@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5f4ed" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>BTC Local Terminal</title>
+    <style>
+      :root {
+        --paper: #f5f4ed;
+        --paper-deep: #ebe9df;
+        --ink: #141413;
+        --muted: #6b6a64;
+        --faint: #86868b;
+        --line: rgba(20, 20, 19, 0.08);
+        --panel: rgba(255, 255, 255, 0.62);
+        --up: #1faa6b;
+        --down: #c75466;
+        --blue-ink: #1b365d;
+      }
+
+      * { box-sizing: border-box; }
+
+      html,
+      body {
+        min-width: 0;
+        min-height: 100%;
+        margin: 0;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.92), transparent 44%),
+          var(--paper);
+        color: var(--ink);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum" 1, "lnum" 1;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      a { color: inherit; }
+
+      .page {
+        min-height: 100svh;
+        width: min(100%, 1560px);
+        margin: 0 auto;
+        padding: max(24px, calc(env(safe-area-inset-top) + 24px))
+          max(24px, calc(env(safe-area-inset-right) + 24px))
+          max(28px, calc(env(safe-area-inset-bottom) + 28px))
+          max(24px, calc(env(safe-area-inset-left) + 24px));
+      }
+
+      .island {
+        position: relative;
+        display: flex;
+        width: min(100%, 760px);
+        margin: 0 auto;
+        padding: 24px 32px 34px;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 40px;
+        background: var(--panel);
+        box-shadow: 0 18px 46px rgba(42, 39, 30, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+      }
+
+      .island-topline {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 16px;
+        min-height: 24px;
+      }
+
+      .asset-mark {
+        color: var(--blue-ink);
+        font-size: 13px;
+        font-weight: 750;
+        letter-spacing: 0.2em;
+      }
+
+      .connection-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--up);
+        box-shadow: 0 0 0 3px rgba(31, 170, 107, 0.12), 0 0 8px rgba(31, 170, 107, 0.28);
+        animation: dot-breathe 2.4s ease-in-out infinite;
+      }
+
+      .change {
+        font-size: clamp(19px, 1.55vw, 28px);
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .up { color: var(--up); }
+      .down { color: var(--down); }
+
+      .price {
+        margin-top: 6px;
+        color: var(--ink);
+        font-size: clamp(72px, 9.2vw, 138px);
+        font-weight: 680;
+        line-height: 0.92;
+        letter-spacing: -0.045em;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum" 1, "lnum" 1;
+        transition: opacity 0.2s ease;
+      }
+
+      .price-pulse { animation: price-pulse 260ms ease-out; }
+
+      .sparkline {
+        display: block;
+        width: min(100%, 420px);
+        height: 34px;
+        margin: 14px auto 0;
+        overflow: visible;
+      }
+
+      .sparkline path {
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0.42;
+      }
+
+      .sparkline circle {
+        stroke: rgba(255, 255, 255, 0.92);
+        stroke-width: 0.8;
+        animation: dot-breathe 2.4s ease-in-out infinite;
+      }
+
+      .sparkline-up path, .sparkline-up circle { stroke: var(--up); fill: var(--up); }
+      .sparkline-down path, .sparkline-down circle { stroke: var(--down); fill: var(--down); }
+
+      .needle {
+        position: absolute;
+        right: 15%;
+        bottom: 14px;
+        left: 15%;
+        height: 1px;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent, rgba(31, 170, 107, 0.1) 54%, rgba(31, 170, 107, 0.55) 88%, rgba(31, 170, 107, 0.9));
+      }
+
+      .needle::after {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 6px;
+        height: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        background: var(--up);
+        box-shadow: 0 0 0 2px rgba(31, 170, 107, 0.11), 0 0 7px rgba(31, 170, 107, 0.3);
+        content: "";
+        transform: translate(50%, -50%);
+      }
+
+      .ticker {
+        display: flex;
+        width: fit-content;
+        max-width: 100%;
+        margin: 24px auto 0;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .chip {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: baseline;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.02);
+        white-space: nowrap;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .chip:hover { border-color: rgba(0, 0, 0, 0.07); background: rgba(0, 0, 0, 0.05); transform: translateY(-1px); }
+      .chip-name { color: var(--faint); font-size: 15px; font-weight: 750; letter-spacing: 0.08em; }
+      .chip-sep { color: rgba(134, 134, 139, 0.5); }
+      .chip-price { color: var(--ink); font-size: 19px; font-weight: 720; }
+      .chip-change { font-size: 16px; font-weight: 650; }
+
+      .news {
+        width: min(100%, 920px);
+        margin: 32px auto 0;
+        padding: 8px 0;
+      }
+
+      .news-row {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 16px;
+        align-items: baseline;
+        padding: 14px 16px;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .news-row:hover { background: rgba(0, 0, 0, 0.025); }
+      .news-time { color: #86868b; font-size: 14px; font-weight: 500; white-space: nowrap; }
+      .news-headline {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--ink);
+        font-size: clamp(17px, 1.35vw, 21px);
+        font-weight: 500;
+        line-height: 1.52;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+
+      .empty { min-height: 32px; color: var(--faint); text-align: center; }
+
+      .kindle .price { font-size: clamp(82px, 10vw, 150px); }
+      .kindle .news-headline { font-size: clamp(20px, 2.2vw, 25px); line-height: 1.55; }
+      .kindle .news-time { font-size: 16px; }
+
+      @keyframes price-pulse { 0% { opacity: 0.86; } 100% { opacity: 1; } }
+      @keyframes dot-breathe { 0%, 100% { opacity: 0.72; } 50% { opacity: 1; } }
+
+      @media (max-width: 720px) {
+        .page { padding-top: max(18px, calc(env(safe-area-inset-top) + 18px)); padding-right: max(16px, calc(env(safe-area-inset-right) + 16px)); padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 22px)); padding-left: max(16px, calc(env(safe-area-inset-left) + 16px)); }
+        .island { padding: 20px 18px 30px; border-radius: 30px; }
+        .price { font-size: clamp(58px, 17vw, 94px); }
+        .ticker { margin-top: 18px; gap: 6px; }
+        .chip { min-height: 36px; padding: 7px 10px; }
+        .chip-name { font-size: 12px; }
+        .chip-price { font-size: 16px; }
+        .chip-change { font-size: 14px; }
+        .news { margin-top: 20px; }
+        .news-row { grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 11px 8px; }
+        .news-headline { font-size: 16px; line-height: 1.45; }
+      }
+
+      @media (orientation: landscape) and (max-height: 620px) {
+        .page { padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)); }
+        .island { padding-top: 14px; padding-bottom: 22px; }
+        .price { font-size: clamp(54px, 12vh, 92px); }
+        .ticker { margin-top: 12px; }
+        .news { margin-top: 12px; }
+        .news-row { padding-top: 7px; padding-bottom: 7px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="island" aria-label="BTC 实时价格">
+        <div class="island-topline">
+          <span class="asset-mark">BTC</span>
+          <span id="connection" class="connection-dot" aria-label="实时连接"></span>
+          <span id="change" class="change">—</span>
+        </div>
+        <div id="price" class="price" aria-live="polite">—</div>
+        <svg id="sparkline" class="sparkline sparkline-up" viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <span class="needle" aria-hidden="true"></span>
+      </section>
+
+      <section id="ticker" class="ticker" aria-label="关联行情"></section>
+      <section id="news" class="news" aria-label="律动新闻"></section>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var CACHE_KEY = "btc-local-terminal-public-v1";
+        var STALE_MS = 60 * 60 * 1000;
+        var PRICE_INTERVAL = 1000;
+        var MACRO_INTERVAL = 3000;
+        var NEWS_INTERVAL = 20000;
+        var priceElement = document.getElementById("price");
+        var changeElement = document.getElementById("change");
+        var tickerElement = document.getElementById("ticker");
+        var newsElement = document.getElementById("news");
+        var sparklineElement = document.getElementById("sparkline");
+        var connectionElement = document.getElementById("connection");
+        var shownPrice = null;
+        var priceAnimation = null;
+        var priceRequest = false;
+        var macroRequest = false;
+        var newsRequest = false;
+        var cachedState = readCache();
+        var macroDefinitions = [
+          { id: "spcx", label: "SPCX", symbol: "SPCXUSDT" },
+          { id: "mu", label: "MU", symbol: "MUUSDT" },
+          { id: "sndk", label: "SNDK", symbol: "SNDKUSDT" },
+          { id: "nvda", label: "NVDA", symbol: "NVDAUSDT" }
+        ];
+
+        if (/kindle|silk|kftt|kfot|kfjw|kfsowi|kfarwi|kfapwi|kfmawi/i.test(navigator.userAgent || "")) {
+          document.documentElement.className = "kindle";
+        }
+
+        if (cachedState) {
+          if (cachedState.btc) renderBtc(cachedState.btc, true);
+          if (cachedState.macro) renderMacro(cachedState.macro);
+          if (cachedState.news) renderNews(cachedState.news);
+        }
+
+        function finite(value) {
+          var number = Number(value);
+          return isFinite(number) ? number : null;
+        }
+
+        function numberText(value, fraction) {
+          var number = finite(value);
+          if (number === null) return "—";
+          try {
+            return new Intl.NumberFormat("en-US", {
+              minimumFractionDigits: fraction,
+              maximumFractionDigits: fraction
+            }).format(number);
+          } catch (error) {
+            return number.toFixed(fraction);
+          }
+        }
+
+        function pctText(value) {
+          var number = finite(value);
+          if (number === null) return "—";
+          return (number >= 0 ? "+" : "") + number.toFixed(2) + "%";
+        }
+
+        function requestJson(url, timeout) {
+          if (window.fetch) {
+            var controller = typeof AbortController === "function" ? new AbortController() : null;
+            var timer = window.setTimeout(function () { if (controller) controller.abort(); }, timeout || 8000);
+            var options = { cache: "no-store", mode: "cors" };
+            if (controller) options.signal = controller.signal;
+            var clearTimer = function () { window.clearTimeout(timer); };
+            return window.fetch(url, options).then(function (response) {
+              if (!response.ok) throw new Error("HTTP " + response.status);
+              return response.json();
+            }).then(function (value) {
+              clearTimer();
+              return value;
+            }, function (error) {
+              clearTimer();
+              throw error;
+            });
+          }
+
+          return new Promise(function (resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.timeout = timeout || 8000;
+            xhr.onreadystatechange = function () {
+              if (xhr.readyState !== 4) return;
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try { resolve(JSON.parse(xhr.responseText)); } catch (error) { reject(error); }
+              } else reject(new Error("HTTP " + xhr.status));
+            };
+            xhr.onerror = reject;
+            xhr.ontimeout = function () { reject(new Error("timeout")); };
+            xhr.send();
+          });
+        }
+
+        function readCache() {
+          try {
+            var value = window.localStorage.getItem(CACHE_KEY);
+            if (!value) return null;
+            var parsed = JSON.parse(value);
+            if (!parsed || !parsed.savedAt || Date.now() - parsed.savedAt > STALE_MS) return parsed;
+            return parsed;
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function writeCache() {
+          try {
+            window.localStorage.setItem(CACHE_KEY, JSON.stringify({
+              savedAt: Date.now(),
+              btc: cachedState && cachedState.btc,
+              macro: cachedState && cachedState.macro,
+              news: cachedState && cachedState.news
+            }));
+          } catch (error) {
+            // Private browsing or a restricted Kindle browser may disable storage.
+          }
+        }
+
+        function animatePrice(next) {
+          if (shownPrice === null || !window.requestAnimationFrame) {
+            shownPrice = next;
+            priceElement.textContent = numberText(next, 0);
+            return;
+          }
+          if (Math.abs(next - shownPrice) < 0.005) return;
+          if (priceAnimation) window.cancelAnimationFrame(priceAnimation);
+          var from = shownPrice;
+          var start = Date.now();
+          var duration = 280;
+          function frame() {
+            var progress = Math.min(1, (Date.now() - start) / duration);
+            var eased = 1 - Math.pow(1 - progress, 3);
+            var value = from + (next - from) * eased;
+            shownPrice = value;
+            priceElement.textContent = numberText(value, 0);
+            if (progress < 1) priceAnimation = window.requestAnimationFrame(frame);
+            else {
+              shownPrice = next;
+              priceElement.textContent = numberText(next, 0);
+              priceAnimation = null;
+            }
+          }
+          priceElement.classList.remove("price-pulse");
+          void priceElement.offsetWidth;
+          priceElement.classList.add("price-pulse");
+          priceAnimation = window.requestAnimationFrame(frame);
+        }
+
+        function buildSparkline(values, trend) {
+          if (!values || values.length < 2) {
+            sparklineElement.innerHTML = "";
+            return;
+          }
+          var min = Math.min.apply(Math, values);
+          var max = Math.max.apply(Math, values);
+          var span = max - min || 1;
+          var path = "";
+          var points = values.map(function (value, index) {
+            return { x: index * 100 / (values.length - 1), y: 30 - ((value - min) / span) * 24 };
+          });
+          points.forEach(function (point, index) {
+            if (index === 0) path = "M " + point.x + " " + point.y;
+            else {
+              var previous = points[index - 1];
+              var midX = (previous.x + point.x) / 2;
+              path += " Q " + midX + " " + previous.y + ", " + point.x + " " + point.y;
+            }
+          });
+          var last = points[points.length - 1];
+          sparklineElement.setAttribute("class", "sparkline " + (trend >= 0 ? "sparkline-up" : "sparkline-down"));
+          sparklineElement.innerHTML = "<path d=\"" + path + "\"></path><circle cx=\"" + last.x + "\" cy=\"" + last.y + "\" r=\"1.7\"></circle>";
+        }
+
+        function renderBtc(btc, instant) {
+          var price = finite(btc.price);
+          var change = finite(btc.change);
+          if (price !== null) {
+            if (instant) {
+              shownPrice = price;
+              priceElement.textContent = numberText(price, 0);
+            } else animatePrice(price);
+          }
+          changeElement.textContent = pctText(change);
+          changeElement.className = "change " + (change !== null && change >= 0 ? "up" : "down");
+          buildSparkline(btc.sparkline || [], change === null || change >= 0 ? 1 : -1);
+          connectionElement.style.background = "var(--up)";
+          cachedState = cachedState || {};
+          cachedState.btc = btc;
+        }
+
+        function renderMacro(items) {
+          var validItems = (items || []).filter(function (item) { return finite(item.price) !== null; });
+          tickerElement.innerHTML = validItems.map(function (item) {
+            var price = finite(item.price);
+            var change = finite(item.change);
+            var fraction = price >= 1000 ? 0 : price >= 10 ? 2 : 3;
+            var tone = change !== null && change >= 0 ? "up" : "down";
+            return "<span class=\"chip\"><span class=\"chip-name\">" + item.label + "</span><span class=\"chip-sep\">|</span><span class=\"chip-price\">" + numberText(price, fraction) + "</span><span class=\"chip-change " + tone + "\">" + pctText(change) + "</span></span>";
+          }).join("");
+          cachedState = cachedState || {};
+          cachedState.macro = validItems;
+        }
+
+        function cleanTitle(value) {
+          if (typeof value !== "string") return null;
+          var title = value.replace(/^观点[:：]\s*/, "").replace(/\s+/g, " ").trim();
+          return title.length > 0 ? title : null;
+        }
+
+        function safeHref(value) {
+          try {
+            var url = new URL(typeof value === "string" && value ? value : "https://fengxiong111.github.io/lydong-screen/");
+            return url.protocol === "http:" || url.protocol === "https:" ? url.href : "https://fengxiong111.github.io/lydong-screen/";
+          } catch (error) {
+            return "https://fengxiong111.github.io/lydong-screen/";
+          }
+        }
+
+        function renderNews(items) {
+          var validItems = (items || []).filter(function (item) { return cleanTitle(item.title); }).slice(0, 8);
+          newsElement.innerHTML = validItems.map(function (item) {
+            var title = cleanTitle(item.title);
+            var time = typeof item.ts === "string" ? item.ts.slice(11, 16) : "";
+            var href = safeHref(item.url);
+            return "<a class=\"news-row\" href=\"" + href.replace(/\"/g, "&quot;") + "\" target=\"_blank\" rel=\"noreferrer\"><span class=\"news-time\">" + time + "</span><span class=\"news-headline\">" + title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</span></a>";
+          }).join("");
+          cachedState = cachedState || {};
+          cachedState.news = validItems;
+        }
+
+        function fetchBtc() {
+          if (priceRequest) return;
+          priceRequest = true;
+          var tickerUrl = "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT";
+          var candleUrl = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=48";
+          Promise.all([requestJson(tickerUrl, 7000), requestJson(candleUrl, 7000)]).then(function (responses) {
+            var ticker = responses[0];
+            var candles = responses[1];
+            var btc = {
+              price: finite(ticker.lastPrice),
+              change: finite(ticker.priceChangePercent),
+              sparkline: Array.isArray(candles) ? candles.map(function (row) { return finite(row[4]); }).filter(function (value) { return value !== null; }) : []
+            };
+            renderBtc(btc, false);
+            writeCache();
+          }).catch(function () {
+            if (cachedState && cachedState.btc) renderBtc(cachedState.btc, true);
+          }).then(function () { priceRequest = false; });
+        }
+
+        function fetchMacro() {
+          if (macroRequest) return;
+          macroRequest = true;
+          Promise.all(macroDefinitions.map(function (definition) {
+            return requestJson("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + definition.symbol, 7000).then(function (ticker) {
+              return { id: definition.id, label: definition.label, price: finite(ticker.lastPrice), change: finite(ticker.priceChangePercent) };
+            }).catch(function () { return null; });
+          })).then(function (items) {
+            var validItems = items.filter(function (item) { return item && item.price !== null; });
+            if (validItems.length > 0) {
+              renderMacro(validItems);
+              writeCache();
+            } else if (cachedState && cachedState.macro) renderMacro(cachedState.macro);
+          }).then(function () { macroRequest = false; });
+        }
+
+        function fetchNews() {
+          if (newsRequest) return;
+          newsRequest = true;
+          var urls = [
+            "https://fengxiong111.github.io/lydong-screen/feed.json",
+            "https://raw.githubusercontent.com/fengxiong111/lydong-screen/main/feed.json"
+          ];
+          var attempt = function (index) {
+            if (index >= urls.length) return Promise.reject(new Error("news unavailable"));
+            return requestJson(urls[index], 9000).catch(function () { return attempt(index + 1); });
+          };
+          attempt(0).then(function (items) {
+            var list = Array.isArray(items) ? items : (items && Array.isArray(items.items) ? items.items : []);
+            list.sort(function (a, b) { return String(b.ts || b.time || "").localeCompare(String(a.ts || a.time || "")); });
+            renderNews(list);
+            writeCache();
+          }).catch(function () {
+            if (cachedState && cachedState.news) renderNews(cachedState.news);
+          }).then(function () { newsRequest = false; });
+        }
+
+        function refreshAll() {
+          fetchBtc();
+          fetchMacro();
+          fetchNews();
+        }
+
+        refreshAll();
+        window.setInterval(fetchBtc, PRICE_INTERVAL);
+        window.setInterval(fetchMacro, MACRO_INTERVAL);
+        window.setInterval(fetchNews, NEWS_INTERVAL);
+        window.addEventListener("focus", refreshAll, { passive: true });
+        window.addEventListener("pageshow", refreshAll, { passive: true });
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") refreshAll();
+        });
+      }());
+    </script>
+  </body>
+</html>
