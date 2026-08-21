@@ -287,6 +287,7 @@
         var CACHE_KEY = "btc-local-terminal-public-v1";
         var STALE_MS = 60 * 60 * 1000;
         var PRICE_INTERVAL = 1000;
+        var SPARKLINE_INTERVAL = 60000;
         var MACRO_INTERVAL = 3000;
         var NEWS_INTERVAL = 20000;
         var priceElement = document.getElementById("price");
@@ -298,6 +299,7 @@
         var shownPrice = null;
         var priceAnimation = null;
         var priceRequest = false;
+        var sparklineRequest = false;
         var macroRequest = false;
         var newsRequest = false;
         var cachedState = readCache();
@@ -458,6 +460,8 @@
         }
 
         function renderBtc(btc, instant) {
+          var previous = cachedState && cachedState.btc ? cachedState.btc : {};
+          var nextBtc = Object.assign({}, previous, btc);
           var price = finite(btc.price);
           var change = finite(btc.change);
           if (price !== null) {
@@ -468,10 +472,10 @@
           }
           changeElement.textContent = pctText(change);
           changeElement.className = "change " + (change !== null && change >= 0 ? "up" : "down");
-          buildSparkline(btc.sparkline || [], change === null || change >= 0 ? 1 : -1);
+          buildSparkline(nextBtc.sparkline || [], change === null || change >= 0 ? 1 : -1);
           connectionElement.style.background = "var(--up)";
           cachedState = cachedState || {};
-          cachedState.btc = btc;
+          cachedState.btc = nextBtc;
         }
 
         function renderMacro(items) {
@@ -518,20 +522,28 @@
           if (priceRequest) return;
           priceRequest = true;
           var tickerUrl = "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT";
-          var candleUrl = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=48";
-          Promise.all([requestJson(tickerUrl, 7000), requestJson(candleUrl, 7000)]).then(function (responses) {
-            var ticker = responses[0];
-            var candles = responses[1];
+          requestJson(tickerUrl, 7000).then(function (ticker) {
             var btc = {
               price: finite(ticker.lastPrice),
-              change: finite(ticker.priceChangePercent),
-              sparkline: Array.isArray(candles) ? candles.map(function (row) { return finite(row[4]); }).filter(function (value) { return value !== null; }) : []
+              change: finite(ticker.priceChangePercent)
             };
             renderBtc(btc, false);
             writeCache();
           }).catch(function () {
             if (cachedState && cachedState.btc) renderBtc(cachedState.btc, true);
           }).then(function () { priceRequest = false; });
+        }
+
+        function fetchSparkline() {
+          if (sparklineRequest) return;
+          sparklineRequest = true;
+          requestJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=48", 7000).then(function (candles) {
+            var values = Array.isArray(candles) ? candles.map(function (row) { return finite(row[4]); }).filter(function (value) { return value !== null; }) : [];
+            if (!cachedState || !cachedState.btc || values.length < 2) return;
+            cachedState.btc.sparkline = values;
+            buildSparkline(values, finite(cachedState.btc.change) === null || cachedState.btc.change >= 0 ? 1 : -1);
+            writeCache();
+          }).then(function () { sparklineRequest = false; }, function () { sparklineRequest = false; });
         }
 
         function fetchMacro() {
@@ -573,12 +585,14 @@
 
         function refreshAll() {
           fetchBtc();
+          fetchSparkline();
           fetchMacro();
           fetchNews();
         }
 
         refreshAll();
         window.setInterval(fetchBtc, PRICE_INTERVAL);
+        window.setInterval(fetchSparkline, SPARKLINE_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
