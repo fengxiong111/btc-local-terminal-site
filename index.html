@@ -184,33 +184,25 @@
 
       .ranking-panel[hidden] { display: none; }
 
-      .ranking-panel-heading {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 12px 8px;
-        color: var(--faint);
-        font-size: 11px;
+      .ranking-groups {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .ranking-group { min-width: 0; }
+
+      .ranking-group-label {
+        display: block;
+        padding: 0 4px 6px;
+        color: var(--muted);
+        font-size: 10px;
         font-weight: 750;
         letter-spacing: 0.12em;
       }
 
-      .ranking-panel-heading a {
-        color: inherit;
-        text-decoration: none;
-        transition: color 0.2s ease, opacity 0.2s ease;
-      }
-
-      .ranking-panel-heading a:hover { color: var(--ink); opacity: 0.8; }
-
-      .ranking-stale {
-        color: #9a7625;
-        letter-spacing: 0.08em;
-      }
-
       .ranking-list {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 3px;
         margin: 0;
         padding: 0;
@@ -219,31 +211,24 @@
 
       .ranking-row {
         display: grid;
-        grid-template-columns: 20px minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas:
-          "rank name value"
-          "rank source source";
+          "name value"
+          "source source";
         align-items: center;
         column-gap: 8px;
         row-gap: 2px;
         min-width: 0;
-        min-height: 42px;
-        padding: 0 12px;
-        border-left: 1px solid rgba(20, 20, 19, 0.06);
+        min-height: 34px;
+        padding: 4px 12px;
+        border-radius: 9px;
         color: var(--ink);
         font-size: 13px;
         font-variant-numeric: tabular-nums;
+        transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
       }
 
-      .ranking-row:first-child { border-left: 0; }
-
-      .ranking-rank {
-        grid-area: rank;
-        align-self: start;
-        padding-top: 2px;
-        color: var(--faint);
-        font-size: 11px;
-      }
+      .ranking-row:hover { background: rgba(0, 0, 0, 0.025); }
 
       .ranking-name {
         grid-area: name;
@@ -265,7 +250,6 @@
 
       .ranking-source-raydium { color: #816b4c; }
       .ranking-source-meteora { color: #806e8d; }
-      .ranking-source-hyperliquid { color: var(--muted); }
 
       .ranking-value {
         grid-area: value;
@@ -329,9 +313,9 @@
         .chip-change { font-size: 14px; }
         .rankings { width: 100%; }
         .ranking-panel { padding-right: 4px; padding-left: 4px; }
+        .ranking-groups { grid-template-columns: minmax(0, 1fr); gap: 8px; }
         .ranking-list { grid-template-columns: minmax(0, 1fr); }
-        .ranking-row { grid-template-columns: 22px minmax(0, 1fr) 42px auto; grid-template-areas: none; gap: 6px; min-height: 26px; padding: 0 4px; border-left: 0; font-size: 12px; }
-        .ranking-rank, .ranking-name, .ranking-source, .ranking-value { grid-area: auto; }
+        .ranking-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name value" "source source"; gap: 2px 6px; min-height: 34px; padding: 0 4px; font-size: 12px; }
         .news { margin-top: 20px; }
         .news-row { grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 11px 8px; }
         .news-headline { font-size: 16px; line-height: 1.45; }
@@ -375,7 +359,7 @@
       (function () {
         "use strict";
 
-        var CACHE_KEY = "btc-local-terminal-public-v2";
+        var CACHE_KEY = "btc-local-terminal-public-v3";
         var LP_FEE_SNAPSHOT_URL = "https://fengxiong111.github.io/lp-decision-os/top3.json";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
         var STALE_MS = 60 * 60 * 1000;
@@ -592,9 +576,23 @@
           return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
         }
 
-        function ordinalText(index) {
-          var value = index + 1;
-          return value < 10 ? "0" + value : String(value);
+        function pairTokens(pair) {
+          return String(pair || "").split(/[\s/|:+_-]+/).filter(Boolean);
+        }
+
+        function isStockMappedPair(pair) {
+          return pairTokens(pair).some(function (token) { return token.toUpperCase() === "RWA" || /^[A-Z0-9]+x$/.test(token); });
+        }
+
+        function isRwaUsdcPair(pair) {
+          var tokens = pairTokens(pair);
+          return tokens.some(function (token) { return token.toUpperCase() === "USDC"; }) && isStockMappedPair(pair);
+        }
+
+        function rankFeeRows(rows, limit) {
+          return (rows || []).slice().sort(function (left, right) {
+            return right.fee - left.fee || (Number(left.rank) || 0) - (Number(right.rank) || 0) || left.pair.localeCompare(right.pair);
+          }).slice(0, limit);
         }
 
         function updateRankingLayout() {
@@ -620,8 +618,9 @@
             if (!row || (row.dex !== "Raydium" && row.dex !== "Meteora")) return;
             var fee = finite(row.lpFee24h);
             if (typeof row.pair !== "string" || !row.pair.trim() || fee === null || fee < 0) return;
-            groups[row.dex].push({ protocol: row.dex, pair: row.pair.trim(), fee: fee, poolType: typeof row.poolType === "string" ? row.poolType : "" });
+            groups[row.dex].push({ rank: finite(row.rank) || 0, protocol: row.dex, pair: row.pair.trim(), fee: fee, poolType: typeof row.poolType === "string" ? row.poolType : "" });
           });
+          var allRows = groups.Raydium.concat(groups.Meteora);
           var rows = [];
           ["Raydium", "Meteora"].forEach(function (protocol) {
             groups[protocol].sort(function (a, b) { return b.fee - a.fee; });
@@ -634,6 +633,8 @@
             generatedAt: generatedAt,
             fetchedAt: Date.now(),
             rows: rows.slice(0, 5),
+            rwaUsdcRows: rankFeeRows(allRows.filter(function (row) { return isRwaUsdcPair(row.pair); }), 3),
+            coinRows: rankFeeRows(allRows.filter(function (row) { return !isStockMappedPair(row.pair); }), 3),
             stale: Date.now() - Date.parse(generatedAt) > LP_FEE_STALE_MS
           };
         }
@@ -641,18 +642,24 @@
         function renderFeeLeaders(snapshot) {
           if (!feeLeadersElement) return;
           var rows = snapshot && Array.isArray(snapshot.rows) ? snapshot.rows : [];
-          if (rows.length === 0) {
+          var rwaRows = snapshot && Array.isArray(snapshot.rwaUsdcRows) ? snapshot.rwaUsdcRows : rankFeeRows(rows.filter(function (row) { return isRwaUsdcPair(row.pair); }), 3);
+          var coinRows = snapshot && Array.isArray(snapshot.coinRows) ? snapshot.coinRows : rankFeeRows(rows.filter(function (row) { return !isStockMappedPair(row.pair); }), 3);
+          if (rwaRows.length === 0 && coinRows.length === 0) {
             feeLeadersElement.innerHTML = "";
             feeLeadersElement.hidden = true;
             lastFeeLeadersMarkup = "";
             updateRankingLayout();
             return;
           }
-          var markup = "<div class=\"ranking-panel-heading\"><span>LP FEE TOP 5</span>" + (snapshot.stale ? "<span class=\"ranking-stale\">STALE</span>" : "") + "</div><ol class=\"ranking-list\">";
-          rows.forEach(function (row, index) {
-            markup += "<li class=\"ranking-row\"><span class=\"ranking-rank\">" + ordinalText(index) + "</span><span class=\"ranking-name\" title=\"" + escapeHtml(row.pair + (row.poolType ? " · " + row.poolType : "")) + "\">" + escapeHtml(row.pair) + "</span><span class=\"ranking-source ranking-source-" + row.protocol.toLowerCase() + "\">" + escapeHtml(row.protocol) + "</span><span class=\"ranking-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
-          });
-          markup += "</ol>";
+          var renderRows = function (groupRows) {
+            return groupRows.map(function (row) {
+              return "<li class=\"ranking-row\"><span class=\"ranking-name\" title=\"" + escapeHtml(row.pair + (row.poolType ? " · " + row.poolType : "")) + "\">" + escapeHtml(row.pair) + "</span><span class=\"ranking-source ranking-source-" + row.protocol.toLowerCase() + "\">" + escapeHtml(row.protocol) + "</span><span class=\"ranking-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
+            }).join("");
+          };
+          var markup = "<div class=\"ranking-groups\">";
+          if (rwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"RWA USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">RWA / USDC</span><ul class=\"ranking-list\">" + renderRows(rwaRows) + "</ul></section>";
+          if (coinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"普通币费用前三\"><span class=\"ranking-group-label\">COINS</span><ul class=\"ranking-list\">" + renderRows(coinRows) + "</ul></section>";
+          markup += "</div>";
           if (markup !== lastFeeLeadersMarkup) {
             feeLeadersElement.innerHTML = markup;
             lastFeeLeadersMarkup = markup;
