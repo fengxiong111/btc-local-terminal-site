@@ -195,14 +195,29 @@
       .chip-price { color: var(--ink); font-size: 19px; font-weight: 720; }
       .chip-change { font-size: 16px; font-weight: 650; }
 
-      .fee-leaders {
+      .rankings {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
         width: min(100%, 920px);
         min-width: 0;
         margin: 18px auto 0;
         padding: 0 4px;
       }
 
-      .fee-leaders-heading {
+      .rankings.single { grid-template-columns: minmax(0, 1fr); }
+
+      .ranking-panel {
+        min-width: 0;
+        padding: 12px 16px 10px;
+        border: 1px solid rgba(20, 20, 19, 0.055);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.26);
+      }
+
+      .ranking-panel[hidden] { display: none; }
+
+      .ranking-panel-heading {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -213,45 +228,20 @@
         letter-spacing: 0.12em;
       }
 
-      .fee-leaders-stale {
+      .ranking-panel-heading a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s ease, opacity 0.2s ease;
+      }
+
+      .ranking-panel-heading a:hover { color: var(--ink); opacity: 0.8; }
+
+      .ranking-stale {
         color: #9a7625;
         letter-spacing: 0.08em;
       }
 
-      .fee-leaders-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-      }
-
-      .fee-leaders-group {
-        min-width: 0;
-        padding: 12px 16px 10px;
-        border: 1px solid rgba(20, 20, 19, 0.055);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.26);
-      }
-
-      .fee-leaders-group-heading {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-        padding-bottom: 7px;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 750;
-        letter-spacing: 0.1em;
-      }
-
-      .fee-leaders-group-heading span:last-child {
-        color: var(--faint);
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-      }
-
-      .fee-leaders-list {
+      .ranking-list {
         display: grid;
         gap: 3px;
         margin: 0;
@@ -259,9 +249,9 @@
         list-style: none;
       }
 
-      .fee-leaders-row {
+      .ranking-row {
         display: grid;
-        grid-template-columns: 28px minmax(0, 1fr) auto;
+        grid-template-columns: 28px minmax(0, 1fr) 72px auto;
         align-items: center;
         gap: 10px;
         min-width: 0;
@@ -271,19 +261,32 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .fee-leaders-rank {
+      .ranking-rank {
         color: var(--faint);
         font-size: 11px;
       }
 
-      .fee-leaders-pair {
+      .ranking-name {
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
-      .fee-leaders-value {
+      .ranking-source {
+        justify-self: start;
+        color: var(--faint);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+
+      .ranking-source-raydium { color: #816b4c; }
+      .ranking-source-meteora { color: #806e8d; }
+      .ranking-source-hyperliquid { color: var(--muted); }
+
+      .ranking-value {
         color: var(--ink);
         font-weight: 750;
         text-align: right;
@@ -338,9 +341,9 @@
         .chip-name { font-size: 12px; }
         .chip-price { font-size: 16px; }
         .chip-change { font-size: 14px; }
-        .fee-leaders { padding: 0; }
-        .fee-leaders-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-        .fee-leaders-group { padding-right: 12px; padding-left: 12px; }
+        .rankings { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 0; }
+        .ranking-panel { padding-right: 12px; padding-left: 12px; }
+        .ranking-row { grid-template-columns: 22px minmax(0, 1fr) 42px auto; gap: 6px; font-size: 12px; }
         .news { margin-top: 20px; }
         .news-row { grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 11px 8px; }
         .news-headline { font-size: 16px; line-height: 1.45; }
@@ -374,7 +377,10 @@
       </section>
 
       <section id="ticker" class="ticker" aria-label="关联行情"></section>
-      <section id="fee-leaders" class="fee-leaders" aria-label="Raydium 与 Meteora 24h Fee 榜前五"></section>
+      <section id="rankings" class="rankings" aria-label="流动性费用与资金费率榜" hidden>
+        <section id="fee-leaders" class="ranking-panel" aria-label="Raydium 与 Meteora 24h Fee 榜前五" hidden></section>
+        <section id="funding-leaders" class="ranking-panel" aria-label="Hyperliquid 资金费率前五" hidden></section>
+      </section>
       <section id="news" class="news" aria-label="律动新闻"></section>
     </main>
 
@@ -395,7 +401,9 @@
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
         var tickerElement = document.getElementById("ticker");
+        var rankingsElement = document.getElementById("rankings");
         var feeLeadersElement = document.getElementById("fee-leaders");
+        var fundingLeadersElement = document.getElementById("funding-leaders");
         var newsElement = document.getElementById("news");
         var sparklineElement = document.getElementById("sparkline");
         var connectionElement = document.getElementById("connection");
@@ -408,10 +416,12 @@
         var macroStatsRequest = false;
         var newsRequest = false;
         var feeLeadersRequest = false;
+        var fundingRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
         var lastFeeLeadersMarkup = "";
+        var lastFundingMarkup = "";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
           { id: "spcx", label: "SPCX", symbol: "SPCXUSDT" },
@@ -428,6 +438,7 @@
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.feeLeaders) renderFeeLeaders(cachedState.feeLeaders);
+          if (cachedState.funding) renderFundingLeaders(cachedState.funding);
           if (cachedState.news) renderNews(cachedState.news);
         }
 
@@ -449,10 +460,11 @@
           }
         }
 
-        function pctText(value) {
+        function pctText(value, fraction) {
           var number = finite(value);
           if (number === null) return "—";
-          return (number >= 0 ? "+" : "") + number.toFixed(2) + "%";
+          var digits = typeof fraction === "number" ? fraction : 2;
+          return (number >= 0 ? "+" : "") + number.toFixed(digits) + "%";
         }
 
         function requestJson(url, timeout, requestOptions) {
@@ -516,6 +528,7 @@
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
               feeLeaders: cachedState && cachedState.feeLeaders,
+              funding: cachedState && cachedState.funding,
               news: cachedState && cachedState.news
             }));
           } catch (error) {
@@ -628,6 +641,15 @@
           return value < 10 ? "0" + value : String(value);
         }
 
+        function updateRankingLayout() {
+          if (!rankingsElement) return;
+          var visibleCount = 0;
+          if (feeLeadersElement && !feeLeadersElement.hidden) visibleCount += 1;
+          if (fundingLeadersElement && !fundingLeadersElement.hidden) visibleCount += 1;
+          rankingsElement.hidden = visibleCount === 0;
+          rankingsElement.classList.toggle("single", visibleCount === 1);
+        }
+
         function normalizeFeeSnapshot(payload) {
           if (!payload || payload.schemaVersion !== 2 || payload.product !== "Solana LP Decision OS") {
             throw new Error("LP fee snapshot unsupported");
@@ -638,47 +660,91 @@
             if (!row || (row.dex !== "Raydium" && row.dex !== "Meteora")) return;
             var fee = finite(row.lpFee24h);
             if (typeof row.pair !== "string" || !row.pair.trim() || fee === null || fee < 0) return;
-            groups[row.dex].push({ pair: row.pair.trim(), fee: fee, poolType: typeof row.poolType === "string" ? row.poolType : "" });
+            groups[row.dex].push({ protocol: row.dex, pair: row.pair.trim(), fee: fee, poolType: typeof row.poolType === "string" ? row.poolType : "" });
           });
-          Object.keys(groups).forEach(function (protocol) {
+          var rows = [];
+          ["Raydium", "Meteora"].forEach(function (protocol) {
             groups[protocol].sort(function (a, b) { return b.fee - a.fee; });
-            groups[protocol] = groups[protocol].slice(0, 5);
+            rows = rows.concat(groups[protocol].slice(0, 5));
           });
+          rows.sort(function (a, b) { return b.fee - a.fee || a.protocol.localeCompare(b.protocol) || a.pair.localeCompare(b.pair); });
           var generatedAt = typeof payload.generatedAt === "string" ? payload.generatedAt : "";
           if (!generatedAt || !isFinite(Date.parse(generatedAt))) throw new Error("LP fee snapshot time invalid");
           return {
             generatedAt: generatedAt,
             fetchedAt: Date.now(),
-            groups: groups,
+            rows: rows.slice(0, 5),
             stale: Date.now() - Date.parse(generatedAt) > LP_FEE_STALE_MS
           };
         }
 
         function renderFeeLeaders(snapshot) {
-          if (!snapshot || !feeLeadersElement) return;
-          var groups = snapshot.groups || {};
-          var protocols = ["Raydium", "Meteora"];
-          var visible = protocols.filter(function (protocol) { return Array.isArray(groups[protocol]) && groups[protocol].length > 0; });
-          if (visible.length === 0) {
+          if (!feeLeadersElement) return;
+          var rows = snapshot && Array.isArray(snapshot.rows) ? snapshot.rows : [];
+          if (rows.length === 0) {
             feeLeadersElement.innerHTML = "";
+            feeLeadersElement.hidden = true;
             lastFeeLeadersMarkup = "";
+            updateRankingLayout();
             return;
           }
-          var markup = "<div class=\"fee-leaders-heading\"><span>24H FEE TOP 5</span>" + (snapshot.stale ? "<span class=\"fee-leaders-stale\">STALE</span>" : "") + "</div><div class=\"fee-leaders-grid\">";
-          visible.forEach(function (protocol) {
-            markup += "<section class=\"fee-leaders-group\" aria-label=\"" + escapeHtml(protocol) + " 24h fee 前五\"><div class=\"fee-leaders-group-heading\"><span>" + escapeHtml(protocol.toUpperCase()) + "</span><span>24H FEE</span></div><ol class=\"fee-leaders-list\">";
-            groups[protocol].forEach(function (row, index) {
-              markup += "<li class=\"fee-leaders-row\"><span class=\"fee-leaders-rank\">" + ordinalText(index) + "</span><span class=\"fee-leaders-pair\" title=\"" + escapeHtml(row.pair + (row.poolType ? " · " + row.poolType : "")) + "\">" + escapeHtml(row.pair) + "</span><span class=\"fee-leaders-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
-            });
-            markup += "</ol></section>";
+          var markup = "<div class=\"ranking-panel-heading\"><span>LP FEE TOP 5</span>" + (snapshot.stale ? "<span class=\"ranking-stale\">STALE</span>" : "") + "</div><ol class=\"ranking-list\">";
+          rows.forEach(function (row, index) {
+            markup += "<li class=\"ranking-row\"><span class=\"ranking-rank\">" + ordinalText(index) + "</span><span class=\"ranking-name\" title=\"" + escapeHtml(row.pair + (row.poolType ? " · " + row.poolType : "")) + "\">" + escapeHtml(row.pair) + "</span><span class=\"ranking-source ranking-source-" + row.protocol.toLowerCase() + "\">" + escapeHtml(row.protocol) + "</span><span class=\"ranking-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
           });
-          markup += "</div>";
+          markup += "</ol>";
           if (markup !== lastFeeLeadersMarkup) {
             feeLeadersElement.innerHTML = markup;
             lastFeeLeadersMarkup = markup;
           }
+          feeLeadersElement.hidden = false;
           cachedState = cachedState || {};
           cachedState.feeLeaders = snapshot;
+          updateRankingLayout();
+        }
+
+        function normalizeFundingSnapshot(payload) {
+          if (!Array.isArray(payload) || payload.length < 2) throw new Error("Hyperliquid funding response unsupported");
+          var meta = payload[0] || {};
+          var universe = Array.isArray(meta.universe) ? meta.universe : [];
+          var contexts = Array.isArray(payload[1]) ? payload[1] : [];
+          var rows = [];
+          universe.forEach(function (asset, index) {
+            if (!asset || asset.isDelisted === true || typeof asset.name !== "string" || !asset.name.trim()) return;
+            var context = contexts[index] || {};
+            var funding = finite(context.funding);
+            if (funding === null) return;
+            rows.push({ coin: asset.name.trim(), funding: funding });
+          });
+          rows.sort(function (a, b) { return b.funding - a.funding || a.coin.localeCompare(b.coin); });
+          if (rows.length === 0) throw new Error("Hyperliquid funding unavailable");
+          return { fetchedAt: Date.now(), rows: rows.slice(0, 5), stale: false };
+        }
+
+        function renderFundingLeaders(snapshot) {
+          if (!fundingLeadersElement) return;
+          var rows = snapshot && Array.isArray(snapshot.rows) ? snapshot.rows : [];
+          if (rows.length === 0) {
+            fundingLeadersElement.innerHTML = "";
+            fundingLeadersElement.hidden = true;
+            lastFundingMarkup = "";
+            updateRankingLayout();
+            return;
+          }
+          var markup = "<div class=\"ranking-panel-heading\"><a href=\"https://app.hyperliquid.xyz/trade\" target=\"_blank\" rel=\"noreferrer\">HYPERLIQUID FUNDING TOP 5</a>" + (snapshot.stale ? "<span class=\"ranking-stale\">STALE</span>" : "") + "</div><ol class=\"ranking-list\">";
+          rows.forEach(function (row, index) {
+            var tone = row.funding >= 0 ? "up" : "down";
+            markup += "<li class=\"ranking-row\"><span class=\"ranking-rank\">" + ordinalText(index) + "</span><span class=\"ranking-name\">" + escapeHtml(row.coin) + "</span><span class=\"ranking-source ranking-source-hyperliquid\">1H</span><span class=\"ranking-value " + tone + "\">" + pctText(row.funding * 100, 4) + "</span></li>";
+          });
+          markup += "</ol>";
+          if (markup !== lastFundingMarkup) {
+            fundingLeadersElement.innerHTML = markup;
+            lastFundingMarkup = markup;
+          }
+          fundingLeadersElement.hidden = false;
+          cachedState = cachedState || {};
+          cachedState.funding = snapshot;
+          updateRankingLayout();
         }
 
         function cleanTitle(value) {
@@ -846,6 +912,24 @@
           }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
         }
 
+        function fetchFundingLeaders() {
+          if (fundingRequest) return;
+          fundingRequest = true;
+          requestJson("https://api.hyperliquid.xyz/info", 5000, {
+            method: "POST",
+            headers: { Accept: "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "metaAndAssetCtxs" })
+          }).then(function (payload) {
+            var snapshot = normalizeFundingSnapshot(payload);
+            renderFundingLeaders(snapshot);
+            writeCache();
+          }).catch(function () {
+            if (cachedState && cachedState.funding) {
+              renderFundingLeaders(Object.assign({}, cachedState.funding, { stale: true }));
+            }
+          }).then(function () { fundingRequest = false; }, function () { fundingRequest = false; });
+        }
+
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
@@ -853,6 +937,7 @@
           fetchMacro();
           fetchMacroStats();
           fetchFeeLeaders();
+          fetchFundingLeaders();
           fetchNews();
         }
 
@@ -863,6 +948,7 @@
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchMacroStats, MACRO_STATS_INTERVAL);
         window.setInterval(fetchFeeLeaders, 60000);
+        window.setInterval(fetchFundingLeaders, 30000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", refreshAll, { passive: true });
