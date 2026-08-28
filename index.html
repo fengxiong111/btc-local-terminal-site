@@ -379,7 +379,7 @@
       <section id="ticker" class="ticker" aria-label="关联行情"></section>
       <section id="rankings" class="rankings" aria-label="流动性费用与资金费率榜" hidden>
         <section id="fee-leaders" class="ranking-panel" aria-label="Raydium 与 Meteora 24h Fee 榜前五" hidden></section>
-        <section id="funding-leaders" class="ranking-panel" aria-label="Hyperliquid 资金费率前五" hidden></section>
+        <section id="funding-leaders" class="ranking-panel" aria-label="Hyperliquid HIP-3 股票正资金费率前五" hidden></section>
       </section>
       <section id="news" class="news" aria-label="律动新闻"></section>
     </main>
@@ -388,8 +388,9 @@
       (function () {
         "use strict";
 
-        var CACHE_KEY = "btc-local-terminal-public-v1";
+        var CACHE_KEY = "btc-local-terminal-public-v2";
         var LP_FEE_SNAPSHOT_URL = "https://fengxiong111.github.io/lp-decision-os/top3.json";
+        var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
         var STALE_MS = 60 * 60 * 1000;
         var LP_FEE_STALE_MS = 30 * 60 * 1000;
         var PRICE_INTERVAL = 1000;
@@ -703,27 +704,45 @@
           updateRankingLayout();
         }
 
-        function normalizeFundingSnapshot(payload) {
-          if (!Array.isArray(payload) || payload.length < 2) throw new Error("Hyperliquid funding response unsupported");
-          var meta = payload[0] || {};
-          var universe = Array.isArray(meta.universe) ? meta.universe : [];
-          var contexts = Array.isArray(payload[1]) ? payload[1] : [];
-          var rows = [];
-          universe.forEach(function (asset, index) {
-            if (!asset || asset.isDelisted === true || typeof asset.name !== "string" || !asset.name.trim()) return;
-            var context = contexts[index] || {};
-            var funding = finite(context.funding);
-            if (funding === null) return;
-            rows.push({ coin: asset.name.trim(), funding: funding });
+        function normalizeFundingSnapshot(dexPayload, categoryPayload, contextResults) {
+          if (!Array.isArray(dexPayload) || !Array.isArray(categoryPayload)) throw new Error("Hyperliquid HIP-3 metadata unsupported");
+          var categories = {};
+          categoryPayload.forEach(function (entry) {
+            if (!Array.isArray(entry) || entry.length < 2 || typeof entry[0] !== "string" || typeof entry[1] !== "string") return;
+            categories[entry[0]] = entry[1];
           });
-          rows.sort(function (a, b) { return b.funding - a.funding || a.coin.localeCompare(b.coin); });
-          if (rows.length === 0) throw new Error("Hyperliquid funding unavailable");
-          return { fetchedAt: Date.now(), rows: rows.slice(0, 5), stale: false };
+          var dexes = dexPayload.filter(function (item) { return item && typeof item.name === "string" && item.name.trim(); }).map(function (item) { return item.name.trim(); });
+          if (dexes.length === 0 || Object.keys(categories).length === 0) throw new Error("Hyperliquid HIP-3 metadata unavailable");
+          var rows = [];
+          var universeCount = 0;
+          contextResults.forEach(function (result) {
+            if (!result || !Array.isArray(result.payload) || result.payload.length < 2) return;
+            var meta = result.payload[0] || {};
+            var universe = Array.isArray(meta.universe) ? meta.universe : [];
+            var contexts = Array.isArray(result.payload[1]) ? result.payload[1] : [];
+            universeCount += universe.length;
+            universe.forEach(function (asset, index) {
+              if (!asset || asset.isDelisted === true || typeof asset.name !== "string" || !asset.name.trim()) return;
+              var fullCoin = asset.name.trim();
+              var categoryKey = fullCoin.indexOf(":") >= 0 ? fullCoin : result.dex + ":" + fullCoin;
+              if (categories[categoryKey] !== "stocks") return;
+              var context = contexts[index] || {};
+              var funding = finite(context.funding);
+              if (funding === null || funding <= 0) return;
+              var separatorIndex = fullCoin.indexOf(":");
+              rows.push({ coin: separatorIndex >= 0 ? fullCoin.slice(separatorIndex + 1) : fullCoin, dex: result.dex, funding: funding });
+            });
+          });
+          rows.sort(function (a, b) { return b.funding - a.funding || a.coin.localeCompare(b.coin) || a.dex.localeCompare(b.dex); });
+          if (rows.length === 0) throw new Error("Hyperliquid 当前没有正费率股票永续");
+          return { fetchedAt: Date.now(), universeCount: universeCount, rows: rows.slice(0, 5), stale: false };
         }
 
         function renderFundingLeaders(snapshot) {
           if (!fundingLeadersElement) return;
-          var rows = snapshot && Array.isArray(snapshot.rows) ? snapshot.rows : [];
+          var rows = snapshot && Array.isArray(snapshot.rows) ? snapshot.rows.filter(function (row) {
+            return row && typeof row.coin === "string" && typeof row.dex === "string" && finite(row.funding) !== null && row.funding > 0;
+          }) : [];
           if (rows.length === 0) {
             fundingLeadersElement.innerHTML = "";
             fundingLeadersElement.hidden = true;
@@ -731,10 +750,10 @@
             updateRankingLayout();
             return;
           }
-          var markup = "<div class=\"ranking-panel-heading\"><a href=\"https://app.hyperliquid.xyz/trade\" target=\"_blank\" rel=\"noreferrer\">HYPERLIQUID FUNDING TOP 5</a>" + (snapshot.stale ? "<span class=\"ranking-stale\">STALE</span>" : "") + "</div><ol class=\"ranking-list\">";
+          var markup = "<div class=\"ranking-panel-heading\"><a href=\"https://app.hyperliquid.xyz/trade\" target=\"_blank\" rel=\"noreferrer\">HIP-3 STOCK FUNDING TOP 5</a>" + (snapshot.stale ? "<span class=\"ranking-stale\">STALE</span>" : "") + "</div><ol class=\"ranking-list\">";
           rows.forEach(function (row, index) {
             var tone = row.funding >= 0 ? "up" : "down";
-            markup += "<li class=\"ranking-row\"><span class=\"ranking-rank\">" + ordinalText(index) + "</span><span class=\"ranking-name\">" + escapeHtml(row.coin) + "</span><span class=\"ranking-source ranking-source-hyperliquid\">1H</span><span class=\"ranking-value " + tone + "\">" + pctText(row.funding * 100, 4) + "</span></li>";
+            markup += "<li class=\"ranking-row\"><span class=\"ranking-rank\">" + ordinalText(index) + "</span><span class=\"ranking-name\">" + escapeHtml(row.coin) + "</span><span class=\"ranking-source ranking-source-hyperliquid\">" + escapeHtml(row.dex) + "</span><span class=\"ranking-value " + tone + "\">" + pctText(row.funding * 100, 4) + "</span></li>";
           });
           markup += "</ol>";
           if (markup !== lastFundingMarkup) {
@@ -778,7 +797,7 @@
             if (price === null) throw new Error("Binance BTC price unavailable");
             return { price: price };
           }).catch(function () {
-            return requestJson("https://api.hyperliquid.xyz/info", 2500, {
+            return requestJson(HYPERLIQUID_INFO_URL, 2500, {
               method: "POST",
               headers: { "Content-Type": "application/json", "Accept": "application/json" },
               body: JSON.stringify({ type: "allMids" })
@@ -827,7 +846,7 @@
           macroRequest = true;
           var requests = macroDefinitions.map(function (definition) {
             if (definition.source === "hyperliquid") {
-              return requestJson("https://api.hyperliquid.xyz/info", 2500, {
+              return requestJson(HYPERLIQUID_INFO_URL, 2500, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Accept": "application/json" },
                 body: JSON.stringify({ type: "metaAndAssetCtxs" })
@@ -915,12 +934,30 @@
         function fetchFundingLeaders() {
           if (fundingRequest) return;
           fundingRequest = true;
-          requestJson("https://api.hyperliquid.xyz/info", 5000, {
-            method: "POST",
-            headers: { Accept: "application/json", "Content-Type": "application/json" },
-            body: JSON.stringify({ type: "metaAndAssetCtxs" })
-          }).then(function (payload) {
-            var snapshot = normalizeFundingSnapshot(payload);
+          var requestOptions = function (body) {
+            return {
+              method: "POST",
+              headers: { Accept: "application/json", "Content-Type": "application/json" },
+              body: JSON.stringify(body)
+            };
+          };
+          Promise.all([
+            requestJson(HYPERLIQUID_INFO_URL, 5000, requestOptions({ type: "perpDexs" })),
+            requestJson(HYPERLIQUID_INFO_URL, 5000, requestOptions({ type: "perpCategories" }))
+          ]).then(function (metadata) {
+            var dexPayload = metadata[0];
+            var dexes = Array.isArray(dexPayload) ? dexPayload.filter(function (item) { return item && typeof item.name === "string" && item.name.trim(); }).map(function (item) { return item.name.trim(); }) : [];
+            if (dexes.length === 0) throw new Error("no HIP-3 dexes");
+            return Promise.all(dexes.map(function (dex) {
+              return requestJson(HYPERLIQUID_INFO_URL, 5000, requestOptions({ type: "metaAndAssetCtxs", dex: dex }))
+                .then(function (payload) { return { dex: dex, payload: payload }; })
+                .catch(function () { return null; });
+            })).then(function (contextResults) {
+              var usableResults = contextResults.filter(function (result) { return result !== null; });
+              if (usableResults.length === 0) throw new Error("no HIP-3 contexts");
+              return normalizeFundingSnapshot(dexPayload, metadata[1], usableResults);
+            });
+          }).then(function (snapshot) {
             renderFundingLeaders(snapshot);
             writeCache();
           }).catch(function () {
