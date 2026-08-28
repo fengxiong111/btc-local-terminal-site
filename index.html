@@ -195,6 +195,100 @@
       .chip-price { color: var(--ink); font-size: 19px; font-weight: 720; }
       .chip-change { font-size: 16px; font-weight: 650; }
 
+      .fee-leaders {
+        width: min(100%, 920px);
+        min-width: 0;
+        margin: 18px auto 0;
+        padding: 0 4px;
+      }
+
+      .fee-leaders-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px 8px;
+        color: var(--faint);
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+      }
+
+      .fee-leaders-stale {
+        color: #9a7625;
+        letter-spacing: 0.08em;
+      }
+
+      .fee-leaders-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .fee-leaders-group {
+        min-width: 0;
+        padding: 12px 16px 10px;
+        border: 1px solid rgba(20, 20, 19, 0.055);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.26);
+      }
+
+      .fee-leaders-group-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 7px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.1em;
+      }
+
+      .fee-leaders-group-heading span:last-child {
+        color: var(--faint);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+
+      .fee-leaders-list {
+        display: grid;
+        gap: 3px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .fee-leaders-row {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        min-height: 26px;
+        color: var(--ink);
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .fee-leaders-rank {
+        color: var(--faint);
+        font-size: 11px;
+      }
+
+      .fee-leaders-pair {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .fee-leaders-value {
+        color: var(--ink);
+        font-weight: 750;
+        text-align: right;
+      }
+
       .news {
         width: min(100%, 920px);
         margin: 32px auto 0;
@@ -244,6 +338,9 @@
         .chip-name { font-size: 12px; }
         .chip-price { font-size: 16px; }
         .chip-change { font-size: 14px; }
+        .fee-leaders { padding: 0; }
+        .fee-leaders-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+        .fee-leaders-group { padding-right: 12px; padding-left: 12px; }
         .news { margin-top: 20px; }
         .news-row { grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 11px 8px; }
         .news-headline { font-size: 16px; line-height: 1.45; }
@@ -277,6 +374,7 @@
       </section>
 
       <section id="ticker" class="ticker" aria-label="关联行情"></section>
+      <section id="fee-leaders" class="fee-leaders" aria-label="Raydium 与 Meteora 24h Fee 榜前五"></section>
       <section id="news" class="news" aria-label="律动新闻"></section>
     </main>
 
@@ -285,7 +383,9 @@
         "use strict";
 
         var CACHE_KEY = "btc-local-terminal-public-v1";
+        var LP_FEE_SNAPSHOT_URL = "https://fengxiong111.github.io/lp-decision-os/top3.json";
         var STALE_MS = 60 * 60 * 1000;
+        var LP_FEE_STALE_MS = 30 * 60 * 1000;
         var PRICE_INTERVAL = 1000;
         var SPARKLINE_INTERVAL = 60000;
         var STATS_INTERVAL = 15000;
@@ -295,6 +395,7 @@
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
         var tickerElement = document.getElementById("ticker");
+        var feeLeadersElement = document.getElementById("fee-leaders");
         var newsElement = document.getElementById("news");
         var sparklineElement = document.getElementById("sparkline");
         var connectionElement = document.getElementById("connection");
@@ -306,9 +407,11 @@
         var macroRequest = false;
         var macroStatsRequest = false;
         var newsRequest = false;
+        var feeLeadersRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
+        var lastFeeLeadersMarkup = "";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
           { id: "spcx", label: "SPCX", symbol: "SPCXUSDT" },
@@ -324,6 +427,7 @@
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (cachedState.macro) renderMacro(cachedState.macro);
+          if (cachedState.feeLeaders) renderFeeLeaders(cachedState.feeLeaders);
           if (cachedState.news) renderNews(cachedState.news);
         }
 
@@ -411,6 +515,7 @@
               savedAt: Date.now(),
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
+              feeLeaders: cachedState && cachedState.feeLeaders,
               news: cachedState && cachedState.news
             }));
           } catch (error) {
@@ -512,6 +617,68 @@
           }
           cachedState = cachedState || {};
           cachedState.macro = validItems;
+        }
+
+        function escapeHtml(value) {
+          return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+        }
+
+        function ordinalText(index) {
+          var value = index + 1;
+          return value < 10 ? "0" + value : String(value);
+        }
+
+        function normalizeFeeSnapshot(payload) {
+          if (!payload || payload.schemaVersion !== 2 || payload.product !== "Solana LP Decision OS") {
+            throw new Error("LP fee snapshot unsupported");
+          }
+          var candidates = payload.scanner && Array.isArray(payload.scanner.candidates) ? payload.scanner.candidates : [];
+          var groups = { Raydium: [], Meteora: [] };
+          candidates.forEach(function (row) {
+            if (!row || (row.dex !== "Raydium" && row.dex !== "Meteora")) return;
+            var fee = finite(row.lpFee24h);
+            if (typeof row.pair !== "string" || !row.pair.trim() || fee === null || fee < 0) return;
+            groups[row.dex].push({ pair: row.pair.trim(), fee: fee, poolType: typeof row.poolType === "string" ? row.poolType : "" });
+          });
+          Object.keys(groups).forEach(function (protocol) {
+            groups[protocol].sort(function (a, b) { return b.fee - a.fee; });
+            groups[protocol] = groups[protocol].slice(0, 5);
+          });
+          var generatedAt = typeof payload.generatedAt === "string" ? payload.generatedAt : "";
+          if (!generatedAt || !isFinite(Date.parse(generatedAt))) throw new Error("LP fee snapshot time invalid");
+          return {
+            generatedAt: generatedAt,
+            fetchedAt: Date.now(),
+            groups: groups,
+            stale: Date.now() - Date.parse(generatedAt) > LP_FEE_STALE_MS
+          };
+        }
+
+        function renderFeeLeaders(snapshot) {
+          if (!snapshot || !feeLeadersElement) return;
+          var groups = snapshot.groups || {};
+          var protocols = ["Raydium", "Meteora"];
+          var visible = protocols.filter(function (protocol) { return Array.isArray(groups[protocol]) && groups[protocol].length > 0; });
+          if (visible.length === 0) {
+            feeLeadersElement.innerHTML = "";
+            lastFeeLeadersMarkup = "";
+            return;
+          }
+          var markup = "<div class=\"fee-leaders-heading\"><span>24H FEE TOP 5</span>" + (snapshot.stale ? "<span class=\"fee-leaders-stale\">STALE</span>" : "") + "</div><div class=\"fee-leaders-grid\">";
+          visible.forEach(function (protocol) {
+            markup += "<section class=\"fee-leaders-group\" aria-label=\"" + escapeHtml(protocol) + " 24h fee 前五\"><div class=\"fee-leaders-group-heading\"><span>" + escapeHtml(protocol.toUpperCase()) + "</span><span>24H FEE</span></div><ol class=\"fee-leaders-list\">";
+            groups[protocol].forEach(function (row, index) {
+              markup += "<li class=\"fee-leaders-row\"><span class=\"fee-leaders-rank\">" + ordinalText(index) + "</span><span class=\"fee-leaders-pair\" title=\"" + escapeHtml(row.pair + (row.poolType ? " · " + row.poolType : "")) + "\">" + escapeHtml(row.pair) + "</span><span class=\"fee-leaders-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
+            });
+            markup += "</ol></section>";
+          });
+          markup += "</div>";
+          if (markup !== lastFeeLeadersMarkup) {
+            feeLeadersElement.innerHTML = markup;
+            lastFeeLeadersMarkup = markup;
+          }
+          cachedState = cachedState || {};
+          cachedState.feeLeaders = snapshot;
         }
 
         function cleanTitle(value) {
@@ -664,12 +831,28 @@
           }).then(function () { newsRequest = false; });
         }
 
+        function fetchFeeLeaders() {
+          if (feeLeadersRequest) return;
+          feeLeadersRequest = true;
+          requestJson(LP_FEE_SNAPSHOT_URL + "?v=" + Date.now(), 9000).then(function (payload) {
+            var snapshot = normalizeFeeSnapshot(payload);
+            renderFeeLeaders(snapshot);
+            writeCache();
+          }).catch(function () {
+            if (cachedState && cachedState.feeLeaders) {
+              var fallback = Object.assign({}, cachedState.feeLeaders, { stale: true });
+              renderFeeLeaders(fallback);
+            }
+          }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
+        }
+
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
           fetchSparkline();
           fetchMacro();
           fetchMacroStats();
+          fetchFeeLeaders();
           fetchNews();
         }
 
@@ -679,6 +862,7 @@
         window.setInterval(fetchSparkline, SPARKLINE_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchMacroStats, MACRO_STATS_INTERVAL);
+        window.setInterval(fetchFeeLeaders, 60000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", refreshAll, { passive: true });
