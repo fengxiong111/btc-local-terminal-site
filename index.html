@@ -508,12 +508,8 @@
         }
 
         function safeHref(value) {
-          try {
-            var url = new URL(typeof value === "string" && value ? value : "https://fengxiong111.github.io/lydong-screen/");
-            return url.protocol === "http:" || url.protocol === "https:" ? url.href : "https://fengxiong111.github.io/lydong-screen/";
-          } catch (error) {
-            return "https://fengxiong111.github.io/lydong-screen/";
-          }
+          var raw = typeof value === "string" && value ? value : "https://fengxiong111.github.io/lydong-screen/";
+          return /^https?:\/\//i.test(raw) ? raw : "https://fengxiong111.github.io/lydong-screen/";
         }
 
         function renderNews(items) {
@@ -548,8 +544,9 @@
           });
           fallback.then(function (quote) {
             var previous = cachedState && cachedState.btc ? cachedState.btc : {};
+            var priceChanged = previous.price !== quote.price;
             renderBtc({ price: quote.price, change: previous.change }, false);
-            writeCache();
+            if (priceChanged) writeCache();
           }).catch(function () {
             if (cachedState && cachedState.btc) renderBtc(cachedState.btc, true);
           }).then(function () { priceRequest = false; });
@@ -560,8 +557,10 @@
           statsRequest = true;
           requestJson("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", 3000).then(function (ticker) {
             if (!cachedState || !cachedState.btc) return;
-            renderBtc({ price: cachedState.btc.price, change: finite(ticker.priceChangePercent) }, true);
-            writeCache();
+            var change = finite(ticker.priceChangePercent);
+            var changeChanged = cachedState.btc.change !== change;
+            renderBtc({ price: cachedState.btc.price, change: change }, true);
+            if (changeChanged) writeCache();
           }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
         }
 
