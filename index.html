@@ -290,6 +290,7 @@
         var SPARKLINE_INTERVAL = 60000;
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
+        var MACRO_STATS_INTERVAL = 15000;
         var NEWS_INTERVAL = 20000;
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
@@ -303,8 +304,11 @@
         var statsRequest = false;
         var sparklineRequest = false;
         var macroRequest = false;
+        var macroStatsRequest = false;
         var newsRequest = false;
         var cachedState = readCache();
+        var macroItemsById = {};
+        var lastMacroMarkup = "";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
           { id: "spcx", label: "SPCX", symbol: "SPCXUSDT" },
@@ -489,14 +493,23 @@
         }
 
         function renderMacro(items) {
-          var validItems = (items || []).filter(function (item) { return finite(item.price) !== null; });
-          tickerElement.innerHTML = validItems.map(function (item) {
+          (items || []).forEach(function (item) {
+            if (!item || finite(item.price) === null) return;
+            macroItemsById[item.id] = Object.assign({}, macroItemsById[item.id] || {}, item);
+          });
+          var validItems = macroDefinitions.map(function (definition) { return macroItemsById[definition.id]; }).filter(function (item) { return item && finite(item.price) !== null; });
+          var markup = validItems.map(function (item) {
             var price = finite(item.price);
             var change = finite(item.change);
             var fraction = price >= 1000 ? 0 : price >= 10 ? 2 : 3;
             var tone = change !== null && change >= 0 ? "up" : "down";
-            return "<span class=\"chip\"><span class=\"chip-name\">" + item.label + "</span><span class=\"chip-sep\">|</span><span class=\"chip-price\">" + numberText(price, fraction) + "</span><span class=\"chip-change " + tone + "\">" + pctText(change) + "</span></span>";
+            var changeMarkup = change === null ? "" : "<span class=\"chip-change " + tone + "\">" + pctText(change) + "</span>";
+            return "<span class=\"chip\"><span class=\"chip-name\">" + item.label + "</span><span class=\"chip-sep\">|</span><span class=\"chip-price\">" + numberText(price, fraction) + "</span>" + changeMarkup + "</span>";
           }).join("");
+          if (markup !== lastMacroMarkup) {
+            tickerElement.innerHTML = markup;
+            lastMacroMarkup = markup;
+          }
           cachedState = cachedState || {};
           cachedState.macro = validItems;
         }
@@ -579,9 +592,9 @@
         function fetchMacro() {
           if (macroRequest) return;
           macroRequest = true;
-          Promise.all(macroDefinitions.map(function (definition) {
+          var requests = macroDefinitions.map(function (definition) {
             if (definition.source === "hyperliquid") {
-              return requestJson("https://api.hyperliquid.xyz/info", 7000, {
+              return requestJson("https://api.hyperliquid.xyz/info", 2500, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Accept": "application/json" },
                 body: JSON.stringify({ type: "metaAndAssetCtxs" })
@@ -594,20 +607,40 @@
                 var price = context ? finite(context.markPx || context.midPx) : null;
                 var previous = context ? finite(context.prevDayPx) : null;
                 var change = price !== null && previous !== null && previous > 0 ? ((price - previous) / previous) * 100 : null;
-                if (price === null) return null;
+                if (price === null) throw new Error("Hyperliquid HYPE unavailable");
                 return { id: definition.id, label: definition.label, price: price, change: change };
+              }).then(function (item) {
+                renderMacro([item]);
+                writeCache();
+                return item;
               }).catch(function () { return null; });
             }
-            return requestJson("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + definition.symbol, 7000).then(function (ticker) {
-              return { id: definition.id, label: definition.label, price: finite(ticker.lastPrice), change: finite(ticker.priceChangePercent) };
-            }).catch(function () { return null; });
-          })).then(function (items) {
-            var validItems = items.filter(function (item) { return item && item.price !== null; });
-            if (validItems.length > 0) {
-              renderMacro(validItems);
+            return requestJson("https://fapi.binance.com/fapi/v1/ticker/price?symbol=" + definition.symbol, 2500).then(function (ticker) {
+              var price = finite(ticker.price);
+              if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " price unavailable");
+              var existing = macroItemsById[definition.id] || {};
+              var item = { id: definition.id, label: definition.label, price: price, change: existing.change === undefined ? null : existing.change };
+              renderMacro([item]);
               writeCache();
-            } else if (cachedState && cachedState.macro) renderMacro(cachedState.macro);
-          }).then(function () { macroRequest = false; });
+              return item;
+            }).catch(function () { return null; });
+          });
+          Promise.all(requests).then(function () { macroRequest = false; }, function () { macroRequest = false; });
+        }
+
+        function fetchMacroStats() {
+          if (macroStatsRequest) return;
+          macroStatsRequest = true;
+          var requests = macroDefinitions.filter(function (definition) { return definition.source !== "hyperliquid"; }).map(function (definition) {
+            return requestJson("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + definition.symbol, 3000).then(function (ticker) {
+              var price = finite(ticker.lastPrice);
+              var change = finite(ticker.priceChangePercent);
+              if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " stats unavailable");
+              renderMacro([{ id: definition.id, label: definition.label, price: price, change: change }]);
+              writeCache();
+            }).catch(function () { return null; });
+          });
+          Promise.all(requests).then(function () { macroStatsRequest = false; }, function () { macroStatsRequest = false; });
         }
 
         function fetchNews() {
@@ -636,6 +669,7 @@
           fetchBtcStats();
           fetchSparkline();
           fetchMacro();
+          fetchMacroStats();
           fetchNews();
         }
 
@@ -644,6 +678,7 @@
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchSparkline, SPARKLINE_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
+        window.setInterval(fetchMacroStats, MACRO_STATS_INTERVAL);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", refreshAll, { passive: true });
