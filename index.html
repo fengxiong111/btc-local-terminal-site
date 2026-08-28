@@ -288,6 +288,7 @@
         var STALE_MS = 60 * 60 * 1000;
         var PRICE_INTERVAL = 1000;
         var SPARKLINE_INTERVAL = 60000;
+        var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
         var NEWS_INTERVAL = 20000;
         var priceElement = document.getElementById("price");
@@ -299,6 +300,7 @@
         var shownPrice = null;
         var priceAnimation = null;
         var priceRequest = false;
+        var statsRequest = false;
         var sparklineRequest = false;
         var macroRequest = false;
         var newsRequest = false;
@@ -529,17 +531,38 @@
         function fetchBtc() {
           if (priceRequest) return;
           priceRequest = true;
-          var tickerUrl = "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT";
-          requestJson(tickerUrl, 7000).then(function (ticker) {
-            var btc = {
-              price: finite(ticker.lastPrice),
-              change: finite(ticker.priceChangePercent)
-            };
-            renderBtc(btc, false);
+          var fallback = requestJson("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", 2500).then(function (ticker) {
+            var price = finite(ticker.price);
+            if (price === null) throw new Error("Binance BTC price unavailable");
+            return { price: price };
+          }).catch(function () {
+            return requestJson("https://api.hyperliquid.xyz/info", 2500, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Accept": "application/json" },
+              body: JSON.stringify({ type: "allMids" })
+            }).then(function (mids) {
+              var price = finite(mids && mids.BTC);
+              if (price === null) throw new Error("Hyperliquid BTC price unavailable");
+              return { price: price };
+            });
+          });
+          fallback.then(function (quote) {
+            var previous = cachedState && cachedState.btc ? cachedState.btc : {};
+            renderBtc({ price: quote.price, change: previous.change }, false);
             writeCache();
           }).catch(function () {
             if (cachedState && cachedState.btc) renderBtc(cachedState.btc, true);
           }).then(function () { priceRequest = false; });
+        }
+
+        function fetchBtcStats() {
+          if (statsRequest) return;
+          statsRequest = true;
+          requestJson("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", 3000).then(function (ticker) {
+            if (!cachedState || !cachedState.btc) return;
+            renderBtc({ price: cachedState.btc.price, change: finite(ticker.priceChangePercent) }, true);
+            writeCache();
+          }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
         }
 
         function fetchSparkline() {
@@ -611,6 +634,7 @@
 
         function refreshAll() {
           fetchBtc();
+          fetchBtcStats();
           fetchSparkline();
           fetchMacro();
           fetchNews();
@@ -618,6 +642,7 @@
 
         refreshAll();
         window.setInterval(fetchBtc, PRICE_INTERVAL);
+        window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchSparkline, SPARKLINE_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchNews, NEWS_INTERVAL);
