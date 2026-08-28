@@ -57,7 +57,7 @@
         display: flex;
         width: min(100%, 760px);
         margin: 0 auto;
-        padding: 24px 32px 34px;
+        padding: 24px 32px 26px;
         flex-direction: column;
         align-items: center;
         border: 1px solid var(--line);
@@ -116,55 +116,6 @@
 
       .price-pulse { animation: price-pulse 260ms ease-out; }
 
-      .sparkline {
-        display: block;
-        width: min(100%, 420px);
-        height: 34px;
-        margin: 14px auto 0;
-        overflow: visible;
-      }
-
-      .sparkline path {
-        fill: none;
-        stroke-width: 1.8;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        opacity: 0.42;
-      }
-
-      .sparkline circle {
-        stroke: rgba(255, 255, 255, 0.92);
-        stroke-width: 0.8;
-        animation: dot-breathe 2.4s ease-in-out infinite;
-      }
-
-      .sparkline-up path, .sparkline-up circle { stroke: var(--up); fill: var(--up); }
-      .sparkline-down path, .sparkline-down circle { stroke: var(--down); fill: var(--down); }
-
-      .needle {
-        position: absolute;
-        right: 15%;
-        bottom: 14px;
-        left: 15%;
-        height: 1px;
-        pointer-events: none;
-        background: linear-gradient(90deg, transparent, rgba(31, 170, 107, 0.1) 54%, rgba(31, 170, 107, 0.55) 88%, rgba(31, 170, 107, 0.9));
-      }
-
-      .needle::after {
-        position: absolute;
-        top: 50%;
-        right: 0;
-        width: 6px;
-        height: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.92);
-        border-radius: 50%;
-        background: var(--up);
-        box-shadow: 0 0 0 2px rgba(31, 170, 107, 0.11), 0 0 7px rgba(31, 170, 107, 0.3);
-        content: "";
-        transform: translate(50%, -50%);
-      }
-
       .ticker {
         display: flex;
         width: fit-content;
@@ -195,24 +146,40 @@
       .chip-price { color: var(--ink); font-size: 19px; font-weight: 720; }
       .chip-change { font-size: 16px; font-weight: 650; }
 
-      .rankings {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
+      .secondary-strip {
+        display: flex;
         width: min(100%, 920px);
         min-width: 0;
-        margin: 18px auto 0;
-        padding: 0 4px;
+        margin: 24px auto 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px 12px;
+        border: 1px solid rgba(20, 20, 19, 0.055);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.26);
       }
 
-      .rankings.single { grid-template-columns: minmax(0, 1fr); }
+      .secondary-strip .ticker {
+        width: fit-content;
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      .rankings {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+      }
 
       .ranking-panel {
         min-width: 0;
-        padding: 12px 16px 10px;
-        border: 1px solid rgba(20, 20, 19, 0.055);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.26);
+        padding: 6px 4px 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
       }
 
       .ranking-panel[hidden] { display: none; }
@@ -243,6 +210,7 @@
 
       .ranking-list {
         display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 3px;
         margin: 0;
         padding: 0;
@@ -251,22 +219,34 @@
 
       .ranking-row {
         display: grid;
-        grid-template-columns: 28px minmax(0, 1fr) 72px auto;
+        grid-template-columns: 20px minmax(0, 1fr) auto;
+        grid-template-areas:
+          "rank name value"
+          "rank source source";
         align-items: center;
-        gap: 10px;
+        column-gap: 8px;
+        row-gap: 2px;
         min-width: 0;
-        min-height: 26px;
+        min-height: 42px;
+        padding: 0 12px;
+        border-left: 1px solid rgba(20, 20, 19, 0.06);
         color: var(--ink);
         font-size: 13px;
         font-variant-numeric: tabular-nums;
       }
 
+      .ranking-row:first-child { border-left: 0; }
+
       .ranking-rank {
+        grid-area: rank;
+        align-self: start;
+        padding-top: 2px;
         color: var(--faint);
         font-size: 11px;
       }
 
       .ranking-name {
+        grid-area: name;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -274,6 +254,7 @@
       }
 
       .ranking-source {
+        grid-area: source;
         justify-self: start;
         color: var(--faint);
         font-size: 10px;
@@ -287,6 +268,9 @@
       .ranking-source-hyperliquid { color: var(--muted); }
 
       .ranking-value {
+        grid-area: value;
+        align-self: start;
+        padding-top: 2px;
         color: var(--ink);
         font-weight: 750;
         text-align: right;
@@ -334,16 +318,20 @@
 
       @media (max-width: 720px) {
         .page { padding-top: max(18px, calc(env(safe-area-inset-top) + 18px)); padding-right: max(16px, calc(env(safe-area-inset-right) + 16px)); padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 22px)); padding-left: max(16px, calc(env(safe-area-inset-left) + 16px)); }
-        .island { padding: 20px 18px 30px; border-radius: 30px; }
+        .island { padding: 20px 18px 22px; border-radius: 30px; }
         .price { font-size: clamp(58px, 17vw, 94px); }
-        .ticker { margin-top: 18px; gap: 6px; }
+        .secondary-strip { width: 100%; margin-top: 18px; gap: 6px; padding: 8px 8px 10px; }
+        .secondary-strip .ticker { width: 100%; margin: 0; }
+        .ticker { margin-top: 0; gap: 6px; }
         .chip { min-height: 36px; padding: 7px 10px; }
         .chip-name { font-size: 12px; }
         .chip-price { font-size: 16px; }
         .chip-change { font-size: 14px; }
-        .rankings { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 0; }
-        .ranking-panel { padding-right: 12px; padding-left: 12px; }
-        .ranking-row { grid-template-columns: 22px minmax(0, 1fr) 42px auto; gap: 6px; font-size: 12px; }
+        .rankings { width: 100%; }
+        .ranking-panel { padding-right: 4px; padding-left: 4px; }
+        .ranking-list { grid-template-columns: minmax(0, 1fr); }
+        .ranking-row { grid-template-columns: 22px minmax(0, 1fr) 42px auto; grid-template-areas: none; gap: 6px; min-height: 26px; padding: 0 4px; border-left: 0; font-size: 12px; }
+        .ranking-rank, .ranking-name, .ranking-source, .ranking-value { grid-area: auto; }
         .news { margin-top: 20px; }
         .news-row { grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 11px 8px; }
         .news-headline { font-size: 16px; line-height: 1.45; }
@@ -351,9 +339,9 @@
 
       @media (orientation: landscape) and (max-height: 620px) {
         .page { padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)); }
-        .island { padding-top: 14px; padding-bottom: 22px; }
+        .island { padding-top: 14px; padding-bottom: 16px; }
         .price { font-size: clamp(54px, 12vh, 92px); }
-        .ticker { margin-top: 12px; }
+        .secondary-strip { margin-top: 12px; }
         .news { margin-top: 12px; }
         .news-row { padding-top: 7px; padding-bottom: 7px; }
       }
@@ -372,14 +360,13 @@
           <span id="change" class="change">—</span>
         </div>
         <div id="price" class="price" aria-live="polite">—</div>
-        <svg id="sparkline" class="sparkline sparkline-up" viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"></svg>
-        <span class="needle" aria-hidden="true"></span>
       </section>
 
-      <section id="ticker" class="ticker" aria-label="关联行情"></section>
-      <section id="rankings" class="rankings" aria-label="流动性费用与资金费率榜" hidden>
-        <section id="fee-leaders" class="ranking-panel" aria-label="Raydium 与 Meteora 24h Fee 榜前五" hidden></section>
-        <section id="funding-leaders" class="ranking-panel" aria-label="Hyperliquid HIP-3 股票正资金费率前五" hidden></section>
+      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与 LP Fee" hidden>
+        <section id="ticker" class="ticker" aria-label="关联行情"></section>
+        <section id="rankings" class="rankings" aria-label="Raydium 与 Meteora 合并 LP Fee 榜单" hidden>
+          <section id="fee-leaders" class="ranking-panel" aria-label="Raydium 与 Meteora 合并 LP Fee 榜前五" hidden></section>
+        </section>
       </section>
       <section id="news" class="news" aria-label="律动新闻"></section>
     </main>
@@ -394,35 +381,30 @@
         var STALE_MS = 60 * 60 * 1000;
         var LP_FEE_STALE_MS = 30 * 60 * 1000;
         var PRICE_INTERVAL = 1000;
-        var SPARKLINE_INTERVAL = 60000;
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
         var MACRO_STATS_INTERVAL = 15000;
         var NEWS_INTERVAL = 20000;
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
+        var secondaryStripElement = document.getElementById("secondary-strip");
         var tickerElement = document.getElementById("ticker");
         var rankingsElement = document.getElementById("rankings");
         var feeLeadersElement = document.getElementById("fee-leaders");
-        var fundingLeadersElement = document.getElementById("funding-leaders");
         var newsElement = document.getElementById("news");
-        var sparklineElement = document.getElementById("sparkline");
         var connectionElement = document.getElementById("connection");
         var shownPrice = null;
         var priceAnimation = null;
         var priceRequest = false;
         var statsRequest = false;
-        var sparklineRequest = false;
         var macroRequest = false;
         var macroStatsRequest = false;
         var newsRequest = false;
         var feeLeadersRequest = false;
-        var fundingRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
         var lastFeeLeadersMarkup = "";
-        var lastFundingMarkup = "";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
           { id: "spcx", label: "SPCX", symbol: "SPCXUSDT" },
@@ -439,7 +421,6 @@
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.feeLeaders) renderFeeLeaders(cachedState.feeLeaders);
-          if (cachedState.funding) renderFundingLeaders(cachedState.funding);
           if (cachedState.news) renderNews(cachedState.news);
         }
 
@@ -529,7 +510,6 @@
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
               feeLeaders: cachedState && cachedState.feeLeaders,
-              funding: cachedState && cachedState.funding,
               news: cachedState && cachedState.news
             }));
           } catch (error) {
@@ -567,31 +547,6 @@
           priceAnimation = window.requestAnimationFrame(frame);
         }
 
-        function buildSparkline(values, trend) {
-          if (!values || values.length < 2) {
-            sparklineElement.innerHTML = "";
-            return;
-          }
-          var min = Math.min.apply(Math, values);
-          var max = Math.max.apply(Math, values);
-          var span = max - min || 1;
-          var path = "";
-          var points = values.map(function (value, index) {
-            return { x: index * 100 / (values.length - 1), y: 30 - ((value - min) / span) * 24 };
-          });
-          points.forEach(function (point, index) {
-            if (index === 0) path = "M " + point.x + " " + point.y;
-            else {
-              var previous = points[index - 1];
-              var midX = (previous.x + point.x) / 2;
-              path += " Q " + midX + " " + previous.y + ", " + point.x + " " + point.y;
-            }
-          });
-          var last = points[points.length - 1];
-          sparklineElement.setAttribute("class", "sparkline " + (trend >= 0 ? "sparkline-up" : "sparkline-down"));
-          sparklineElement.innerHTML = "<path d=\"" + path + "\"></path><circle cx=\"" + last.x + "\" cy=\"" + last.y + "\" r=\"1.7\"></circle>";
-        }
-
         function renderBtc(btc, instant) {
           var previous = cachedState && cachedState.btc ? cachedState.btc : {};
           var nextBtc = Object.assign({}, previous, btc);
@@ -605,7 +560,6 @@
           }
           changeElement.textContent = pctText(change);
           changeElement.className = "change " + (change !== null && change >= 0 ? "up" : "down");
-          buildSparkline(nextBtc.sparkline || [], change === null || change >= 0 ? 1 : -1);
           connectionElement.style.background = "var(--up)";
           cachedState = cachedState || {};
           cachedState.btc = nextBtc;
@@ -631,6 +585,7 @@
           }
           cachedState = cachedState || {};
           cachedState.macro = validItems;
+          updateSecondaryLayout();
         }
 
         function escapeHtml(value) {
@@ -644,11 +599,15 @@
 
         function updateRankingLayout() {
           if (!rankingsElement) return;
-          var visibleCount = 0;
-          if (feeLeadersElement && !feeLeadersElement.hidden) visibleCount += 1;
-          if (fundingLeadersElement && !fundingLeadersElement.hidden) visibleCount += 1;
-          rankingsElement.hidden = visibleCount === 0;
-          rankingsElement.classList.toggle("single", visibleCount === 1);
+          rankingsElement.hidden = !feeLeadersElement || feeLeadersElement.hidden;
+          updateSecondaryLayout();
+        }
+
+        function updateSecondaryLayout() {
+          if (!secondaryStripElement) return;
+          var hasTicker = Boolean(tickerElement && tickerElement.children.length > 0);
+          var hasRankings = Boolean(rankingsElement && !rankingsElement.hidden);
+          secondaryStripElement.hidden = !hasTicker && !hasRankings;
         }
 
         function normalizeFeeSnapshot(payload) {
@@ -701,68 +660,6 @@
           feeLeadersElement.hidden = false;
           cachedState = cachedState || {};
           cachedState.feeLeaders = snapshot;
-          updateRankingLayout();
-        }
-
-        function normalizeFundingSnapshot(dexPayload, categoryPayload, contextResults) {
-          if (!Array.isArray(dexPayload) || !Array.isArray(categoryPayload)) throw new Error("Hyperliquid HIP-3 metadata unsupported");
-          var categories = {};
-          categoryPayload.forEach(function (entry) {
-            if (!Array.isArray(entry) || entry.length < 2 || typeof entry[0] !== "string" || typeof entry[1] !== "string") return;
-            categories[entry[0]] = entry[1];
-          });
-          var dexes = dexPayload.filter(function (item) { return item && typeof item.name === "string" && item.name.trim(); }).map(function (item) { return item.name.trim(); });
-          if (dexes.length === 0 || Object.keys(categories).length === 0) throw new Error("Hyperliquid HIP-3 metadata unavailable");
-          var rows = [];
-          var universeCount = 0;
-          contextResults.forEach(function (result) {
-            if (!result || !Array.isArray(result.payload) || result.payload.length < 2) return;
-            var meta = result.payload[0] || {};
-            var universe = Array.isArray(meta.universe) ? meta.universe : [];
-            var contexts = Array.isArray(result.payload[1]) ? result.payload[1] : [];
-            universeCount += universe.length;
-            universe.forEach(function (asset, index) {
-              if (!asset || asset.isDelisted === true || typeof asset.name !== "string" || !asset.name.trim()) return;
-              var fullCoin = asset.name.trim();
-              var categoryKey = fullCoin.indexOf(":") >= 0 ? fullCoin : result.dex + ":" + fullCoin;
-              if (categories[categoryKey] !== "stocks") return;
-              var context = contexts[index] || {};
-              var funding = finite(context.funding);
-              if (funding === null || funding <= 0) return;
-              var separatorIndex = fullCoin.indexOf(":");
-              rows.push({ coin: separatorIndex >= 0 ? fullCoin.slice(separatorIndex + 1) : fullCoin, dex: result.dex, funding: funding });
-            });
-          });
-          rows.sort(function (a, b) { return b.funding - a.funding || a.coin.localeCompare(b.coin) || a.dex.localeCompare(b.dex); });
-          if (rows.length === 0) throw new Error("Hyperliquid 当前没有正费率股票永续");
-          return { fetchedAt: Date.now(), universeCount: universeCount, rows: rows.slice(0, 5), stale: false };
-        }
-
-        function renderFundingLeaders(snapshot) {
-          if (!fundingLeadersElement) return;
-          var rows = snapshot && Array.isArray(snapshot.rows) ? snapshot.rows.filter(function (row) {
-            return row && typeof row.coin === "string" && typeof row.dex === "string" && finite(row.funding) !== null && row.funding > 0;
-          }) : [];
-          if (rows.length === 0) {
-            fundingLeadersElement.innerHTML = "";
-            fundingLeadersElement.hidden = true;
-            lastFundingMarkup = "";
-            updateRankingLayout();
-            return;
-          }
-          var markup = "<div class=\"ranking-panel-heading\"><a href=\"https://app.hyperliquid.xyz/trade\" target=\"_blank\" rel=\"noreferrer\">HIP-3 STOCK FUNDING TOP 5</a>" + (snapshot.stale ? "<span class=\"ranking-stale\">STALE</span>" : "") + "</div><ol class=\"ranking-list\">";
-          rows.forEach(function (row, index) {
-            var tone = row.funding >= 0 ? "up" : "down";
-            markup += "<li class=\"ranking-row\"><span class=\"ranking-rank\">" + ordinalText(index) + "</span><span class=\"ranking-name\">" + escapeHtml(row.coin) + "</span><span class=\"ranking-source ranking-source-hyperliquid\">" + escapeHtml(row.dex) + "</span><span class=\"ranking-value " + tone + "\">" + pctText(row.funding * 100, 4) + "</span></li>";
-          });
-          markup += "</ol>";
-          if (markup !== lastFundingMarkup) {
-            fundingLeadersElement.innerHTML = markup;
-            lastFundingMarkup = markup;
-          }
-          fundingLeadersElement.hidden = false;
-          cachedState = cachedState || {};
-          cachedState.funding = snapshot;
           updateRankingLayout();
         }
 
@@ -827,18 +724,6 @@
             renderBtc({ price: cachedState.btc.price, change: change }, true);
             if (changeChanged) writeCache();
           }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
-        }
-
-        function fetchSparkline() {
-          if (sparklineRequest) return;
-          sparklineRequest = true;
-          requestJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=48", 7000).then(function (candles) {
-            var values = Array.isArray(candles) ? candles.map(function (row) { return finite(row[4]); }).filter(function (value) { return value !== null; }) : [];
-            if (!cachedState || !cachedState.btc || values.length < 2) return;
-            cachedState.btc.sparkline = values;
-            buildSparkline(values, finite(cachedState.btc.change) === null || cachedState.btc.change >= 0 ? 1 : -1);
-            writeCache();
-          }).then(function () { sparklineRequest = false; }, function () { sparklineRequest = false; });
         }
 
         function fetchMacro() {
@@ -931,61 +816,21 @@
           }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
         }
 
-        function fetchFundingLeaders() {
-          if (fundingRequest) return;
-          fundingRequest = true;
-          var requestOptions = function (body) {
-            return {
-              method: "POST",
-              headers: { Accept: "application/json", "Content-Type": "application/json" },
-              body: JSON.stringify(body)
-            };
-          };
-          Promise.all([
-            requestJson(HYPERLIQUID_INFO_URL, 5000, requestOptions({ type: "perpDexs" })),
-            requestJson(HYPERLIQUID_INFO_URL, 5000, requestOptions({ type: "perpCategories" }))
-          ]).then(function (metadata) {
-            var dexPayload = metadata[0];
-            var dexes = Array.isArray(dexPayload) ? dexPayload.filter(function (item) { return item && typeof item.name === "string" && item.name.trim(); }).map(function (item) { return item.name.trim(); }) : [];
-            if (dexes.length === 0) throw new Error("no HIP-3 dexes");
-            return Promise.all(dexes.map(function (dex) {
-              return requestJson(HYPERLIQUID_INFO_URL, 5000, requestOptions({ type: "metaAndAssetCtxs", dex: dex }))
-                .then(function (payload) { return { dex: dex, payload: payload }; })
-                .catch(function () { return null; });
-            })).then(function (contextResults) {
-              var usableResults = contextResults.filter(function (result) { return result !== null; });
-              if (usableResults.length === 0) throw new Error("no HIP-3 contexts");
-              return normalizeFundingSnapshot(dexPayload, metadata[1], usableResults);
-            });
-          }).then(function (snapshot) {
-            renderFundingLeaders(snapshot);
-            writeCache();
-          }).catch(function () {
-            if (cachedState && cachedState.funding) {
-              renderFundingLeaders(Object.assign({}, cachedState.funding, { stale: true }));
-            }
-          }).then(function () { fundingRequest = false; }, function () { fundingRequest = false; });
-        }
-
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
-          fetchSparkline();
           fetchMacro();
           fetchMacroStats();
           fetchFeeLeaders();
-          fetchFundingLeaders();
           fetchNews();
         }
 
         refreshAll();
         window.setInterval(fetchBtc, PRICE_INTERVAL);
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
-        window.setInterval(fetchSparkline, SPARKLINE_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchMacroStats, MACRO_STATS_INTERVAL);
         window.setInterval(fetchFeeLeaders, 60000);
-        window.setInterval(fetchFundingLeaders, 30000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", refreshAll, { passive: true });
