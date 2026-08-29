@@ -372,7 +372,6 @@
         var PRICE_INTERVAL = 1000;
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
-        var MACRO_STATS_INTERVAL = 15000;
         var NEWS_INTERVAL = 20000;
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
@@ -387,19 +386,19 @@
         var priceRequest = false;
         var statsRequest = false;
         var macroRequest = false;
-        var macroStatsRequest = false;
         var newsRequest = false;
         var feeLeadersRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
         var lastFeeLeadersMarkup = "";
+        var HIP3_STOCK_DEX = "xyz";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
-          { id: "spcx", label: "SPCX", symbol: "SPCXUSDT" },
-          { id: "mu", label: "MU", symbol: "MUUSDT" },
-          { id: "sndk", label: "SNDK", symbol: "SNDKUSDT" },
-          { id: "nvda", label: "NVDA", symbol: "NVDAUSDT" }
+          { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
+          { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
+          { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
+          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
         ];
 
         if (/kindle|silk|kftt|kfot|kfjw|kfsowi|kfarwi|kfapwi|kfmawi/i.test(navigator.userAgent || "")) {
@@ -765,58 +764,76 @@
           }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
         }
 
-        function fetchMacro() {
-          if (macroRequest) return;
-          macroRequest = true;
-          var requests = macroDefinitions.map(function (definition) {
-            if (definition.source === "hyperliquid") {
-              return requestJson(HYPERLIQUID_INFO_URL, 2500, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({ type: "metaAndAssetCtxs" })
-              }).then(function (payload) {
-                var meta = payload && payload[0];
-                var contexts = payload && payload[1];
-                var universe = meta && Array.isArray(meta.universe) ? meta.universe : [];
-                var index = universe.findIndex(function (item) { return item && item.name === "HYPE"; });
-                var context = Array.isArray(contexts) && index >= 0 ? contexts[index] : null;
-                var price = context ? finite(context.markPx || context.midPx) : null;
-                var previous = context ? finite(context.prevDayPx) : null;
-                var change = price !== null && previous !== null && previous > 0 ? ((price - previous) / previous) * 100 : null;
-                if (price === null) throw new Error("Hyperliquid HYPE unavailable");
-                return { id: definition.id, label: definition.label, price: price, change: change };
-              }).then(function (item) {
-                renderMacro([item]);
-                writeCache();
-                return item;
-              }).catch(function () { return null; });
-            }
-            return requestJson("https://fapi.binance.com/fapi/v1/ticker/price?symbol=" + definition.symbol, 2500).then(function (ticker) {
-              var price = finite(ticker.price);
-              if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " price unavailable");
-              var existing = macroItemsById[definition.id] || {};
-              var item = { id: definition.id, label: definition.label, price: price, change: existing.change === undefined ? null : existing.change };
-              renderMacro([item]);
-              writeCache();
-              return item;
-            }).catch(function () { return null; });
+        function fetchHyperliquidMacro(definitions, dex) {
+          if (!definitions.length) return Promise.resolve([]);
+          var body = { type: "metaAndAssetCtxs" };
+          if (dex) body.dex = dex;
+          return requestJson(HYPERLIQUID_INFO_URL, 2500, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(body)
+          }).then(function (payload) {
+            var meta = payload && payload[0];
+            var contexts = payload && payload[1];
+            var universe = meta && Array.isArray(meta.universe) ? meta.universe : [];
+            return definitions.map(function (definition) {
+              var expectedName = (dex ? dex + ":" : "") + definition.label;
+              var index = universe.findIndex(function (item) {
+                return item && (item.name === expectedName || (!dex && item.name === definition.label));
+              });
+              var context = Array.isArray(contexts) && index >= 0 ? contexts[index] : null;
+              var price = context ? finite(context.markPx || context.midPx) : null;
+              var previous = context ? finite(context.prevDayPx) : null;
+              if (price === null) return null;
+              var sourceName = universe[index] && typeof universe[index].name === "string" ? universe[index].name : expectedName;
+              return {
+                id: definition.id,
+                label: definition.label,
+                symbol: "HYPERLIQUID:" + sourceName,
+                price: price,
+                change: previous !== null && previous > 0 ? ((price - previous) / previous) * 100 : null
+              };
+            }).filter(function (item) { return item !== null; });
           });
-          Promise.all(requests).then(function () { macroRequest = false; }, function () { macroRequest = false; });
         }
 
-        function fetchMacroStats() {
-          if (macroStatsRequest) return;
-          macroStatsRequest = true;
-          var requests = macroDefinitions.filter(function (definition) { return definition.source !== "hyperliquid"; }).map(function (definition) {
+        function fetchBinanceMacro(definitions) {
+          return Promise.all(definitions.map(function (definition) {
             return requestJson("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + definition.symbol, 3000).then(function (ticker) {
               var price = finite(ticker.lastPrice);
               var change = finite(ticker.priceChangePercent);
-              if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " stats unavailable");
-              renderMacro([{ id: definition.id, label: definition.label, price: price, change: change }]);
-              writeCache();
+              if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " price unavailable");
+              return { id: definition.id, label: definition.label, symbol: "BINANCE-FUTURES:" + definition.symbol, price: price, change: change };
             }).catch(function () { return null; });
+          })).then(function (items) {
+            return items.filter(function (item) { return item !== null; });
           });
-          Promise.all(requests).then(function () { macroStatsRequest = false; }, function () { macroStatsRequest = false; });
+        }
+
+        function fetchMacro() {
+          if (macroRequest) return;
+          macroRequest = true;
+          var hypeDefinitions = macroDefinitions.filter(function (definition) { return !definition.dex; });
+          var stockDefinitions = macroDefinitions.filter(function (definition) { return definition.dex === HIP3_STOCK_DEX; });
+          Promise.all([
+            fetchHyperliquidMacro(hypeDefinitions).catch(function () { return []; }),
+            fetchHyperliquidMacro(stockDefinitions, HIP3_STOCK_DEX).catch(function () { return []; })
+          ]).then(function (groups) {
+            var items = groups[0].concat(groups[1]);
+            if (items.length > 0) {
+              renderMacro(items);
+              writeCache();
+            }
+            var available = {};
+            items.forEach(function (item) { available[item.id] = true; });
+            var missingStocks = stockDefinitions.filter(function (definition) { return !available[definition.id]; });
+            return fetchBinanceMacro(missingStocks);
+          }).then(function (fallbackItems) {
+            if (fallbackItems.length > 0) {
+              renderMacro(fallbackItems);
+              writeCache();
+            }
+          }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
         }
 
         function fetchNews() {
@@ -861,7 +878,6 @@
           fetchBtc();
           fetchBtcStats();
           fetchMacro();
-          fetchMacroStats();
           fetchFeeLeaders();
           fetchNews();
         }
@@ -870,7 +886,6 @@
         window.setInterval(fetchBtc, PRICE_INTERVAL);
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
-        window.setInterval(fetchMacroStats, MACRO_STATS_INTERVAL);
         window.setInterval(fetchFeeLeaders, 60000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });

@@ -4,7 +4,7 @@
 
 - BTC：Binance 现货公开行情
 - HYPE：Hyperliquid 永续实时标记价格
-- SPCX / MU / SNDK / NVDA：Binance USDⓈ-M 永续公开行情
+- SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` 股票永续公开行情；单个标的缺失时回退 Binance USDⓈ-M 行情
 - Uniswap：真实 ExploreStats 快照中的 RWA/USDC Fee 前三与普通币 Fee 前三
 - Solana：Raydium / Meteora 真实 LP Decision OS 快照中的 RWA/USDC Fee 前三与普通币 Fee 前三
 - 新闻：公开的律动 `feed.json`
