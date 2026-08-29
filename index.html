@@ -251,6 +251,8 @@
       .ranking-source-v2 { color: #816b4c; }
       .ranking-source-v3 { color: #3d7084; }
       .ranking-source-v4 { color: #806e8d; }
+      .ranking-source-raydium { color: #b2744a; }
+      .ranking-source-meteora { color: #7b6498; }
 
       .ranking-value {
         grid-area: value;
@@ -347,10 +349,10 @@
         <div id="price" class="price" aria-live="polite">—</div>
       </section>
 
-      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与 Uniswap Fee" hidden>
+      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与链上 Fee" hidden>
         <section id="ticker" class="ticker" aria-label="关联行情"></section>
-        <section id="rankings" class="rankings" aria-label="Uniswap Fee 榜单" hidden>
-          <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap RWA/USDC 与普通币 Fee 榜前三" hidden></section>
+        <section id="rankings" class="rankings" aria-label="Uniswap 与 Solana Fee 榜单" hidden>
+          <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap 与 Solana RWA/USDC、普通币 Fee 榜前三" hidden></section>
         </section>
       </section>
       <section id="news" class="news" aria-label="律动新闻"></section>
@@ -360,11 +362,13 @@
       (function () {
         "use strict";
 
-        var CACHE_KEY = "btc-local-terminal-public-v4";
+        var CACHE_KEY = "btc-local-terminal-public-v5";
         var UNISWAP_FEE_SNAPSHOT_URL = "./uniswap-fee.json";
+        var SOLANA_FEE_SNAPSHOT_URL = "https://fengxiong111.github.io/lp-decision-os/top3.json";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
         var STALE_MS = 60 * 60 * 1000;
         var UNISWAP_FEE_STALE_MS = 30 * 60 * 1000;
+        var SOLANA_FEE_STALE_MS = 30 * 60 * 1000;
         var PRICE_INTERVAL = 1000;
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
@@ -405,7 +409,7 @@
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (cachedState.macro) renderMacro(cachedState.macro);
-          if (cachedState.feeLeaders) renderFeeLeaders(cachedState.feeLeaders);
+          if (cachedState.uniswapFeeLeaders || cachedState.solanaFeeLeaders) renderFeeLeaders(cachedState.uniswapFeeLeaders, cachedState.solanaFeeLeaders);
           if (cachedState.news) renderNews(cachedState.news);
         }
 
@@ -494,7 +498,8 @@
               savedAt: Date.now(),
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
-              feeLeaders: cachedState && cachedState.feeLeaders,
+              uniswapFeeLeaders: cachedState && cachedState.uniswapFeeLeaders,
+              solanaFeeLeaders: cachedState && cachedState.solanaFeeLeaders,
               news: cachedState && cachedState.news
             }));
           } catch (error) {
@@ -621,25 +626,70 @@
           };
         }
 
-        function renderFeeLeaders(snapshot) {
+        function pairTokens(pair) {
+          return String(pair || "").split(/[\s/|:+_-]+/).filter(Boolean);
+        }
+
+        function isStockMappedPair(pair) {
+          return pairTokens(pair).some(function (token) { return token.toUpperCase() === "RWA" || /^[A-Z0-9]+x$/.test(token); });
+        }
+
+        function isRwaUsdcPair(pair) {
+          var tokens = pairTokens(pair);
+          return tokens.some(function (token) { return token.toUpperCase() === "USDC"; }) && isStockMappedPair(pair);
+        }
+
+        function normalizeSolanaFeeSnapshot(payload) {
+          if (!payload || payload.schemaVersion !== 2 || payload.product !== "Solana LP Decision OS") {
+            throw new Error("Solana fee snapshot unsupported");
+          }
+          var generatedAt = typeof payload.generatedAt === "string" ? payload.generatedAt : "";
+          if (!generatedAt || !isFinite(Date.parse(generatedAt))) throw new Error("Solana fee snapshot time invalid");
+          var candidates = payload.scanner && Array.isArray(payload.scanner.candidates) ? payload.scanner.candidates : [];
+          var allRows = candidates.map(function (row) {
+            if (!row || (row.dex !== "Raydium" && row.dex !== "Meteora")) return null;
+            var fee = finite(row.lpFee24h);
+            if (typeof row.pair !== "string" || !row.pair.trim() || fee === null || fee <= 0 || typeof row.poolAddress !== "string" || !row.poolAddress.trim()) return null;
+            return { rank: finite(row.rank) || 0, protocol: row.dex, pair: row.pair.trim(), poolAddress: row.poolAddress, poolType: typeof row.poolType === "string" ? row.poolType : "", fee: fee };
+          }).filter(Boolean);
+          if (allRows.length === 0) throw new Error("Solana fee snapshot has no usable rows");
+          return {
+            generatedAt: generatedAt,
+            fetchedAt: Date.now(),
+            rwaUsdcRows: rankFeeRows(allRows.filter(function (row) { return isRwaUsdcPair(row.pair); }), 3),
+            coinRows: rankFeeRows(allRows.filter(function (row) { return !isStockMappedPair(row.pair); }), 3),
+            stale: Date.now() - Date.parse(generatedAt) > SOLANA_FEE_STALE_MS
+          };
+        }
+
+        function renderFeeLeaders(uniswapSnapshot, solanaSnapshot) {
           if (!feeLeadersElement) return;
-          var rwaRows = snapshot && Array.isArray(snapshot.rwaUsdcRows) ? snapshot.rwaUsdcRows : [];
-          var coinRows = snapshot && Array.isArray(snapshot.coinRows) ? snapshot.coinRows : [];
-          if (rwaRows.length === 0 && coinRows.length === 0) {
+          var uniswapRwaRows = uniswapSnapshot && Array.isArray(uniswapSnapshot.rwaUsdcRows) ? uniswapSnapshot.rwaUsdcRows : [];
+          var uniswapCoinRows = uniswapSnapshot && Array.isArray(uniswapSnapshot.coinRows) ? uniswapSnapshot.coinRows : [];
+          var solanaRwaRows = solanaSnapshot && Array.isArray(solanaSnapshot.rwaUsdcRows) ? solanaSnapshot.rwaUsdcRows : [];
+          var solanaCoinRows = solanaSnapshot && Array.isArray(solanaSnapshot.coinRows) ? solanaSnapshot.coinRows : [];
+          if (uniswapRwaRows.length === 0 && uniswapCoinRows.length === 0 && solanaRwaRows.length === 0 && solanaCoinRows.length === 0) {
             feeLeadersElement.innerHTML = "";
             feeLeadersElement.hidden = true;
             lastFeeLeadersMarkup = "";
             updateRankingLayout();
             return;
           }
-          var renderRows = function (groupRows) {
+          var renderUniswapRows = function (groupRows) {
             return groupRows.map(function (row) {
               return "<li class=\"ranking-row\"><span class=\"ranking-name\" title=\"" + escapeHtml(row.pair + " · " + row.protocol + " · " + row.chain) + "\">" + escapeHtml(row.pair) + "</span><span class=\"ranking-source ranking-source-" + row.protocol.toLowerCase() + "\">" + escapeHtml(row.protocol + " · " + row.chain) + "</span><span class=\"ranking-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
             }).join("");
           };
+          var renderSolanaRows = function (groupRows) {
+            return groupRows.map(function (row) {
+              return "<li class=\"ranking-row\"><span class=\"ranking-name\" title=\"" + escapeHtml(row.pair + " · " + row.protocol + (row.poolType ? " · " + row.poolType : "")) + "\">" + escapeHtml(row.pair) + "</span><span class=\"ranking-source ranking-source-" + row.protocol.toLowerCase() + "\">" + escapeHtml(row.protocol) + "</span><span class=\"ranking-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
+            }).join("");
+          };
           var markup = "<div class=\"ranking-groups\">";
-          if (rwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"RWA USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">RWA / USDC</span><ul class=\"ranking-list\">" + renderRows(rwaRows) + "</ul></section>";
-          if (coinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"普通币费用前三\"><span class=\"ranking-group-label\">COINS</span><ul class=\"ranking-list\">" + renderRows(coinRows) + "</ul></section>";
+          if (uniswapRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap RWA USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">UNISWAP · RWA / USDC</span><ul class=\"ranking-list\">" + renderUniswapRows(uniswapRwaRows) + "</ul></section>";
+          if (uniswapCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap 普通币费用前三\"><span class=\"ranking-group-label\">UNISWAP · COINS</span><ul class=\"ranking-list\">" + renderUniswapRows(uniswapCoinRows) + "</ul></section>";
+          if (solanaRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Solana RWA USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">SOLANA · RWA / USDC</span><ul class=\"ranking-list\">" + renderSolanaRows(solanaRwaRows) + "</ul></section>";
+          if (solanaCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Solana 普通币费用前三\"><span class=\"ranking-group-label\">SOLANA · COINS</span><ul class=\"ranking-list\">" + renderSolanaRows(solanaCoinRows) + "</ul></section>";
           markup += "</div>";
           if (markup !== lastFeeLeadersMarkup) {
             feeLeadersElement.innerHTML = markup;
@@ -647,7 +697,8 @@
           }
           feeLeadersElement.hidden = false;
           cachedState = cachedState || {};
-          cachedState.feeLeaders = snapshot;
+          cachedState.uniswapFeeLeaders = uniswapSnapshot;
+          cachedState.solanaFeeLeaders = solanaSnapshot;
           updateRankingLayout();
         }
 
@@ -792,14 +843,16 @@
         function fetchFeeLeaders() {
           if (feeLeadersRequest) return;
           feeLeadersRequest = true;
-          requestJson(UNISWAP_FEE_SNAPSHOT_URL + "?v=" + Date.now(), 9000).then(function (payload) {
-            var snapshot = normalizeUniswapFeeSnapshot(payload);
-            renderFeeLeaders(snapshot);
-            writeCache();
-          }).catch(function () {
-            if (cachedState && cachedState.feeLeaders) {
-              var fallback = Object.assign({}, cachedState.feeLeaders, { stale: true });
-              renderFeeLeaders(fallback);
+          var uniswapRequest = requestJson(UNISWAP_FEE_SNAPSHOT_URL + "?v=" + Date.now(), 9000)
+            .then(normalizeUniswapFeeSnapshot)
+            .catch(function () { return cachedState && cachedState.uniswapFeeLeaders ? Object.assign({}, cachedState.uniswapFeeLeaders, { stale: true }) : null; });
+          var solanaRequest = requestJson(SOLANA_FEE_SNAPSHOT_URL + "?v=" + Date.now(), 9000)
+            .then(normalizeSolanaFeeSnapshot)
+            .catch(function () { return cachedState && cachedState.solanaFeeLeaders ? Object.assign({}, cachedState.solanaFeeLeaders, { stale: true }) : null; });
+          Promise.all([uniswapRequest, solanaRequest]).then(function (snapshots) {
+            if (snapshots[0] || snapshots[1]) {
+              renderFeeLeaders(snapshots[0], snapshots[1]);
+              writeCache();
             }
           }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
         }
