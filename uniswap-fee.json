@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": "uniswap-explore-stats",
   "sourceUrl": "https://interface.gateway.uniswap.org/v2/uniswap.explore.v1.ExploreStatsService/ExploreStats",
-  "generatedAt": "2026-08-29T00:03:40.489Z",
+  "generatedAt": "2026-08-29T00:05:40.807Z",
   "scope": "Uniswap v2 / v3 / v4 · ALL_NETWORKS · public top-pool snapshot",
   "feeBasis": "24h volume × pool fee tier; v2 uses the documented 0.30% total swap fee",
   "rows": [
