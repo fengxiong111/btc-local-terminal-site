@@ -396,17 +396,6 @@
       .public-panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
       .panel-kicker { display: block; color: #f0b35c; font-family: monospace; font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
       .public-panel h2 { margin: 8px 0 0; color: var(--ink); font-size: 18px; font-weight: 620; letter-spacing: -.02em; }
-      .module-status { color: var(--faint); font-family: monospace; font-size: 9px; letter-spacing: .05em; }
-      .public-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
-      .public-metrics > div { min-width: 0; padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: rgba(19, 35, 58, .52); }
-      .public-metrics span { display: block; color: var(--faint); font-family: monospace; font-size: 9px; }
-      .public-metrics strong { display: block; margin-top: 8px; overflow: hidden; color: var(--ink); font-family: monospace; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
-      .public-table-wrap { overflow-x: auto; margin-top: 15px; }
-      .public-table { width: 100%; min-width: 700px; border-collapse: collapse; font-family: monospace; font-size: 10px; }
-      .public-table th, .public-table td { padding: 10px 9px; border-top: 1px solid rgba(148, 163, 184, .1); text-align: left; white-space: nowrap; }
-      .public-table th { border-top: 0; color: var(--faint); font-size: 9px; font-weight: 700; letter-spacing: .08em; }
-      .public-table td { color: var(--muted); }
-      .module-note { margin: 14px 0 0; color: var(--faint); font-size: 10px; line-height: 1.6; }
       .news { padding: 10px 8px; }
       .news-row { border-radius: 9px; }
       .news-headline { color: var(--ink); }
@@ -432,7 +421,7 @@
       <header class="public-topbar">
         <a href="#overview" class="public-brand"><span class="public-brand-mark">⌁</span><span><strong>BTC 本地终端</strong><small>只读市场观察</small></span></a>
         <nav class="public-nav" aria-label="工作区导航">
-          <a href="#overview">总览</a><a href="#options-panel">期权</a>
+          <a href="#overview">总览</a>
         </nav>
         <span class="public-source"><i id="connection" class="connection-dot" aria-label="实时连接"></i>公开数据</span>
       </header>
@@ -452,13 +441,6 @@
         <section id="rankings" class="rankings" aria-label="Uniswap 与 Solana 手续费榜单" hidden>
           <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap 与 Solana 实物资产/USDC、普通币手续费榜前三" hidden></section>
         </section>
-      </section>
-
-      <section id="options-panel" class="public-panel module-panel" aria-label="期权观察">
-        <header class="public-panel-header"><div><span class="panel-kicker">期权</span><h2>卖方观察链</h2></div><span id="options-status" class="module-status">读取中</span></header>
-        <div class="public-metrics"><div><span>Deribit 指数</span><strong id="options-spot">—</strong></div><div><span>平值 IV</span><strong id="options-atm">—</strong></div><div><span>25日 RR</span><strong id="options-rr">—</strong></div><div><span>30日 VRP</span><strong id="options-vrp">—</strong></div></div>
-        <div class="public-table-wrap"><table class="public-table"><thead><tr><th>到期日</th><th>行权价</th><th>OTM</th><th>Bid / USD</th><th>年化条件收益</th><th>Delta</th><th>IV</th></tr></thead><tbody id="options-rows"><tr><td colspan="7" class="empty">正在读取 Deribit 公开链</td></tr></tbody></table></div>
-        <p class="module-note">数据口径参考 btcsellput.com：只读展示权利金、期限和风险字段，不输出下单指令。</p>
       </section>
 
       <section id="news" class="news public-panel" aria-label="律动新闻"></section>
@@ -492,12 +474,6 @@
         var connectionElement = document.getElementById("connection");
         var ema200Element = document.getElementById("ema200-value");
         var ma120Element = document.getElementById("ma120-value");
-        var optionsStatusElement = document.getElementById("options-status");
-        var optionsSpotElement = document.getElementById("options-spot");
-        var optionsAtmElement = document.getElementById("options-atm");
-        var optionsRrElement = document.getElementById("options-rr");
-        var optionsVrpElement = document.getElementById("options-vrp");
-        var optionsRowsElement = document.getElementById("options-rows");
         var shownPrice = null;
         var priceAnimation = null;
         var priceRequest = false;
@@ -506,7 +482,6 @@
         var newsRequest = false;
         var feeLeadersRequest = false;
         var emaRequest = false;
-        var optionsRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
@@ -527,7 +502,6 @@
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120);
-          if (cachedState.options) renderOptions(cachedState.options, true);
           if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.uniswapFeeLeaders || cachedState.solanaFeeLeaders) renderFeeLeaders(cachedState.uniswapFeeLeaders, cachedState.solanaFeeLeaders);
           if (cachedState.news) renderNews(cachedState.news);
@@ -622,7 +596,6 @@
               solanaFeeLeaders: cachedState && cachedState.solanaFeeLeaders,
               ema200: cachedState && cachedState.ema200,
               ma120: cachedState && cachedState.ma120,
-              options: cachedState && cachedState.options,
               news: cachedState && cachedState.news
             }));
           } catch (error) {
@@ -1029,77 +1002,10 @@
           }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
         }
 
-        function normalCdf(value) {
-          var sign = value < 0 ? -1 : 1;
-          var absolute = Math.abs(value) / Math.sqrt(2);
-          var t = 1 / (1 + 0.3275911 * absolute);
-          var polynomial = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-absolute * absolute);
-          return 0.5 * (1 + sign * polynomial);
-        }
-
-        function fetchOptions() {
-          if (optionsRequest) return;
-          optionsRequest = true;
-          var base = "https://www.deribit.com/api/v2/public/";
-          var instrumentsRequest = requestJson(base + "get_instruments?currency=BTC&kind=option&expired=false", 10000);
-          var summariesRequest = requestJson(base + "get_book_summary_by_currency?currency=BTC&kind=option", 10000);
-          var indexRequest = requestJson(base + "get_index_price?index_name=btc_usd", 10000);
-          var rvRequest = requestJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=32", 8000).then(function (rows) {
-            var closes = (Array.isArray(rows) ? rows : []).map(function (row) { return finite(row && row[4]); }).filter(function (value) { return value !== null && value > 0; });
-            if (closes.length < 16) return null;
-            var returns = []; for (var i = 1; i < closes.length; i += 1) returns.push(Math.log(closes[i] / closes[i - 1]));
-            var mean = returns.reduce(function (sum, value) { return sum + value; }, 0) / returns.length;
-            var variance = returns.reduce(function (sum, value) { return sum + Math.pow(value - mean, 2); }, 0) / Math.max(1, returns.length - 1);
-            return Math.sqrt(variance) * Math.sqrt(365) * 100;
-          }).catch(function () { return null; });
-          Promise.all([instrumentsRequest, summariesRequest, indexRequest, rvRequest]).then(function (parts) {
-            var instruments = Array.isArray(parts[0]) ? parts[0] : [];
-            var summaries = Array.isArray(parts[1]) ? parts[1] : [];
-            var index = finite(parts[2] && parts[2].result && parts[2].result.index_price);
-            if (index === null) throw new Error("option index unavailable");
-            var byName = {}; summaries.forEach(function (item) { if (item && item.instrument_name) byName[item.instrument_name] = item; });
-            var allQuotes = instruments.map(function (item) {
-              var summary = byName[item.instrument_name];
-              var type = String(item.option_type || "").toLowerCase();
-              var strike = finite(item.strike); var expiry = finite(item.expiration_timestamp); var iv = finite(summary && summary.mark_iv); var bid = finite(summary && summary.bid_price); var ask = finite(summary && summary.ask_price);
-              if (!summary || (type !== "put" && type !== "call") || strike === null || expiry === null || iv === null || bid === null || ask === null || bid <= 0 || ask <= 0) return null;
-              var dte = Math.max(1, Math.ceil((expiry - Date.now()) / 86400000)); var ratio = strike / index; var isPut = type === "put";
-              if (dte > 120 || (isPut ? ratio < .65 || ratio > .98 : ratio < 1.02 || ratio > 1.35)) return null;
-              var sigma = iv / 100; var root = sigma * Math.sqrt(dte / 365); var d1 = (Math.log(index / strike) + .5 * sigma * sigma * dte / 365) / root; var delta = isPut ? normalCdf(d1) - 1 : normalCdf(d1); var bidUsd = bid * index; var yieldPct = bidUsd / strike * 365 / dte * 100;
-              return { type: type, expiry: new Date(expiry).toISOString().slice(0, 10), strike: strike, otm: (isPut ? 1 - ratio : ratio - 1) * 100, bidUsd: bidUsd, yieldPct: yieldPct, delta: delta, iv: iv, dte: dte };
-            }).filter(function (item) { return item !== null; });
-            var puts = allQuotes.filter(function (item) { return item.type === "put"; }).sort(function (left, right) { return left.expiry.localeCompare(right.expiry) || right.yieldPct - left.yieldPct; });
-            var near = function (type, targetDelta, minDte, maxDte) { return allQuotes.filter(function (item) { return item.type === type && item.dte >= minDte && item.dte <= maxDte; }).sort(function (left, right) { return Math.abs(Math.abs(left.delta) - targetDelta) - Math.abs(Math.abs(right.delta) - targetDelta) || Math.abs(left.dte - 30) - Math.abs(right.dte - 30); })[0] || null; };
-            var atmPut = near("put", .5, 20, 40); var atmCall = near("call", .5, 20, 40); var rrPut = near("put", .25, 15, 40); var rrCall = near("call", .25, 15, 40);
-            var atmValues = [atmPut && atmPut.iv, atmCall && atmCall.iv].filter(function (value) { return value !== null && value !== undefined; });
-            var atm = atmValues.length > 0 ? atmValues.reduce(function (sum, value) { return sum + value; }, 0) / atmValues.length : null;
-            var rr = rrCall && rrPut ? rrCall.iv - rrPut.iv : null;
-            renderOptions({ spot: index, atm: atm, rr: rr, vrp: atm !== null && parts[3] !== null ? atm - parts[3] : null, items: puts.slice(0, 24) });
-            writeCache();
-          }).catch(function () {
-            if (cachedState && cachedState.options) renderOptions(cachedState.options, true);
-          }).then(function () { optionsRequest = false; }, function () { optionsRequest = false; });
-        }
-
-        function renderOptions(payload, instant) {
-          if (!payload) return;
-          if (optionsSpotElement) optionsSpotElement.textContent = numberText(payload.spot, 0);
-          if (optionsAtmElement) optionsAtmElement.textContent = payload.atm === null ? "—" : numberText(payload.atm, 1) + "%";
-          if (optionsRrElement) optionsRrElement.textContent = payload.rr === null ? "—" : pctText(payload.rr, 1);
-          if (optionsVrpElement) optionsVrpElement.textContent = payload.vrp === null ? "—" : pctText(payload.vrp, 1);
-          if (optionsStatusElement) optionsStatusElement.textContent = payload.items && payload.items.length > 0 ? "LIVE · Deribit" : "暂无候选";
-          if (optionsRowsElement) optionsRowsElement.innerHTML = payload.items && payload.items.length > 0 ? payload.items.map(function (item) {
-            return "<tr><td>" + item.expiry + "</td><td>" + numberText(item.strike, 0) + "</td><td>" + numberText(item.otm, 1) + "%</td><td>" + numberText(item.bidUsd, 0) + "</td><td>" + pctText(item.yieldPct, 1) + "</td><td>" + numberText(item.delta, 2) + "</td><td>" + numberText(item.iv, 1) + "%</td></tr>";
-          }).join("") : '<tr><td colspan="7" class="empty">暂无满足基础流动性条件的 Put</td></tr>';
-          cachedState = cachedState || {};
-          cachedState.options = payload;
-        }
-
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
           fetchEma200();
-          fetchOptions();
           fetchMacro();
           fetchFeeLeaders();
           fetchNews();
@@ -1109,7 +1015,6 @@
         window.setInterval(fetchBtc, PRICE_INTERVAL);
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
-        window.setInterval(fetchOptions, 30000);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchFeeLeaders, 60000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
