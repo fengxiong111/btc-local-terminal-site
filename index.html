@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f5f4ed" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>BTC Local Terminal</title>
+    <title>BTC 本地终端</title>
     <style>
       :root {
         --paper: #f5f4ed;
@@ -349,10 +349,10 @@
         <div id="price" class="price" aria-live="polite">—</div>
       </section>
 
-      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与链上 Fee" hidden>
+      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与链上手续费" hidden>
         <section id="ticker" class="ticker" aria-label="关联行情"></section>
-        <section id="rankings" class="rankings" aria-label="Uniswap 与 Solana Fee 榜单" hidden>
-          <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap 与 Solana RWA/USDC、普通币 Fee 榜前三" hidden></section>
+        <section id="rankings" class="rankings" aria-label="Uniswap 与 Solana 手续费榜单" hidden>
+          <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap 与 Solana 实物资产/USDC、普通币手续费榜前三" hidden></section>
         </section>
       </section>
       <section id="news" class="news" aria-label="律动新闻"></section>
@@ -685,10 +685,10 @@
             }).join("");
           };
           var markup = "<div class=\"ranking-groups\">";
-          if (uniswapRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap RWA USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">UNISWAP · RWA / USDC</span><ul class=\"ranking-list\">" + renderUniswapRows(uniswapRwaRows) + "</ul></section>";
-          if (uniswapCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap 普通币费用前三\"><span class=\"ranking-group-label\">UNISWAP · COINS</span><ul class=\"ranking-list\">" + renderUniswapRows(uniswapCoinRows) + "</ul></section>";
-          if (solanaRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Solana RWA USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">SOLANA · RWA / USDC</span><ul class=\"ranking-list\">" + renderSolanaRows(solanaRwaRows) + "</ul></section>";
-          if (solanaCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Solana 普通币费用前三\"><span class=\"ranking-group-label\">SOLANA · COINS</span><ul class=\"ranking-list\">" + renderSolanaRows(solanaCoinRows) + "</ul></section>";
+          if (uniswapRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap 实物资产 USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">UNISWAP · 实物资产 / USDC</span><ul class=\"ranking-list\">" + renderUniswapRows(uniswapRwaRows) + "</ul></section>";
+          if (uniswapCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap 普通代币费用前三\"><span class=\"ranking-group-label\">UNISWAP · 代币</span><ul class=\"ranking-list\">" + renderUniswapRows(uniswapCoinRows) + "</ul></section>";
+          if (solanaRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Solana 实物资产 USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">SOLANA · 实物资产 / USDC</span><ul class=\"ranking-list\">" + renderSolanaRows(solanaRwaRows) + "</ul></section>";
+          if (solanaCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Solana 普通代币费用前三\"><span class=\"ranking-group-label\">SOLANA · 代币</span><ul class=\"ranking-list\">" + renderSolanaRows(solanaCoinRows) + "</ul></section>";
           markup += "</div>";
           if (markup !== lastFeeLeadersMarkup) {
             feeLeadersElement.innerHTML = markup;

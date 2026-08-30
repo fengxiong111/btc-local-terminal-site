@@ -90,6 +90,7 @@ const message = encodeURIComponent(JSON.stringify({ chainId: "ALL_NETWORKS" }));
 const response = await fetch(`${endpoint}?connect=v1&encoding=json&message=${message}`, {
   headers: {
     Accept: "application/json",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
     Origin: "https://app.uniswap.org",
     Referer: "https://app.uniswap.org/"
   }
