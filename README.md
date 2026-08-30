@@ -2,7 +2,7 @@
 
 这是 BTC Local Terminal 的静态远程查看页，部署在 GitHub Pages。
 
-- BTC：Binance 现货公开行情
+- BTC：Binance 现货公开行情与日线 EMA200
 - HYPE：Hyperliquid 永续实时标记价格
 - SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` 股票永续公开行情；单个标的缺失时回退 Binance USDⓈ-M 行情
 - Uniswap：真实 ExploreStats 快照中的实物资产/USDC 手续费前三与普通代币手续费前三

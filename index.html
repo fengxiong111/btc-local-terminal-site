@@ -116,6 +116,25 @@
 
       .price-pulse { animation: price-pulse 260ms ease-out; }
 
+      .benchmark {
+        display: flex;
+        width: min(100%, 320px);
+        margin: 18px auto 0;
+        padding-top: 12px;
+        align-items: baseline;
+        justify-content: center;
+        gap: 10px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .benchmark strong {
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 720;
+      }
+
       .ticker {
         display: flex;
         width: fit-content;
@@ -347,6 +366,7 @@
           <span id="change" class="change">—</span>
         </div>
         <div id="price" class="price" aria-live="polite">—</div>
+        <div id="benchmark" class="benchmark" aria-label="BTC 日线 EMA200"><span>日线 EMA200</span><strong>—</strong></div>
       </section>
 
       <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与链上手续费" hidden>
@@ -373,6 +393,9 @@
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
         var NEWS_INTERVAL = 20000;
+        var EMA_INTERVAL = 60000;
+        var EMA_PERIOD = 200;
+        var EMA_CANDLE_LIMIT = 240;
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
         var secondaryStripElement = document.getElementById("secondary-strip");
@@ -381,6 +404,7 @@
         var feeLeadersElement = document.getElementById("fee-leaders");
         var newsElement = document.getElementById("news");
         var connectionElement = document.getElementById("connection");
+        var benchmarkElement = document.querySelector("#benchmark strong");
         var shownPrice = null;
         var priceAnimation = null;
         var priceRequest = false;
@@ -388,6 +412,7 @@
         var macroRequest = false;
         var newsRequest = false;
         var feeLeadersRequest = false;
+        var emaRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
@@ -407,6 +432,7 @@
 
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
+          if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200);
           if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.uniswapFeeLeaders || cachedState.solanaFeeLeaders) renderFeeLeaders(cachedState.uniswapFeeLeaders, cachedState.solanaFeeLeaders);
           if (cachedState.news) renderNews(cachedState.news);
@@ -499,11 +525,46 @@
               macro: cachedState && cachedState.macro,
               uniswapFeeLeaders: cachedState && cachedState.uniswapFeeLeaders,
               solanaFeeLeaders: cachedState && cachedState.solanaFeeLeaders,
+              ema200: cachedState && cachedState.ema200,
               news: cachedState && cachedState.news
             }));
           } catch (error) {
             // Private browsing or a restricted Kindle browser may disable storage.
           }
+        }
+
+        function renderEma200(value) {
+          var ema = finite(value);
+          if (ema === null || !benchmarkElement) return;
+          benchmarkElement.textContent = numberText(ema, 0);
+          cachedState = cachedState || {};
+          cachedState.ema200 = ema;
+        }
+
+        function fetchEma200() {
+          if (emaRequest) return;
+          emaRequest = true;
+          var endTime = Date.now();
+          var startTime = endTime - EMA_CANDLE_LIMIT * 24 * 60 * 60 * 1000;
+          requestJson(HYPERLIQUID_INFO_URL, 8000, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ type: "candleSnapshot", req: { coin: "BTC", interval: "1d", startTime: startTime, endTime: endTime } })
+          }).then(function (candles) {
+            var closes = (Array.isArray(candles) ? candles : []).map(function (item) {
+              return { time: finite(item && item.t), close: finite(item && item.c) };
+            }).filter(function (item) { return item.time !== null && item.close !== null; }).sort(function (left, right) { return left.time - right.time; });
+            if (closes.length < EMA_PERIOD) throw new Error("日线数据不足，无法计算 EMA200");
+            var sum = 0;
+            for (var index = 0; index < EMA_PERIOD; index += 1) sum += closes[index].close;
+            var ema = sum / EMA_PERIOD;
+            var multiplier = 2 / (EMA_PERIOD + 1);
+            for (var next = EMA_PERIOD; next < closes.length; next += 1) ema = (closes[next].close - ema) * multiplier + ema;
+            renderEma200(ema);
+            writeCache();
+          }).catch(function () {
+            if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200);
+          }).then(function () { emaRequest = false; }, function () { emaRequest = false; });
         }
 
         function animatePrice(next) {
@@ -877,6 +938,7 @@
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
+          fetchEma200();
           fetchMacro();
           fetchFeeLeaders();
           fetchNews();
@@ -885,6 +947,7 @@
         refreshAll();
         window.setInterval(fetchBtc, PRICE_INTERVAL);
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
+        window.setInterval(fetchEma200, EMA_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchFeeLeaders, 60000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
