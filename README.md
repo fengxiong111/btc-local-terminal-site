@@ -1,6 +1,6 @@
 # BTC 本地终端 · 远程查看页
 
-这是 BTC Local Terminal 的静态远程查看页，部署在 GitHub Pages。它不能运行本地 Next.js API 或读取本机文件，因此使用同一套只读视觉语言，并在浏览器直接读取公开行情、Deribit 期权和公开成交；本地文件型 Flow/Options 输出只在本地服务可用。
+这是 BTC Local Terminal 的静态远程查看页，部署在 GitHub Pages。它不能运行本地 Next.js API 或读取本机文件，因此使用同一套只读视觉语言，并在浏览器直接读取公开行情与 Deribit 期权；本地文件型 Flow/Options 输出只在本地服务可用。
 
 - BTC：Binance 现货公开行情与日线 EMA200
 - HYPE：Hyperliquid 永续实时标记价格
@@ -9,7 +9,7 @@
 - Solana：Raydium / Meteora 真实 LP 决策系统快照中的实物资产/USDC 手续费前三与普通代币手续费前三
 - 新闻：公开的律动 `feed.json`
 - 页面端轮询、浏览器缓存和失败回退均在 `index.html` 内完成
-- 1分钟 / 1小时价格图、Binance 日线 EMA200 / MA120、公开成交资金流与 Deribit 卖方观察链
+- Binance 日线 EMA200 / MA120 与 Deribit 卖方观察链
 
 此仓库只包含静态页面，不包含本地 `.env`、API key、局域网地址或本地文件路径。
 

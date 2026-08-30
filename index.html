@@ -392,25 +392,11 @@
       .benchmark-divider { color: var(--faint); }
       .secondary-strip, .public-panel { width: 100%; margin: 14px 0 0; border: 1px solid var(--line); border-radius: 14px; background: rgba(12, 24, 42, .76); box-shadow: 0 14px 35px rgba(0, 0, 0, .12); }
       .secondary-strip { padding: 14px; }
-      .market-chart-panel { padding: 20px 22px 15px; }
       .public-panel { padding: 18px 20px; }
       .public-panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
       .panel-kicker { display: block; color: #f0b35c; font-family: monospace; font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
       .public-panel h2 { margin: 8px 0 0; color: var(--ink); font-size: 18px; font-weight: 620; letter-spacing: -.02em; }
-      .chart-tools { display: grid; justify-items: end; gap: 8px; }
-      #chart-meta, .chart-footer, .module-status { color: var(--faint); font-family: monospace; font-size: 9px; letter-spacing: .05em; }
-      .chart-tabs { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: rgba(5, 14, 26, .55); }
-      .chart-tabs button { min-height: 25px; padding: 0 9px; border: 0; border-radius: 5px; color: var(--faint); background: transparent; font-family: monospace; font-size: 9px; cursor: pointer; }
-      .chart-tabs button:hover, .chart-tabs button.is-active { color: var(--ink); background: rgba(169, 199, 245, .14); }
-      .chart-value { margin-top: 24px; color: var(--ink); font-family: monospace; font-size: 25px; font-weight: 650; }
-      .price-chart { min-height: 210px; margin-top: 8px; }
-      .price-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-      .chart-grid { fill: none; stroke: rgba(148, 163, 184, .12); stroke-dasharray: 2 8; }
-      .chart-line { fill: none; stroke: var(--up); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
-      .chart-area { opacity: .85; }
-      .chart-dot { fill: var(--up); stroke: #07111f; stroke-width: 2; vector-effect: non-scaling-stroke; }
-      .chart-footer { display: flex; justify-content: space-between; gap: 12px; }
-      .module-panel { overflow: hidden; }
+      .module-status { color: var(--faint); font-family: monospace; font-size: 9px; letter-spacing: .05em; }
       .public-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
       .public-metrics > div { min-width: 0; padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: rgba(19, 35, 58, .52); }
       .public-metrics span { display: block; color: var(--faint); font-family: monospace; font-size: 9px; }
@@ -420,8 +406,6 @@
       .public-table th, .public-table td { padding: 10px 9px; border-top: 1px solid rgba(148, 163, 184, .1); text-align: left; white-space: nowrap; }
       .public-table th { border-top: 0; color: var(--faint); font-size: 9px; font-weight: 700; letter-spacing: .08em; }
       .public-table td { color: var(--muted); }
-      .flow-buy { color: var(--up) !important; }
-      .flow-sell { color: var(--down) !important; }
       .module-note { margin: 14px 0 0; color: var(--faint); font-size: 10px; line-height: 1.6; }
       .news { padding: 10px 8px; }
       .news-row { border-radius: 9px; }
@@ -437,11 +421,9 @@
         .island { padding: 20px 18px 22px; }
         .price { margin-top: 19px; font-size: clamp(58px, 17vw, 94px); }
         .benchmark { flex-wrap: wrap; gap: 7px; font-size: 11px; }
-        .public-panel, .market-chart-panel { padding: 15px 13px; }
+        .public-panel { padding: 15px 13px; }
         .public-panel-header { flex-direction: column; gap: 12px; }
-        .chart-tools { width: 100%; align-items: flex-start; justify-items: start; }
         .public-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .chart-footer { font-size: 8px; }
       }
     </style>
   </head>
@@ -450,7 +432,7 @@
       <header class="public-topbar">
         <a href="#overview" class="public-brand"><span class="public-brand-mark">⌁</span><span><strong>BTC 本地终端</strong><small>只读市场观察</small></span></a>
         <nav class="public-nav" aria-label="工作区导航">
-          <a href="#overview">总览</a><a href="#flow-panel">资金流</a><a href="#options-panel">期权</a><a href="#market-chart-panel">价格图</a>
+          <a href="#overview">总览</a><a href="#options-panel">期权</a>
         </nav>
         <span class="public-source"><i id="connection" class="connection-dot" aria-label="实时连接"></i>公开数据</span>
       </header>
@@ -464,25 +446,12 @@
         <div id="benchmark" class="benchmark" aria-label="BTC 日线指标"><span>EMA200</span><strong id="ema200-value">—</strong><span class="benchmark-divider">·</span><span>MA120</span><strong id="ma120-value">—</strong></div>
       </section>
 
-      <section id="market-chart-panel" class="public-panel market-chart-panel" aria-label="BTC 价格走势图">
-        <header class="public-panel-header"><div><span class="panel-kicker">价格走势</span><h2>BTC / USD</h2></div><div class="chart-tools"><span id="chart-meta">读取中</span><div class="chart-tabs" role="tablist" aria-label="价格图周期"><button type="button" data-chart-period="1m" role="tab">1分钟</button><button type="button" data-chart-period="1H" role="tab" class="is-active">1小时</button></div></div></header>
-        <div id="chart-value" class="chart-value">—</div>
-        <div id="price-chart" class="price-chart"><div class="empty">正在读取价格历史</div></div>
-        <footer class="chart-footer"><span id="chart-start">—</span><span>Binance 公共 K 线</span><span id="chart-end">—</span></footer>
-      </section>
 
       <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与链上手续费" hidden>
         <section id="ticker" class="ticker" aria-label="关联行情"></section>
         <section id="rankings" class="rankings" aria-label="Uniswap 与 Solana 手续费榜单" hidden>
           <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap 与 Solana 实物资产/USDC、普通币手续费榜前三" hidden></section>
         </section>
-      </section>
-
-      <section id="flow-panel" class="public-panel module-panel" aria-label="资金流观察">
-        <header class="public-panel-header"><div><span class="panel-kicker">资金流</span><h2>主动成交观察</h2></div><span id="flow-status" class="module-status">读取中</span></header>
-        <div class="public-metrics"><div><span>1分钟大额成交</span><strong id="flow-large">—</strong></div><div><span>主动净额 BTC</span><strong id="flow-net">—</strong></div><div><span>公开源</span><strong id="flow-source">—</strong></div></div>
-        <div class="public-table-wrap"><table class="public-table"><thead><tr><th>时间</th><th>场所</th><th>方向</th><th>均价</th><th>BTC</th><th>规模</th></tr></thead><tbody id="flow-rows"><tr><td colspan="6" class="empty">正在读取公开成交</td></tr></tbody></table></div>
-        <p class="module-note">主动成交净额不是链上转账；公开接口未提供全市场清算流时保持空白。</p>
       </section>
 
       <section id="options-panel" class="public-panel module-panel" aria-label="期权观察">
@@ -513,8 +482,6 @@
         var EMA_INTERVAL = 60000;
         var EMA_PERIOD = 200;
         var EMA_CANDLE_LIMIT = 1000;
-        var CHART_LIMITS = { "1m": 60, "1H": 72 };
-        var chartPeriod = "1H";
         var priceElement = document.getElementById("price");
         var changeElement = document.getElementById("change");
         var secondaryStripElement = document.getElementById("secondary-strip");
@@ -525,16 +492,6 @@
         var connectionElement = document.getElementById("connection");
         var ema200Element = document.getElementById("ema200-value");
         var ma120Element = document.getElementById("ma120-value");
-        var chartElement = document.getElementById("price-chart");
-        var chartValueElement = document.getElementById("chart-value");
-        var chartMetaElement = document.getElementById("chart-meta");
-        var chartStartElement = document.getElementById("chart-start");
-        var chartEndElement = document.getElementById("chart-end");
-        var flowStatusElement = document.getElementById("flow-status");
-        var flowLargeElement = document.getElementById("flow-large");
-        var flowNetElement = document.getElementById("flow-net");
-        var flowSourceElement = document.getElementById("flow-source");
-        var flowRowsElement = document.getElementById("flow-rows");
         var optionsStatusElement = document.getElementById("options-status");
         var optionsSpotElement = document.getElementById("options-spot");
         var optionsAtmElement = document.getElementById("options-atm");
@@ -549,8 +506,6 @@
         var newsRequest = false;
         var feeLeadersRequest = false;
         var emaRequest = false;
-        var chartRequest = false;
-        var flowRequest = false;
         var optionsRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
@@ -572,8 +527,6 @@
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120);
-          if (cachedState.chart) renderChart(cachedState.chart, chartPeriod, true);
-          if (cachedState.flow) renderFlow(cachedState.flow, true);
           if (cachedState.options) renderOptions(cachedState.options, true);
           if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.uniswapFeeLeaders || cachedState.solanaFeeLeaders) renderFeeLeaders(cachedState.uniswapFeeLeaders, cachedState.solanaFeeLeaders);
@@ -669,8 +622,6 @@
               solanaFeeLeaders: cachedState && cachedState.solanaFeeLeaders,
               ema200: cachedState && cachedState.ema200,
               ma120: cachedState && cachedState.ma120,
-              chart: cachedState && cachedState.chart,
-              flow: cachedState && cachedState.flow,
               options: cachedState && cachedState.options,
               news: cachedState && cachedState.news
             }));
@@ -1078,134 +1029,6 @@
           }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
         }
 
-        function formatClock(value) {
-          var date = new Date(value);
-          if (!isFinite(date.getTime())) return "—";
-          return String(date.getUTCHours()).padStart(2, "0") + ":" + String(date.getUTCMinutes()).padStart(2, "0");
-        }
-
-        function chartCandles(payload) {
-          if (Array.isArray(payload)) return payload;
-          return payload && Array.isArray(payload.candles) ? payload.candles : [];
-        }
-
-        function renderChart(payload, period, instant) {
-          var candles = chartCandles(payload).filter(function (item) {
-            return item && finite(item.time) !== null && finite(item.close) !== null && finite(item.high) !== null && finite(item.low) !== null;
-          }).slice(-CHART_LIMITS[period]);
-          if (!chartElement || candles.length < 2) return;
-          var lows = candles.map(function (item) { return finite(item.low); });
-          var highs = candles.map(function (item) { return finite(item.high); });
-          var closes = candles.map(function (item) { return finite(item.close); });
-          var min = Math.min.apply(Math, lows);
-          var max = Math.max.apply(Math, highs);
-          var range = max - min || 1;
-          var width = 720;
-          var height = 210;
-          var points = closes.map(function (close, index) {
-            return { x: 8 + (index / (closes.length - 1)) * 704, y: 12 + ((max - close) / range) * 174 };
-          });
-          var line = points.map(function (point, index) { return (index === 0 ? "M" : "L") + point.x.toFixed(2) + "," + point.y.toFixed(2); }).join(" ");
-          var first = points[0];
-          var last = points[points.length - 1];
-          var area = line + " L" + last.x.toFixed(2) + ",198 L" + first.x.toFixed(2) + ",198 Z";
-          var positive = closes[closes.length - 1] >= closes[0];
-          chartElement.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="BTC ' + (period === "1m" ? "1分钟" : "1小时") + '价格曲线"><defs><linearGradient id="public-chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="' + (positive ? "#4adea0" : "#ff7081") + '" stop-opacity=".28"></stop><stop offset="100%" stop-color="' + (positive ? "#4adea0" : "#ff7081") + '" stop-opacity="0"></stop></linearGradient></defs><path class="chart-grid" d="M8 55H712M8 102H712M8 149H712"></path><path class="chart-area" d="' + area + '" fill="url(#public-chart-fill)"></path><path class="chart-line" style="stroke:' + (positive ? "#4adea0" : "#ff7081") + '" d="' + line + '"></path><circle class="chart-dot" style="fill:' + (positive ? "#4adea0" : "#ff7081") + '" cx="' + last.x.toFixed(2) + '" cy="' + last.y.toFixed(2) + '" r="4"></circle></svg>';
-          if (chartValueElement) chartValueElement.textContent = numberText(closes[closes.length - 1], 0);
-          if (chartMetaElement) chartMetaElement.textContent = (period === "1m" ? "1分钟" : "1小时") + " · " + candles.length + " 根";
-          if (chartStartElement) chartStartElement.textContent = formatClock(candles[0].time);
-          if (chartEndElement) chartEndElement.textContent = formatClock(candles[candles.length - 1].time);
-          cachedState = cachedState || {};
-          cachedState.chart = { period: period, candles: candles };
-        }
-
-        function fetchChart() {
-          if (chartRequest) return;
-          chartRequest = true;
-          var requestedPeriod = chartPeriod;
-          var interval = requestedPeriod === "1m" ? "1m" : "1h";
-          var limit = CHART_LIMITS[requestedPeriod];
-          requestJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=" + interval + "&limit=" + limit, 8000).then(function (rows) {
-            var candles = (Array.isArray(rows) ? rows : []).map(function (item) {
-              return { time: finite(item && item[0]), open: finite(item && item[1]), high: finite(item && item[2]), low: finite(item && item[3]), close: finite(item && item[4]) };
-            }).filter(function (item) { return item.time !== null && item.open !== null && item.high !== null && item.low !== null && item.close !== null; });
-            renderChart({ period: requestedPeriod, candles: candles }, requestedPeriod);
-            writeCache();
-            if (chartPeriod !== requestedPeriod) fetchChart();
-          }).catch(function () {
-            if (cachedState && cachedState.chart) renderChart(cachedState.chart, cachedState.chart.period || chartPeriod, true);
-          }).then(function () { chartRequest = false; }, function () { chartRequest = false; });
-        }
-
-        function normalizeFlowTrades() {
-          var binance = requestJson("https://fapi.binance.com/fapi/v1/aggTrades?symbol=BTCUSDT&limit=1000", 8000).then(function (rows) {
-            return (Array.isArray(rows) ? rows : []).map(function (item, index) {
-              var price = finite(item && item.p); var size = finite(item && item.q); var time = finite(item && item.T);
-              return price !== null && size !== null && time !== null ? { venue: "Binance", side: item.m ? "sell" : "buy", price: price, size: size, usd: price * size, time: time, id: "bn-" + (item.a || index) } : null;
-            }).filter(function (item) { return item !== null; });
-          }).catch(function () { return []; });
-          var hyperliquid = requestJson(HYPERLIQUID_INFO_URL, 8000, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify({ type: "recentTrades", coin: "BTC" }) }).then(function (rows) {
-            return (Array.isArray(rows) ? rows : []).map(function (item, index) {
-              var price = finite(item && item.px); var size = finite(item && item.sz); var time = finite(item && item.time);
-              return price !== null && size !== null && time !== null ? { venue: "Hyperliquid", side: item.side === "A" ? "sell" : "buy", price: price, size: size, usd: price * size, time: time, id: "hl-" + (item.tid || index) } : null;
-            }).filter(function (item) { return item !== null; });
-          }).catch(function () { return []; });
-          var deribit = requestJson("https://www.deribit.com/api/v2/public/get_last_trades_by_instrument?instrument_name=BTC-PERPETUAL&count=100&include_old=false", 8000).then(function (payload) {
-            var rows = payload && payload.result && Array.isArray(payload.result.trades) ? payload.result.trades : [];
-            return rows.map(function (item, index) {
-              var price = finite(item && item.price); var contracts = finite(item && item.contracts); var amount = finite(item && item.amount); var time = finite(item && item.timestamp);
-              var size = price !== null && price > 0 ? (contracts !== null ? contracts * 10 / price : amount !== null ? amount / price : null) : null;
-              return price !== null && size !== null && time !== null ? { venue: "Deribit", side: item.direction === "sell" ? "sell" : "buy", price: price, size: size, usd: price * size, time: time, id: "db-" + (item.trade_id || index) } : null;
-            }).filter(function (item) { return item !== null; });
-          }).catch(function () { return []; });
-          return Promise.all([binance, hyperliquid, deribit]).then(function (groups) { return groups[0].concat(groups[1], groups[2]); });
-        }
-
-        function renderFlow(payload, instant) {
-          var trades = payload && Array.isArray(payload.trades) ? payload.trades : [];
-          var large = payload && Array.isArray(payload.large) ? payload.large : [];
-          if (flowLargeElement) flowLargeElement.textContent = String(large.length);
-          if (flowNetElement) {
-            var net = finite(payload && payload.net);
-            flowNetElement.textContent = net === null ? "—" : (net >= 0 ? "+" : "") + numberText(net, 3);
-            flowNetElement.className = net !== null && net < 0 ? "flow-sell" : "flow-buy";
-          }
-          if (flowSourceElement) flowSourceElement.textContent = trades.length > 0 ? "公开实时" : "—";
-          if (flowStatusElement) flowStatusElement.textContent = trades.length > 0 ? "LIVE · 只读" : "暂无数据";
-          if (flowRowsElement) {
-            flowRowsElement.innerHTML = large.length > 0 ? large.slice(0, 12).map(function (item) {
-              return "<tr><td>" + formatClock(item.time) + "</td><td>" + escapeHtml(item.venue) + "</td><td class=\"" + (item.side === "buy" ? "flow-buy" : "flow-sell") + "\">" + (item.side === "buy" ? "主动买入" : "主动卖出") + "</td><td>" + numberText(item.price, 0) + "</td><td>" + numberText(item.size, 3) + "</td><td>" + numberText(item.usd, 0) + "</td></tr>";
-            }).join("") : '<tr><td colspan="6" class="empty">当前窗口没有大额成交</td></tr>';
-          }
-          cachedState = cachedState || {};
-          cachedState.flow = payload;
-        }
-
-        function fetchFlow() {
-          if (flowRequest) return;
-          flowRequest = true;
-          normalizeFlowTrades().then(function (trades) {
-            if (trades.length === 0) throw new Error("flow unavailable");
-            var grouped = {};
-            trades.forEach(function (trade) {
-              var bucket = Math.floor(trade.time / 60000) * 60000;
-              var key = trade.venue + ":" + trade.side + ":" + bucket;
-              var current = grouped[key] || { venue: trade.venue, side: trade.side, time: trade.time, priceSize: 0, size: 0, usd: 0 };
-              current.priceSize += trade.price * trade.size;
-              current.size += trade.size;
-              current.usd += trade.usd;
-              current.time = Math.max(current.time, trade.time);
-              grouped[key] = current;
-            });
-            var large = Object.keys(grouped).map(function (key) { var item = grouped[key]; return { venue: item.venue, side: item.side, time: new Date(item.time).toISOString(), price: item.priceSize / item.size, size: item.size, usd: item.usd }; }).filter(function (item) { return item.usd >= 100000; }).sort(function (left, right) { return right.time.localeCompare(left.time) || right.usd - left.usd; });
-            var net = trades.reduce(function (sum, trade) { return sum + (trade.side === "buy" ? trade.size : -trade.size); }, 0);
-            renderFlow({ trades: trades, large: large, net: net });
-            writeCache();
-          }).catch(function () {
-            if (cachedState && cachedState.flow) renderFlow(cachedState.flow, true);
-          }).then(function () { flowRequest = false; }, function () { flowRequest = false; });
-        }
-
         function normalCdf(value) {
           var sign = value < 0 ? -1 : 1;
           var absolute = Math.abs(value) / Math.sqrt(2);
@@ -1272,20 +1095,10 @@
           cachedState.options = payload;
         }
 
-        document.querySelectorAll("[data-chart-period]").forEach(function (button) {
-          button.addEventListener("click", function () {
-            chartPeriod = button.getAttribute("data-chart-period") === "1m" ? "1m" : "1H";
-            document.querySelectorAll("[data-chart-period]").forEach(function (candidate) { candidate.classList.toggle("is-active", candidate === button); candidate.setAttribute("aria-selected", candidate === button ? "true" : "false"); });
-            fetchChart();
-          });
-        });
-
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
           fetchEma200();
-          fetchChart();
-          fetchFlow();
           fetchOptions();
           fetchMacro();
           fetchFeeLeaders();
@@ -1296,8 +1109,6 @@
         window.setInterval(fetchBtc, PRICE_INTERVAL);
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
-        window.setInterval(fetchChart, 15000);
-        window.setInterval(fetchFlow, 15000);
         window.setInterval(fetchOptions, 30000);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
         window.setInterval(fetchFeeLeaders, 60000);
