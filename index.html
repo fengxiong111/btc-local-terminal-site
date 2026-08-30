@@ -1235,17 +1235,23 @@
             var index = finite(parts[2] && parts[2].result && parts[2].result.index_price);
             if (index === null) throw new Error("option index unavailable");
             var byName = {}; summaries.forEach(function (item) { if (item && item.instrument_name) byName[item.instrument_name] = item; });
-            var quotes = instruments.map(function (item) {
+            var allQuotes = instruments.map(function (item) {
               var summary = byName[item.instrument_name];
+              var type = String(item.option_type || "").toLowerCase();
               var strike = finite(item.strike); var expiry = finite(item.expiration_timestamp); var iv = finite(summary && summary.mark_iv); var bid = finite(summary && summary.bid_price); var ask = finite(summary && summary.ask_price);
-              if (!summary || String(item.option_type).toLowerCase() !== "put" || strike === null || expiry === null || iv === null || bid === null || ask === null || bid <= 0 || ask <= 0) return null;
-              var dte = Math.max(1, Math.ceil((expiry - Date.now()) / 86400000)); var ratio = strike / index;
-              if (dte > 120 || strike >= index || ratio < .65 || ratio > .98) return null;
-              var sigma = iv / 100; var root = sigma * Math.sqrt(dte / 365); var d1 = (Math.log(index / strike) + .5 * sigma * sigma * dte / 365) / root; var delta = normalCdf(d1) - 1; var bidUsd = bid * index; var yieldPct = bidUsd / strike * 365 / dte * 100;
-              return { expiry: new Date(expiry).toISOString().slice(0, 10), strike: strike, otm: (1 - ratio) * 100, bidUsd: bidUsd, yieldPct: yieldPct, delta: delta, iv: iv, dte: dte };
-            }).filter(function (item) { return item !== null; }).sort(function (left, right) { return left.expiry.localeCompare(right.expiry) || right.yieldPct - left.yieldPct; });
-            var atm = quotes.filter(function (item) { return item.dte >= 20 && item.dte <= 40; }).sort(function (left, right) { return Math.abs(left.strike - index) - Math.abs(right.strike - index); })[0];
-            renderOptions({ spot: index, atm: atm ? atm.iv : null, rr: null, vrp: atm && parts[3] !== null ? atm.iv - parts[3] : null, items: quotes.slice(0, 24) });
+              if (!summary || (type !== "put" && type !== "call") || strike === null || expiry === null || iv === null || bid === null || ask === null || bid <= 0 || ask <= 0) return null;
+              var dte = Math.max(1, Math.ceil((expiry - Date.now()) / 86400000)); var ratio = strike / index; var isPut = type === "put";
+              if (dte > 120 || (isPut ? ratio < .65 || ratio > .98 : ratio < 1.02 || ratio > 1.35)) return null;
+              var sigma = iv / 100; var root = sigma * Math.sqrt(dte / 365); var d1 = (Math.log(index / strike) + .5 * sigma * sigma * dte / 365) / root; var delta = isPut ? normalCdf(d1) - 1 : normalCdf(d1); var bidUsd = bid * index; var yieldPct = bidUsd / strike * 365 / dte * 100;
+              return { type: type, expiry: new Date(expiry).toISOString().slice(0, 10), strike: strike, otm: (isPut ? 1 - ratio : ratio - 1) * 100, bidUsd: bidUsd, yieldPct: yieldPct, delta: delta, iv: iv, dte: dte };
+            }).filter(function (item) { return item !== null; });
+            var puts = allQuotes.filter(function (item) { return item.type === "put"; }).sort(function (left, right) { return left.expiry.localeCompare(right.expiry) || right.yieldPct - left.yieldPct; });
+            var near = function (type, targetDelta, minDte, maxDte) { return allQuotes.filter(function (item) { return item.type === type && item.dte >= minDte && item.dte <= maxDte; }).sort(function (left, right) { return Math.abs(Math.abs(left.delta) - targetDelta) - Math.abs(Math.abs(right.delta) - targetDelta) || Math.abs(left.dte - 30) - Math.abs(right.dte - 30); })[0] || null; };
+            var atmPut = near("put", .5, 20, 40); var atmCall = near("call", .5, 20, 40); var rrPut = near("put", .25, 15, 40); var rrCall = near("call", .25, 15, 40);
+            var atmValues = [atmPut && atmPut.iv, atmCall && atmCall.iv].filter(function (value) { return value !== null && value !== undefined; });
+            var atm = atmValues.length > 0 ? atmValues.reduce(function (sum, value) { return sum + value; }, 0) / atmValues.length : null;
+            var rr = rrCall && rrPut ? rrCall.iv - rrPut.iv : null;
+            renderOptions({ spot: index, atm: atm, rr: rr, vrp: atm !== null && parts[3] !== null ? atm - parts[3] : null, items: puts.slice(0, 24) });
             writeCache();
           }).catch(function () {
             if (cachedState && cachedState.options) renderOptions(cachedState.options, true);
@@ -1281,8 +1287,6 @@
           fetchChart();
           fetchFlow();
           fetchOptions();
-          fetchBtcStats();
-          fetchEma200();
           fetchMacro();
           fetchFeeLeaders();
           fetchNews();
