@@ -185,101 +185,6 @@
         margin: 0 auto;
       }
 
-      .rankings {
-        display: block;
-        width: 100%;
-        min-width: 0;
-        margin: 0;
-        padding: 0;
-      }
-
-      .ranking-panel {
-        min-width: 0;
-        padding: 6px 4px 0;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-      }
-
-      .ranking-panel[hidden] { display: none; }
-
-      .ranking-groups {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .ranking-group { min-width: 0; }
-
-      .ranking-group-label {
-        display: block;
-        padding: 0 4px 6px;
-        color: var(--muted);
-        font-size: 10px;
-        font-weight: 750;
-        letter-spacing: 0.12em;
-      }
-
-      .ranking-list {
-        display: grid;
-        gap: 3px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-
-      .ranking-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-          "name value"
-          "source source";
-        align-items: center;
-        column-gap: 8px;
-        row-gap: 2px;
-        min-width: 0;
-        min-height: 34px;
-        padding: 4px 12px;
-        border-radius: 9px;
-        color: var(--ink);
-        font-size: 13px;
-        font-variant-numeric: tabular-nums;
-        transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
-      }
-
-      .ranking-row:hover { background: rgba(0, 0, 0, 0.025); }
-
-      .ranking-name {
-        grid-area: name;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .ranking-source {
-        grid-area: source;
-        justify-self: start;
-        color: var(--faint);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        white-space: nowrap;
-      }
-
-      .ranking-source-v2 { color: #816b4c; }
-      .ranking-source-v3 { color: #3d7084; }
-      .ranking-source-v4 { color: #806e8d; }
-
-      .ranking-value {
-        grid-area: value;
-        align-self: start;
-        padding-top: 2px;
-        color: var(--ink);
-        font-weight: 750;
-        text-align: right;
-      }
-
       .news {
         width: min(100%, 920px);
         margin: 32px auto 0;
@@ -331,11 +236,6 @@
         .chip-name { font-size: 12px; }
         .chip-price { font-size: 16px; }
         .chip-change { font-size: 14px; }
-        .rankings { width: 100%; }
-        .ranking-panel { padding-right: 4px; padding-left: 4px; }
-        .ranking-groups { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-        .ranking-list { grid-template-columns: minmax(0, 1fr); }
-        .ranking-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name value" "source source"; gap: 2px 6px; min-height: 34px; padding: 0 4px; font-size: 12px; }
         .news { margin-top: 20px; }
         .news-row { grid-template-columns: 50px minmax(0, 1fr); gap: 10px; padding: 11px 8px; }
         .news-headline { font-size: 16px; line-height: 1.45; }
@@ -373,9 +273,6 @@
       .public-topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px; min-height: 54px; margin-bottom: 18px; padding: 0 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(7, 17, 31, .84); box-shadow: 0 14px 34px rgba(0, 0, 0, .18); backdrop-filter: blur(18px); }
       .public-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
       .public-brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid rgba(240, 179, 92, .45); border-radius: 9px; color: #f0b35c; background: rgba(240, 179, 92, .1); font-size: 22px; line-height: 1; }
-      .public-nav { display: flex; align-items: center; gap: 4px; }
-      .public-nav a { padding: 8px 10px; border-radius: 7px; color: var(--faint); font-size: 11px; text-decoration: none; transition: color .18s ease, background-color .18s ease; }
-      .public-nav a:hover { color: var(--ink); background: rgba(169, 199, 245, .1); }
       .public-source { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--faint); font-family: monospace; font-size: 9px; letter-spacing: .08em; }
       .island { width: 100%; margin: 0; padding: 25px 32px 28px; align-items: flex-start; border-color: var(--line); border-radius: 16px; background: linear-gradient(145deg, rgba(20, 38, 64, .96), rgba(8, 18, 32, .9)); box-shadow: 0 18px 46px rgba(0, 0, 0, .18); text-align: left; }
       .island-topline { justify-content: flex-start; gap: 12px; }
@@ -400,7 +297,6 @@
       @media (max-width: 720px) {
         .page { padding: 14px 12px 24px; }
         .public-topbar { grid-template-columns: 1fr auto; gap: 10px; padding: 0 11px; }
-        .public-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding-bottom: 7px; border-top: 1px solid var(--line); }
         .public-source { grid-column: 2; grid-row: 1; }
         .island { padding: 20px 18px 22px; }
         .price { margin-top: 19px; font-size: clamp(58px, 17vw, 94px); }
@@ -428,11 +324,8 @@
       </section>
 
 
-      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情与链上手续费" hidden>
+      <section id="secondary-strip" class="secondary-strip" aria-label="关联行情" hidden>
         <section id="ticker" class="ticker" aria-label="关联行情"></section>
-        <section id="rankings" class="rankings" aria-label="Uniswap 手续费榜单" hidden>
-          <section id="fee-leaders" class="ranking-panel" aria-label="Uniswap 实物资产/USDC、普通币手续费榜前三" hidden></section>
-        </section>
       </section>
 
       <section id="news" class="news public-panel" aria-label="律动新闻"></section>
@@ -443,10 +336,8 @@
         "use strict";
 
         var CACHE_KEY = "btc-local-terminal-public-v6";
-        var UNISWAP_FEE_SNAPSHOT_URL = "./uniswap-fee.json";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
         var STALE_MS = 60 * 60 * 1000;
-        var UNISWAP_FEE_STALE_MS = 30 * 60 * 1000;
         var PRICE_INTERVAL = 500;
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
@@ -458,8 +349,6 @@
         var changeElement = document.getElementById("change");
         var secondaryStripElement = document.getElementById("secondary-strip");
         var tickerElement = document.getElementById("ticker");
-        var rankingsElement = document.getElementById("rankings");
-        var feeLeadersElement = document.getElementById("fee-leaders");
         var newsElement = document.getElementById("news");
         var connectionElement = document.getElementById("connection");
         var ema200Element = document.getElementById("ema200-value");
@@ -470,12 +359,10 @@
         var statsRequest = false;
         var macroRequest = false;
         var newsRequest = false;
-        var feeLeadersRequest = false;
         var emaRequest = false;
         var cachedState = readCache();
         var macroItemsById = {};
         var lastMacroMarkup = "";
-        var lastFeeLeadersMarkup = "";
         var HIP3_STOCK_DEX = "xyz";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
@@ -493,7 +380,6 @@
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120);
           if (cachedState.macro) renderMacro(cachedState.macro);
-          if (cachedState.uniswapFeeLeaders) renderFeeLeaders(cachedState.uniswapFeeLeaders);
           if (cachedState.news) renderNews(cachedState.news);
         }
 
@@ -582,7 +468,6 @@
               savedAt: Date.now(),
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
-              uniswapFeeLeaders: cachedState && cachedState.uniswapFeeLeaders,
               ema200: cachedState && cachedState.ema200,
               ma120: cachedState && cachedState.ma120,
               news: cachedState && cachedState.news
@@ -694,82 +579,10 @@
           updateSecondaryLayout();
         }
 
-        function escapeHtml(value) {
-          return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
-        }
-
-        function rankFeeRows(rows, limit) {
-          return (rows || []).slice().sort(function (left, right) {
-            return right.fee - left.fee || (Number(left.rank) || 0) - (Number(right.rank) || 0) || left.pair.localeCompare(right.pair);
-          }).slice(0, limit);
-        }
-
-        function updateRankingLayout() {
-          if (!rankingsElement) return;
-          rankingsElement.hidden = !feeLeadersElement || feeLeadersElement.hidden;
-          updateSecondaryLayout();
-        }
-
         function updateSecondaryLayout() {
           if (!secondaryStripElement) return;
           var hasTicker = Boolean(tickerElement && tickerElement.children.length > 0);
-          var hasRankings = Boolean(rankingsElement && !rankingsElement.hidden);
-          secondaryStripElement.hidden = !hasTicker && !hasRankings;
-        }
-
-        function normalizeUniswapFeeSnapshot(payload) {
-          if (!payload || payload.schemaVersion !== 1 || payload.source !== "uniswap-explore-stats") {
-            throw new Error("Uniswap fee snapshot unsupported");
-          }
-          var generatedAt = typeof payload.generatedAt === "string" ? payload.generatedAt : "";
-          if (!generatedAt || !isFinite(Date.parse(generatedAt))) throw new Error("Uniswap fee snapshot time invalid");
-          var allRows = Array.isArray(payload.rows) ? payload.rows.map(function (row) {
-            if (!row || ["V2", "V3", "V4"].indexOf(row.protocol) < 0) return null;
-            var fee = finite(row.fee24h);
-            var volume = finite(row.volume24h);
-            var feeRate = finite(row.feeRate);
-            if (typeof row.pair !== "string" || !row.pair.trim() || typeof row.chain !== "string" || !row.chain.trim() || typeof row.poolAddress !== "string" || !row.poolAddress.trim() || fee === null || fee <= 0 || volume === null || volume <= 0 || feeRate === null || feeRate <= 0) return null;
-            return { rank: finite(row.rank) || 0, protocol: row.protocol, chain: row.chain, pair: row.pair.trim(), fee: fee, poolAddress: row.poolAddress, volume: volume, feeRate: feeRate, isRwa: row.isRwa === true, isRwaUsdc: row.isRwaUsdc === true };
-          }).filter(Boolean) : [];
-          if (allRows.length === 0) throw new Error("Uniswap fee snapshot has no usable rows");
-          return {
-            generatedAt: generatedAt,
-            fetchedAt: Date.now(),
-            rows: rankFeeRows(allRows, 5),
-            rwaUsdcRows: rankFeeRows(allRows.filter(function (row) { return row.isRwaUsdc; }), 3),
-            coinRows: rankFeeRows(allRows.filter(function (row) { return !row.isRwa; }), 3),
-            stale: Date.now() - Date.parse(generatedAt) > UNISWAP_FEE_STALE_MS
-          };
-        }
-
-        function renderFeeLeaders(uniswapSnapshot) {
-          if (!feeLeadersElement) return;
-          var uniswapRwaRows = uniswapSnapshot && Array.isArray(uniswapSnapshot.rwaUsdcRows) ? uniswapSnapshot.rwaUsdcRows : [];
-          var uniswapCoinRows = uniswapSnapshot && Array.isArray(uniswapSnapshot.coinRows) ? uniswapSnapshot.coinRows : [];
-          if (uniswapRwaRows.length === 0 && uniswapCoinRows.length === 0) {
-            feeLeadersElement.innerHTML = "";
-            feeLeadersElement.hidden = true;
-            lastFeeLeadersMarkup = "";
-            updateRankingLayout();
-            return;
-          }
-          var renderRows = function (groupRows) {
-            return groupRows.map(function (row) {
-              return "<li class=\"ranking-row\"><span class=\"ranking-name\" title=\"" + escapeHtml(row.pair + " · " + row.protocol + " · " + row.chain) + "\">" + escapeHtml(row.pair) + "</span><span class=\"ranking-source ranking-source-" + row.protocol.toLowerCase() + "\">" + escapeHtml(row.protocol + " · " + row.chain) + "</span><span class=\"ranking-value\">" + numberText(row.fee, row.fee >= 1000 ? 0 : 2) + "</span></li>";
-            }).join("");
-          };
-          var markup = "<div class=\"ranking-groups\">";
-          if (uniswapRwaRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap 实物资产 USDC 股票映射代币费用前三\"><span class=\"ranking-group-label\">UNISWAP · 实物资产 / USDC</span><ul class=\"ranking-list\">" + renderRows(uniswapRwaRows) + "</ul></section>";
-          if (uniswapCoinRows.length > 0) markup += "<section class=\"ranking-group\" aria-label=\"Uniswap 普通代币费用前三\"><span class=\"ranking-group-label\">UNISWAP · 代币</span><ul class=\"ranking-list\">" + renderRows(uniswapCoinRows) + "</ul></section>";
-          markup += "</div>";
-          if (markup !== lastFeeLeadersMarkup) {
-            feeLeadersElement.innerHTML = markup;
-            lastFeeLeadersMarkup = markup;
-          }
-          feeLeadersElement.hidden = false;
-          cachedState = cachedState || {};
-          cachedState.uniswapFeeLeaders = uniswapSnapshot;
-          updateRankingLayout();
+          secondaryStripElement.hidden = !hasTicker;
         }
 
         function cleanTitle(value) {
@@ -928,26 +741,11 @@
           }).then(function () { newsRequest = false; });
         }
 
-        function fetchFeeLeaders() {
-          if (feeLeadersRequest) return;
-          feeLeadersRequest = true;
-          requestJson(UNISWAP_FEE_SNAPSHOT_URL + "?v=" + Date.now(), 9000)
-            .then(normalizeUniswapFeeSnapshot)
-            .catch(function () { return cachedState && cachedState.uniswapFeeLeaders ? Object.assign({}, cachedState.uniswapFeeLeaders, { stale: true }) : null; })
-            .then(function (snapshot) {
-              if (snapshot) {
-                renderFeeLeaders(snapshot);
-                writeCache();
-              }
-            }).then(function () { feeLeadersRequest = false; }, function () { feeLeadersRequest = false; });
-        }
-
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
           fetchEma200();
           fetchMacro();
-          fetchFeeLeaders();
           fetchNews();
         }
 
@@ -956,7 +754,6 @@
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
-        window.setInterval(fetchFeeLeaders, 60000);
         window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", refreshAll, { passive: true });
