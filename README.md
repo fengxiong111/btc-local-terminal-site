@@ -4,6 +4,8 @@
 
 - BTC：Binance 现货公开行情与日线 EMA200
 - HYPE：Hyperliquid 永续实时标记价格
+- PONS：Hyperliquid 永续实时标记价格
+- STONK：Solana 最高流动性池的 DexScreener 美元价格
 - SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` 股票永续公开行情；单个标的缺失时回退 Binance USDⓈ-M 行情
 - Uniswap 快照：仓库保留真实 ExploreStats 数据供本地工作区/API 回退使用，静态首页不展示榜单
 - 新闻：公开的律动 `feed.json`
