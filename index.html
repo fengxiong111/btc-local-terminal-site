@@ -335,7 +335,7 @@
       (function () {
         "use strict";
 
-        var CACHE_KEY = "btc-local-terminal-public-v6";
+        var CACHE_KEY = "btc-local-terminal-public-v7";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
         var STALE_MS = 60 * 60 * 1000;
         var PRICE_INTERVAL = 500;
@@ -364,8 +364,11 @@
         var macroItemsById = {};
         var lastMacroMarkup = "";
         var HIP3_STOCK_DEX = "xyz";
+        var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
+          { id: "pons", label: "PONS", source: "hyperliquid" },
+          { id: "stonk", label: "STONK", source: "dexscreener", address: STONK_SOLANA_ADDRESS },
           { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
@@ -694,16 +697,40 @@
           });
         }
 
+        function fetchDexScreenerMacro(definitions) {
+          return Promise.all(definitions.map(function (definition) {
+            return requestJson("https://api.dexscreener.com/latest/dex/tokens/" + definition.address, 3000).then(function (payload) {
+              var pairs = payload && Array.isArray(payload.pairs) ? payload.pairs : [];
+              pairs = pairs.filter(function (pair) {
+                return pair && pair.chainId === "solana" && pair.baseToken && pair.baseToken.address === definition.address && finite(pair.priceUsd) !== null;
+              }).sort(function (left, right) { return (right.liquidity && finite(right.liquidity.usd) || 0) - (left.liquidity && finite(left.liquidity.usd) || 0); });
+              var pair = pairs[0];
+              if (!pair) throw new Error(definition.label + " price unavailable");
+              return {
+                id: definition.id,
+                label: definition.label,
+                symbol: "DEXSCREENER:SOLANA:" + definition.address,
+                price: finite(pair.priceUsd),
+                change: pair.priceChange ? finite(pair.priceChange.h24) : null
+              };
+            }).catch(function () { return null; });
+          })).then(function (items) {
+            return items.filter(function (item) { return item !== null; });
+          });
+        }
+
         function fetchMacro() {
           if (macroRequest) return;
           macroRequest = true;
-          var hypeDefinitions = macroDefinitions.filter(function (definition) { return !definition.dex; });
+          var hypeDefinitions = macroDefinitions.filter(function (definition) { return definition.source === "hyperliquid" && !definition.dex; });
           var stockDefinitions = macroDefinitions.filter(function (definition) { return definition.dex === HIP3_STOCK_DEX; });
+          var dexDefinitions = macroDefinitions.filter(function (definition) { return definition.source === "dexscreener"; });
           Promise.all([
             fetchHyperliquidMacro(hypeDefinitions).catch(function () { return []; }),
-            fetchHyperliquidMacro(stockDefinitions, HIP3_STOCK_DEX).catch(function () { return []; })
+            fetchHyperliquidMacro(stockDefinitions, HIP3_STOCK_DEX).catch(function () { return []; }),
+            fetchDexScreenerMacro(dexDefinitions)
           ]).then(function (groups) {
-            var items = groups[0].concat(groups[1]);
+            var items = groups[0].concat(groups[1], groups[2]);
             if (items.length > 0) {
               renderMacro(items);
               writeCache();
