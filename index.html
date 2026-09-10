@@ -8,7 +8,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>市场</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap");
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("./fonts/JetBrainsMono-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 100 800;
+        font-display: swap;
+      }
 
       :root {
         color-scheme: light;
@@ -47,7 +53,7 @@
           radial-gradient(circle at 96% 10%, rgba(214, 229, 218, 0.54), transparent 34%),
           var(--bg);
         color: var(--text);
-        font-family: "Inter Tight", Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-family: "JetBrains Mono", "SFMono-Regular", "PingFang SC", "Microsoft YaHei", monospace;
         font-variant-numeric: tabular-nums;
         font-feature-settings: "tnum" 1, "lnum" 1;
         -webkit-font-smoothing: antialiased;
