@@ -25,7 +25,6 @@
         --down: #b6535c;
         --pending: #a4773c;
         --shadow-card: 0 16px 32px rgba(43, 61, 50, 0.09), 0 3px 8px rgba(43, 61, 50, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.88);
-        --shadow-button: 0 8px 16px rgba(43, 61, 50, 0.11), inset 0 6px 8px rgba(255, 255, 255, 0.78), inset 0 -1px 1px rgba(43, 61, 50, 0.05);
         --radius-card: 16px;
         --radius-large: 18px;
       }
@@ -84,30 +83,10 @@
           max(16px, calc(env(safe-area-inset-left) + 16px));
       }
 
-      .app-header {
-        display: flex;
-        min-height: 42px;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 16px;
-        padding-bottom: 0;
-      }
-
       .market-row,
       .market-ident,
-      .market-quote,
-      .news-meta,
-      .news-stream-row {
+      .market-quote {
         display: flex;
-      }
-
-      .circle-button {
-        display: grid;
-        width: 42px;
-        height: 42px;
-        flex: 0 0 42px;
-        place-items: center;
-        border-radius: 50%;
       }
 
       .market-source {
@@ -120,20 +99,6 @@
         text-transform: uppercase;
       }
 
-      .circle-button {
-        padding: 0;
-        border: 0;
-        color: var(--strong);
-        background: linear-gradient(145deg, #ffffff, #e7ede8);
-        box-shadow: var(--shadow-button);
-        cursor: pointer;
-        transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
-      }
-
-      .circle-button:hover { color: var(--up); }
-      .circle-button:active { transform: translateY(1px); box-shadow: 0 4px 8px rgba(43, 61, 50, 0.1), inset 0 3px 6px rgba(43, 61, 50, 0.06); }
-      .circle-button svg { width: 18px; height: 18px; }
-
       :focus-visible {
         outline: 2px solid var(--strong);
         outline-offset: 3px;
@@ -141,50 +106,15 @@
 
       .section { margin-top: 30px; }
 
-      .news-stack { min-width: 0; }
-
-      .news-card {
-        min-width: 0;
-        border-radius: var(--radius-card);
-        background: var(--surface);
-        box-shadow: var(--shadow-card);
-      }
-
-      .news-card a { display: block; text-decoration: none; }
-      .news-card a:focus-visible { border-radius: inherit; }
-      .news-card--lead { padding: 22px 20px 23px; border-radius: var(--radius-large); background: var(--surface-strong); }
-      .news-card--secondary { margin-top: 12px; padding: 17px 18px 18px; }
-      .news-meta {
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 16px;
-      }
-
-      .news-time { margin-left: auto; color: var(--muted); white-space: nowrap; }
-      .news-title { margin: 12px 0 0; color: var(--text); font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: -0.7px; overflow-wrap: anywhere; }
-      .news-card--secondary .news-title { margin-top: 9px; font-size: 19px; line-height: 24px; letter-spacing: -0.45px; }
-      .news-card a:hover .news-title { color: var(--up); }
-
       .news-section { margin-top: 30px; }
-      .news-group,
-      .news-stream { margin-top: 22px; }
-
-      .news-briefs { overflow: hidden; border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
-      .news-brief { display: block; padding: 15px 16px; text-decoration: none; }
-      .news-brief + .news-brief { border-top: 1px solid var(--track); }
-      .news-brief:hover,
-      .news-stream-row:hover { background: rgba(255, 255, 255, 0.36); }
-      .news-brief-title { margin: 0; color: var(--text); font-size: 14.5px; font-weight: 400; line-height: 18px; letter-spacing: 0.3px; overflow-wrap: anywhere; }
-      .news-brief-meta { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 15px; }
-
-      .news-stream { padding-bottom: 3px; }
-      .news-stream-row { align-items: baseline; gap: 14px; padding: 14px 2px; text-decoration: none; }
-      .news-stream-row + .news-stream-row { border-top: 1px solid var(--track); }
-      .news-stream-time { width: 82px; flex: 0 0 82px; color: var(--muted); font-size: 12px; line-height: 16px; white-space: nowrap; }
-      .news-stream-title { min-width: 0; color: var(--text); font-size: 14.5px; font-weight: 400; line-height: 18px; letter-spacing: 0.3px; overflow-wrap: anywhere; }
+      .news-stack { min-width: 0; overflow: hidden; border-radius: var(--radius-large); background: var(--surface); box-shadow: var(--shadow-card); }
+      .news-item { min-width: 0; }
+      .news-item + .news-item { border-top: 1px solid var(--track); }
+      .news-item a { display: block; padding: 17px 18px 16px; text-decoration: none; }
+      .news-item a:hover { background: rgba(255, 255, 255, 0.36); }
+      .news-item a:focus-visible { border-radius: inherit; }
+      .news-item-title { margin: 0; color: var(--text); font-size: 16px; font-weight: 500; line-height: 22px; letter-spacing: -0.12px; overflow-wrap: anywhere; }
+      .news-item-meta { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 16px; }
 
       .market-section { margin-top: 14px; }
       .market-list { display: grid; min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
@@ -202,14 +132,7 @@
 
       @media (max-width: 560px) {
         .page { padding-top: max(14px, calc(env(safe-area-inset-top) + 14px)); }
-        .app-header { min-height: 38px; }
         .section { margin-top: 25px; }
-        .news-card--lead { padding: 20px 17px 21px; }
-        .news-title { font-size: 22px; line-height: 28px; }
-        .news-card--secondary { padding: 16px 16px 17px; }
-        .news-brief { padding: 14px 14px; }
-        .news-stream-row { gap: 10px; padding: 13px 2px; }
-        .news-stream-time { width: 68px; flex-basis: 68px; font-size: 11px; }
         .market-section { margin-top: 10px; }
         .market-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
         .market-row { min-height: 76px; gap: 8px; padding: 12px; }
@@ -224,10 +147,7 @@
       @media (orientation: landscape) and (max-height: 620px) {
         .page { padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)); }
         .section { margin-top: 20px; }
-        .news-card--lead { padding-top: 17px; padding-bottom: 18px; }
-        .news-title { font-size: 19px; line-height: 24px; }
-        .news-card--secondary { margin-top: 9px; padding-top: 14px; padding-bottom: 15px; }
-        .news-group, .news-stream, .news-section, .market-section { margin-top: 18px; }
+        .news-section, .market-section { margin-top: 18px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -238,17 +158,6 @@
   <body>
     <a class="skip-link" href="#market">跳到公开行情</a>
     <main class="page">
-      <header class="app-header" aria-label="公开市场终端">
-        <button id="refresh" class="circle-button" type="button" aria-label="刷新公开行情与快讯">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M20 11a8 8 0 0 0-13.7-4.9L4 8.4" />
-            <path d="M4 4.5v3.9h3.9" />
-            <path d="M4 13a8 8 0 0 0 13.7 4.9l2.3-2.3" />
-            <path d="M20 19.5v-3.9h-3.9" />
-          </svg>
-        </button>
-      </header>
-
       <section id="market" class="section market-section" aria-label="公开行情">
         <div id="market-list" class="market-list" aria-live="polite"><p class="empty">正在读取公开行情…</p></div>
       </section>
@@ -273,7 +182,6 @@
         var EMA_CANDLE_LIMIT = 1000;
         var marketListElement = document.getElementById("market-list");
         var newsStackElement = document.getElementById("news-stack");
-        var refreshElement = document.getElementById("refresh");
         var priceRequest = false;
         var statsRequest = false;
         var macroRequest = false;
@@ -309,8 +217,6 @@
           if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.news) renderNews(cachedState.news);
         }
-
-        if (refreshElement) refreshElement.addEventListener("click", refreshAll);
 
         function finite(value) {
           if (value === null || value === undefined || value === "") return null;
@@ -444,6 +350,18 @@
           } catch (error) {
             return String(date.getMonth() + 1).padStart(2, "0") + "/" + String(date.getDate()).padStart(2, "0") + " " + formatClock(date);
           }
+        }
+
+        function formatNewsAge(date) {
+          if (!(date instanceof Date) || !isFinite(date.getTime())) return "";
+          var diff = Date.now() - date.getTime();
+          if (diff < 0 || diff > 30 * 24 * 60 * 60 * 1000) return formatNewsDate(date);
+          var minutes = Math.floor(diff / 60000);
+          if (minutes < 1) return "刚刚";
+          if (minutes < 60) return minutes + " 分钟前";
+          var hours = Math.floor(minutes / 60);
+          if (hours < 24) return hours + " 小时前";
+          return Math.floor(hours / 24) + " 天前";
         }
 
         function sourceLabel(symbol, fallback) {
@@ -621,59 +539,23 @@
           };
         }
 
-        function createNewsCard(item, kind) {
+        function createNewsItem(item) {
           var article = document.createElement("article");
-          article.className = "news-card news-card--" + kind;
+          article.className = "news-item";
           var link = document.createElement("a");
           link.href = item.url;
           link.target = "_blank";
           link.rel = "noreferrer";
-          var meta = document.createElement("div");
-          meta.className = "news-meta";
-          var time = document.createElement("time");
-          time.className = "news-time";
-          time.dateTime = item.date.toISOString();
-          time.textContent = formatNewsDate(item.date);
-          meta.append(time);
           var title = document.createElement("h3");
-          title.className = "news-title";
+          title.className = "news-item-title";
           title.textContent = item.title;
-          link.append(meta, title);
+          var time = document.createElement("time");
+          time.className = "news-item-meta";
+          time.dateTime = item.date.toISOString();
+          time.textContent = formatNewsAge(item.date);
+          link.append(title, time);
           article.append(link);
           return article;
-        }
-
-        function createBrief(item) {
-          var link = document.createElement("a");
-          link.className = "news-brief";
-          link.href = item.url;
-          link.target = "_blank";
-          link.rel = "noreferrer";
-          var title = document.createElement("h3");
-          title.className = "news-brief-title";
-          title.textContent = item.title;
-          var meta = document.createElement("span");
-          meta.className = "news-brief-meta";
-          meta.textContent = formatNewsDate(item.date);
-          link.append(title, meta);
-          return link;
-        }
-
-        function createStreamRow(item) {
-          var link = document.createElement("a");
-          link.className = "news-stream-row";
-          link.href = item.url;
-          link.target = "_blank";
-          link.rel = "noreferrer";
-          var time = document.createElement("time");
-          time.className = "news-stream-time";
-          time.dateTime = item.date.toISOString();
-          time.textContent = formatNewsDate(item.date);
-          var title = document.createElement("span");
-          title.className = "news-stream-title";
-          title.textContent = item.title;
-          link.append(time, title);
-          return link;
         }
 
         function renderNews(items) {
@@ -688,25 +570,7 @@
             empty.textContent = "暂无可用快讯";
             fragment.append(empty);
           } else {
-            if (validItems[0]) fragment.append(createNewsCard(validItems[0], "lead"));
-            if (validItems[1]) fragment.append(createNewsCard(validItems[1], "secondary"));
-            var briefs = validItems.slice(2, 5);
-            if (briefs.length) {
-              var group = document.createElement("section");
-              group.className = "news-group";
-              var briefList = document.createElement("div");
-              briefList.className = "news-briefs";
-              briefs.forEach(function (item) { briefList.append(createBrief(item)); });
-              group.append(briefList);
-              fragment.append(group);
-            }
-            var streamItems = validItems.slice(5);
-            if (streamItems.length) {
-              var stream = document.createElement("section");
-              stream.className = "news-stream";
-              streamItems.forEach(function (item) { stream.append(createStreamRow(item)); });
-              fragment.append(stream);
-            }
+            validItems.forEach(function (item) { fragment.append(createNewsItem(item)); });
           }
           replaceChildrenCompat(newsStackElement, fragment);
           cachedState = cachedState || {};
