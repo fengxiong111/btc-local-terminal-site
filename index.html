@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#eef2ee" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>今日市场 · 公开行情</title>
+    <title>市场</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap");
 
@@ -86,19 +86,13 @@
 
       .app-header {
         display: flex;
-        min-height: 52px;
+        min-height: 42px;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-end;
         gap: 16px;
-        padding-bottom: 17px;
-        border-bottom: 1px solid var(--track);
+        padding-bottom: 0;
       }
 
-      .brand-cluster,
-      .header-actions,
-      .sync-state,
-      .section-heading,
-      .section-heading-main,
       .market-row,
       .market-ident,
       .market-quote,
@@ -107,9 +101,6 @@
         display: flex;
       }
 
-      .brand-cluster { min-width: 0; align-items: center; gap: 12px; }
-
-      .brand-mark,
       .circle-button {
         display: grid;
         width: 42px;
@@ -119,19 +110,7 @@
         border-radius: 50%;
       }
 
-      .brand-mark {
-        color: var(--strong);
-        background: linear-gradient(145deg, #ffffff, #e8eee9);
-        box-shadow: var(--shadow-button);
-      }
-
-      .brand-mark svg { width: 21px; height: 21px; }
-
-      .eyebrow,
-      .section-kicker,
-      .news-label,
-      .market-source,
-      .footer-label {
+      .market-source {
         margin: 0;
         color: var(--muted);
         font-size: 11px;
@@ -139,51 +118,6 @@
         line-height: 14px;
         letter-spacing: 0.6px;
         text-transform: uppercase;
-      }
-
-      .app-title {
-        margin: 2px 0 0;
-        color: var(--text);
-        font-size: 22px;
-        font-weight: 600;
-        line-height: 28px;
-        letter-spacing: -0.7px;
-      }
-
-      .header-actions { align-items: center; gap: 12px; }
-
-      .sync-state {
-        min-width: 0;
-        align-items: center;
-        gap: 7px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 16px;
-        white-space: nowrap;
-      }
-
-      .connection-dot {
-        width: 8px;
-        height: 8px;
-        flex: 0 0 8px;
-        border-radius: 50%;
-        background: var(--soft);
-        box-shadow: 0 0 0 3px rgba(120, 132, 125, 0.12);
-      }
-
-      .connection-dot.live {
-        background: var(--up);
-        box-shadow: 0 0 0 3px rgba(20, 124, 91, 0.13);
-      }
-
-      .connection-dot.pending {
-        background: var(--pending);
-        box-shadow: 0 0 0 3px rgba(164, 119, 60, 0.13);
-      }
-
-      .connection-dot.offline {
-        background: var(--down);
-        box-shadow: 0 0 0 3px rgba(182, 83, 92, 0.13);
       }
 
       .circle-button {
@@ -207,17 +141,6 @@
 
       .section { margin-top: 30px; }
 
-      .section-heading {
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 14px;
-      }
-
-      .section-heading-main { min-width: 0; align-items: baseline; gap: 10px; }
-      .section-title { margin: 0; color: var(--text); font-size: 19px; font-weight: 600; line-height: 24px; letter-spacing: -0.45px; }
-      .section-meta { margin: 0; color: var(--soft); font-size: 12px; line-height: 16px; white-space: nowrap; }
-
       .news-stack { min-width: 0; }
 
       .news-card {
@@ -231,8 +154,6 @@
       .news-card a:focus-visible { border-radius: inherit; }
       .news-card--lead { padding: 22px 20px 23px; border-radius: var(--radius-large); background: var(--surface-strong); }
       .news-card--secondary { margin-top: 12px; padding: 17px 18px 18px; }
-      .news-label { color: var(--strong); }
-
       .news-meta {
         align-items: center;
         justify-content: space-between;
@@ -242,7 +163,7 @@
         line-height: 16px;
       }
 
-      .news-time { color: var(--muted); white-space: nowrap; }
+      .news-time { margin-left: auto; color: var(--muted); white-space: nowrap; }
       .news-title { margin: 12px 0 0; color: var(--text); font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: -0.7px; overflow-wrap: anywhere; }
       .news-card--secondary .news-title { margin-top: 9px; font-size: 19px; line-height: 24px; letter-spacing: -0.45px; }
       .news-card a:hover .news-title { color: var(--up); }
@@ -250,8 +171,6 @@
       .news-section { margin-top: 30px; }
       .news-group,
       .news-stream { margin-top: 22px; }
-
-      .subsection-label { margin: 0 0 9px 2px; color: var(--muted); font-size: 12px; font-weight: 600; line-height: 16px; letter-spacing: 0.6px; text-transform: uppercase; }
 
       .news-briefs { overflow: hidden; border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
       .news-brief { display: block; padding: 15px 16px; text-decoration: none; }
@@ -267,7 +186,7 @@
       .news-stream-time { width: 82px; flex: 0 0 82px; color: var(--muted); font-size: 12px; line-height: 16px; white-space: nowrap; }
       .news-stream-title { min-width: 0; color: var(--text); font-size: 14.5px; font-weight: 400; line-height: 18px; letter-spacing: 0.3px; overflow-wrap: anywhere; }
 
-      .market-section { margin-top: 28px; }
+      .market-section { margin-top: 14px; }
       .market-list { display: grid; min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
       .market-row { min-width: 0; min-height: 86px; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px; padding: 14px; border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
       .market-ident { min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 3px; }
@@ -279,31 +198,19 @@
       .market-change.up { color: var(--up); }
       .market-change.down { color: var(--down); }
 
-      .reference-panel { margin-top: 12px; padding: 15px 16px; border-radius: var(--radius-card); background: var(--surface-muted); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 4px 10px rgba(43, 61, 50, 0.04); }
-      .reference-label { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; line-height: 16px; letter-spacing: 0.6px; text-transform: uppercase; }
-      .reference-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; }
-      .reference-item { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 4px 0; color: var(--muted); font-size: 12px; line-height: 16px; }
-      .reference-item + .reference-item { padding-left: 16px; border-left: 1px solid var(--track); }
-      .reference-item strong { color: var(--strong); font-size: 14px; font-weight: 600; }
-
       .empty { padding: 22px 12px; color: var(--muted); font-size: 14.5px; line-height: 18px; text-align: center; }
-      .page-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--track); color: var(--soft); font-size: 12px; line-height: 16px; }
-      .page-footer p { margin: 0; }
 
       @media (max-width: 560px) {
         .page { padding-top: max(14px, calc(env(safe-area-inset-top) + 14px)); }
-        .app-header { padding-bottom: 15px; }
-        .sync-state { display: none; }
+        .app-header { min-height: 38px; }
         .section { margin-top: 25px; }
-        .section-heading { margin-bottom: 12px; }
-        .section-meta { font-size: 11px; }
         .news-card--lead { padding: 20px 17px 21px; }
         .news-title { font-size: 22px; line-height: 28px; }
         .news-card--secondary { padding: 16px 16px 17px; }
         .news-brief { padding: 14px 14px; }
         .news-stream-row { gap: 10px; padding: 13px 2px; }
         .news-stream-time { width: 68px; flex-basis: 68px; font-size: 11px; }
-        .market-section { margin-top: 22px; }
+        .market-section { margin-top: 10px; }
         .market-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
         .market-row { min-height: 76px; gap: 8px; padding: 12px; }
         .market-ident { min-width: 0; }
@@ -312,8 +219,6 @@
         .market-quote { gap: 6px; }
         .market-price { font-size: 15px; }
         .market-change { font-size: 12px; }
-        .reference-panel { padding: 14px; }
-        .reference-item + .reference-item { padding-left: 12px; }
       }
 
       @media (orientation: landscape) and (max-height: 620px) {
@@ -334,66 +239,23 @@
     <a class="skip-link" href="#market">跳到公开行情</a>
     <main class="page">
       <header class="app-header" aria-label="公开市场终端">
-        <div class="brand-cluster">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 16.5 8.2 12l3.2 2.9L19.5 7" />
-              <path d="M15.5 7h4v4" />
-            </svg>
-          </span>
-          <div>
-            <p class="eyebrow">PUBLIC MARKET</p>
-            <h1 class="app-title">今日市场</h1>
-          </div>
-        </div>
-        <div class="header-actions">
-          <div class="sync-state" aria-live="polite">
-            <i id="connection" class="connection-dot" aria-hidden="true"></i>
-            <span id="connection-label">等待更新</span>
-          </div>
-          <button id="refresh" class="circle-button" type="button" aria-label="刷新公开行情与快讯" title="刷新">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M20 11a8 8 0 0 0-13.7-4.9L4 8.4" />
-              <path d="M4 4.5v3.9h3.9" />
-              <path d="M4 13a8 8 0 0 0 13.7 4.9l2.3-2.3" />
-              <path d="M20 19.5v-3.9h-3.9" />
-            </svg>
-          </button>
-        </div>
+        <button id="refresh" class="circle-button" type="button" aria-label="刷新公开行情与快讯">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 11a8 8 0 0 0-13.7-4.9L4 8.4" />
+            <path d="M4 4.5v3.9h3.9" />
+            <path d="M4 13a8 8 0 0 0 13.7 4.9l2.3-2.3" />
+            <path d="M20 19.5v-3.9h-3.9" />
+          </svg>
+        </button>
       </header>
 
-      <section id="market" class="section market-section" aria-labelledby="market-title">
-        <div class="section-heading">
-          <div class="section-heading-main">
-            <p class="section-kicker">MARKET TAPE</p>
-            <h2 id="market-title" class="section-title">公开行情</h2>
-          </div>
-          <p id="market-updated" class="section-meta">等待数据</p>
-        </div>
+      <section id="market" class="section market-section" aria-label="公开行情">
         <div id="market-list" class="market-list" aria-live="polite"><p class="empty">正在读取公开行情…</p></div>
-        <div class="reference-panel" aria-label="BTC 趋势参考">
-          <p class="reference-label">BTC 趋势参考</p>
-          <div class="reference-values">
-            <div class="reference-item"><span>EMA200</span><strong id="ema200-value">—</strong></div>
-            <div class="reference-item"><span>MA120</span><strong id="ma120-value">—</strong></div>
-          </div>
-        </div>
       </section>
 
-      <section id="news" class="section news-section" aria-labelledby="news-title">
-        <div class="section-heading">
-          <div class="section-heading-main">
-            <p class="section-kicker">NEWSROOM</p>
-            <h2 id="news-title" class="section-title">市场快讯</h2>
-          </div>
-          <p id="news-updated" class="section-meta">等待数据</p>
-        </div>
+      <section id="news" class="section news-section" aria-label="市场快讯">
         <div id="news-stack" class="news-stack" aria-live="polite"><p class="empty">正在读取公开快讯…</p></div>
       </section>
-
-      <footer class="page-footer">
-        <p><span class="footer-label">PUBLIC SOURCES</span> · Binance · Hyperliquid · DexScreener · 律动快讯</p>
-      </footer>
     </main>
     <script>
       (function () {
@@ -411,13 +273,7 @@
         var EMA_CANDLE_LIMIT = 1000;
         var marketListElement = document.getElementById("market-list");
         var newsStackElement = document.getElementById("news-stack");
-        var newsUpdatedElement = document.getElementById("news-updated");
-        var marketUpdatedElement = document.getElementById("market-updated");
-        var connectionElement = document.getElementById("connection");
-        var connectionLabelElement = document.getElementById("connection-label");
         var refreshElement = document.getElementById("refresh");
-        var ema200Element = document.getElementById("ema200-value");
-        var ma120Element = document.getElementById("ma120-value");
         var priceRequest = false;
         var statsRequest = false;
         var macroRequest = false;
@@ -426,7 +282,6 @@
         var marketItemsById = {};
         var macroItemsById = {};
         var lastMarketMarkup = "";
-        var lastDataAt = null;
         var HIP3_STOCK_DEX = "xyz";
         var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
         var macroDefinitions = [
@@ -438,7 +293,10 @@
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
         ];
-        var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat(macroDefinitions);
+        var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat(macroDefinitions, [
+          { id: "ema200", label: "EMA200", source: "BTC daily" },
+          { id: "ma120", label: "MA120", source: "BTC daily" }
+        ]);
         var cachedState = readCache();
 
         if (/kindle|silk|kftt|kfot|kfjw|kfsowi|kfarwi|kfapwi|kfmawi/i.test(navigator.userAgent || "")) {
@@ -446,16 +304,16 @@
         }
 
         if (cachedState) {
-          if (cachedState.btc) renderBtc(cachedState.btc, true);
+          if (cachedState.btc) renderBtc(cachedState.btc);
           if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120);
-          if (cachedState.macro) renderMacro(cachedState.macro, true);
+          if (cachedState.macro) renderMacro(cachedState.macro);
           if (cachedState.news) renderNews(cachedState.news);
-          if (cachedState.btc || cachedState.macro || cachedState.news) setConnection("缓存数据", "pending");
         }
 
         if (refreshElement) refreshElement.addEventListener("click", refreshAll);
 
         function finite(value) {
+          if (value === null || value === undefined || value === "") return null;
           var number = Number(value);
           return isFinite(number) ? number : null;
         }
@@ -547,11 +405,6 @@
           } catch (error) {
             // Private browsing or a restricted Kindle browser may disable storage.
           }
-        }
-
-        function setConnection(label, state) {
-          if (connectionLabelElement) connectionLabelElement.textContent = label;
-          if (connectionElement) connectionElement.className = "connection-dot " + (state || "");
         }
 
         function formatClock(value) {
@@ -674,19 +527,19 @@
           replaceChildrenCompat(marketListElement, fragment);
         }
 
-        function markMarketUpdated() {
-          lastDataAt = new Date();
-          if (marketUpdatedElement) marketUpdatedElement.textContent = "更新 " + formatClock(lastDataAt);
-        }
-
         function renderEma200(value, ma120) {
           var ema = finite(value);
           var ma = finite(ma120);
-          if (ema !== null && ema200Element) ema200Element.textContent = numberText(ema, 0);
-          if (ma !== null && ma120Element) ma120Element.textContent = numberText(ma, 0);
           cachedState = cachedState || {};
-          if (ema !== null) cachedState.ema200 = ema;
-          if (ma !== null) cachedState.ma120 = ma;
+          if (ema !== null) {
+            cachedState.ema200 = ema;
+            marketItemsById.ema200 = { id: "ema200", label: "EMA200", source: "BTC daily", symbol: "BTC-1D", price: ema, change: null };
+          }
+          if (ma !== null) {
+            cachedState.ma120 = ma;
+            marketItemsById.ma120 = { id: "ma120", label: "MA120", source: "BTC daily", symbol: "BTC-1D", price: ma, change: null };
+          }
+          if (ema !== null || ma !== null) renderMarketBoard();
         }
 
         function fetchEma200() {
@@ -710,7 +563,7 @@
           }).then(function () { emaRequest = false; }, function () { emaRequest = false; });
         }
 
-        function renderBtc(btc, fromCache) {
+        function renderBtc(btc) {
           var previous = cachedState && cachedState.btc ? cachedState.btc : {};
           var nextBtc = Object.assign({}, previous, btc);
           var price = finite(btc.price);
@@ -723,14 +576,13 @@
               price: price,
               change: finite(btc.change)
             };
-            if (!fromCache) markMarketUpdated();
             renderMarketBoard();
           }
           cachedState = cachedState || {};
           cachedState.btc = nextBtc;
         }
 
-        function renderMacro(items, fromCache) {
+        function renderMacro(items) {
           (items || []).forEach(function (item) {
             if (!item || finite(item.price) === null) return;
             macroItemsById[item.id] = Object.assign({}, macroItemsById[item.id] || {}, item);
@@ -740,7 +592,6 @@
           cachedState = cachedState || {};
           cachedState.macro = validItems;
           if (validItems.length) {
-            if (!fromCache) markMarketUpdated();
             renderMarketBoard();
           }
         }
@@ -770,7 +621,7 @@
           };
         }
 
-        function createNewsCard(item, kind, label) {
+        function createNewsCard(item, kind) {
           var article = document.createElement("article");
           article.className = "news-card news-card--" + kind;
           var link = document.createElement("a");
@@ -779,14 +630,11 @@
           link.rel = "noreferrer";
           var meta = document.createElement("div");
           meta.className = "news-meta";
-          var tag = document.createElement("span");
-          tag.className = "news-label";
-          tag.textContent = label;
           var time = document.createElement("time");
           time.className = "news-time";
           time.dateTime = item.date.toISOString();
           time.textContent = formatNewsDate(item.date);
-          meta.append(tag, time);
+          meta.append(time);
           var title = document.createElement("h3");
           title.className = "news-title";
           title.textContent = item.title;
@@ -840,33 +688,25 @@
             empty.textContent = "暂无可用快讯";
             fragment.append(empty);
           } else {
-            if (validItems[0]) fragment.append(createNewsCard(validItems[0], "lead", "TOP STORY"));
-            if (validItems[1]) fragment.append(createNewsCard(validItems[1], "secondary", "NEXT"));
+            if (validItems[0]) fragment.append(createNewsCard(validItems[0], "lead"));
+            if (validItems[1]) fragment.append(createNewsCard(validItems[1], "secondary"));
             var briefs = validItems.slice(2, 5);
             if (briefs.length) {
               var group = document.createElement("section");
               group.className = "news-group";
-              var groupLabel = document.createElement("h3");
-              groupLabel.className = "subsection-label";
-              groupLabel.textContent = "BRIEFING";
               var briefList = document.createElement("div");
               briefList.className = "news-briefs";
               briefs.forEach(function (item) { briefList.append(createBrief(item)); });
-              group.append(groupLabel, briefList);
+              group.append(briefList);
               fragment.append(group);
             }
             var streamItems = validItems.slice(5);
             if (streamItems.length) {
               var stream = document.createElement("section");
               stream.className = "news-stream";
-              var streamLabel = document.createElement("h3");
-              streamLabel.className = "subsection-label";
-              streamLabel.textContent = "LATEST FLOW";
-              stream.append(streamLabel);
               streamItems.forEach(function (item) { stream.append(createStreamRow(item)); });
               fragment.append(stream);
             }
-            if (newsUpdatedElement) newsUpdatedElement.textContent = "最新 " + formatNewsDate(validItems[0].date);
           }
           replaceChildrenCompat(newsStackElement, fragment);
           cachedState = cachedState || {};
@@ -897,13 +737,11 @@
             var previous = cachedState && cachedState.btc ? cachedState.btc : {};
             var priceChanged = previous.price !== quote.price;
             renderBtc({ price: quote.price, change: previous.change });
-            setConnection("实时更新", "live");
             if (priceChanged) writeCache();
           }).catch(function () {
             if (cachedState && cachedState.btc) {
-              renderBtc(cachedState.btc, true);
-              setConnection("使用缓存", "pending");
-            } else setConnection("暂时离线", "offline");
+              renderBtc(cachedState.btc);
+            }
           }).then(function () { priceRequest = false; });
         }
 
@@ -915,7 +753,6 @@
             var change = finite(ticker.priceChangePercent);
             var changeChanged = cachedState.btc.change !== change;
             renderBtc({ price: cachedState.btc.price, change: change });
-            setConnection("实时更新", "live");
             if (changeChanged) writeCache();
           }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
         }
@@ -1002,7 +839,6 @@
             var items = groups[0].concat(groups[1], groups[2]);
             if (items.length > 0) {
               renderMacro(items);
-              setConnection("实时更新", "live");
               writeCache();
             }
             var available = {};
@@ -1012,7 +848,6 @@
           }).then(function (fallbackItems) {
             if (fallbackItems.length > 0) {
               renderMacro(fallbackItems);
-              setConnection("实时更新", "live");
               writeCache();
             }
           }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
@@ -1033,12 +868,10 @@
             var list = Array.isArray(items) ? items : (items && Array.isArray(items.items) ? items.items : []);
             list.sort(function (a, b) { return String(b.ts || b.time || "").localeCompare(String(a.ts || a.time || "")); });
             renderNews(list);
-            setConnection("实时更新", "live");
             writeCache();
           }).catch(function () {
             if (cachedState && cachedState.news) {
               renderNews(cachedState.news);
-              setConnection("使用缓存", "pending");
             }
           }).then(function () { newsRequest = false; });
         }
