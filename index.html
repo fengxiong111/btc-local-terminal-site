@@ -102,7 +102,7 @@
       .market-row[data-market-state="stale"] .market-stale-dot,
       .market-row[data-market-state="fallback"] .market-stale-dot { opacity: 0.9; }
       .market-source { display: none; }
-      .market-quote { width: 100%; min-width: 0; flex: 1 1 auto; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .market-quote { width: 100%; min-width: 0; flex: 1 1 auto; align-items: baseline; justify-content: flex-start; gap: clamp(18px, 1.6vw, 28px); }
       .market-price { display: inline-flex; min-width: 0; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; color: var(--text); font-size: clamp(28px, 2vw, 36px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
       .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; contain: paint; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
       .market-price .sep { display: inline-block; width: 0.22em; margin: 0 -0.04em; text-align: center; opacity: 0.86; }
@@ -115,10 +115,10 @@
 
       .market-row--btc { grid-column: 1 / -1; min-height: 0; gap: clamp(16px, 1.3vw, 22px); padding: clamp(22px, 1.6vw, 32px); background: var(--surface-strong); }
       .market-row--btc .market-symbol { font-size: clamp(16px, 1.15vw, 21px); }
-      .market-row--btc .market-quote { flex: 0 0 auto; gap: 18px; }
+      .market-row--btc .market-quote { flex: 0 0 auto; gap: clamp(24px, 2.2vw, 40px); }
       .market-row--btc .market-price { font-size: clamp(68px, 5vw, 96px); letter-spacing: -0.06em; }
       .market-row--btc .market-change { font-size: clamp(15px, 1.1vw, 20px); }
-      .btc-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 4vw, 72px); margin-top: 1px; padding-top: clamp(14px, 1.1vw, 20px); border-top: 1px solid rgba(120, 132, 125, 0.25); }
+      .btc-metrics { display: grid; width: min(100%, 620px); max-width: 620px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 2.4vw, 40px); margin-top: 1px; padding-top: clamp(14px, 1.1vw, 20px); border-top: 1px solid rgba(120, 132, 125, 0.25); }
       .btc-metric { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
       .btc-metric .market-symbol { color: var(--muted); font-size: clamp(13px, 0.95vw, 16px); letter-spacing: 0; }
       .btc-metric .market-price { font-size: clamp(28px, 2.1vw, 38px); letter-spacing: -0.045em; }
@@ -156,6 +156,10 @@
 
       @media (max-width: 1399px) and (min-width: 901px) {
         .market-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+
+      @media (min-width: 1400px) {
+        .market-list { max-width: 1520px; }
       }
 
       @media (max-width: 900px) and (min-width: 561px) {
@@ -349,13 +353,7 @@
         }
 
         function priceFraction(value) {
-          var price = finite(value);
-          if (price === null) return 2;
-          if (price >= 1000) return 0;
-          if (price >= 10) return 2;
-          if (price >= 1) return 3;
-          if (price >= 0.01) return 4;
-          return 6;
+          return 2;
         }
 
         function formatPriceText(value) {

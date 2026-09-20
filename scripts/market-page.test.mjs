@@ -50,13 +50,21 @@ test("Apple system typography and integrated hero hierarchy", () => {
   assert.match(html, /font-variant-numeric: tabular-nums/);
   assert.match(html, /font-feature-settings: "tnum" 1, "lnum" 1/);
   assert.match(html, /\.market-row--btc \{ grid-column: 1 \/ -1;/);
-  assert.match(html, /\.btc-metrics \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(html, /\.btc-metrics \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(html, /\.btc-metric \.market-price \{ font-size: clamp\(28px, 2\.1vw, 38px\)/);
   assert.match(html, /\.market-row--btc \.market-price \{ font-size: clamp\(68px, 5vw, 96px\)/);
   assert.match(html, /\.market-price \{.*font-size: clamp\(28px, 2vw, 36px\)/);
   assert.match(html, /function createBtcHeroRow\(/);
   assert.match(html, /metricRows\[item\.id\] = metric/);
   assert.match(html, /\.btc-metrics \{ grid-template-columns: 1fr;/);
+});
+
+test("desktop grouping and fixed two-decimal prices", () => {
+  assert.match(html, /\.market-quote \{[^}]*justify-content: flex-start;[^}]*gap: clamp\(18px, 1\.6vw, 28px\)/);
+  assert.match(html, /\.market-row--btc \.market-quote \{[^}]*gap: clamp\(24px, 2\.2vw, 40px\)/);
+  assert.match(html, /@media \(min-width: 1400px\) \{\s*\.market-list \{ max-width: 1520px; \}/);
+  assert.match(html, /\.btc-metrics \{[^}]*width: min\(100%, 620px\); max-width: 620px;/);
+  assert.match(html, /function priceFraction\(value\) \{\s*return 2;\s*\}/);
 });
 
 test("digit offset uses shortest path", () => {
