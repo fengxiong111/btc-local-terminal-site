@@ -585,8 +585,8 @@
 
           function setDisplayText(text, instant) {
             if (!text) return;
-            var reducedMotion = updateMotionDiagnostic();
-            if (instant || reducedMotion || !inited || text.length !== currentTemplate.length) {
+            updateMotionDiagnostic();
+            if (instant || !inited || text.length !== currentTemplate.length) {
               setAllInstant(text, instant ? "explicit" : "display-rebuild");
             } else if (text !== lastShown) {
               animateTo(text);
@@ -598,11 +598,13 @@
           }
 
           function refitCurrent() {
-            if (!inited || !lastShown) return;
+            if (!inited || !lastShown || diagnostics.testRunning) return;
             diagnostics.refitCount += 1;
             window.setTimeout(function () {
-              refreshCellHeight();
-              setAllInstant(lastShown, "refit");
+              var previousHeight = digitCellHeight;
+              var nextHeight = refreshCellHeight();
+              if (previousHeight && nextHeight && Math.abs(nextHeight - previousHeight) <= 0.5) return;
+              if (nextHeight) setAllInstant(lastShown, "real-size-change");
             }, 80);
           }
 

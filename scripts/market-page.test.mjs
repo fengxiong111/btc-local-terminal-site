@@ -77,6 +77,13 @@ test("btc-screen animation core is ported without extra execution layers", () =>
   assert.doesNotMatch(html, /animation\.finished/);
   assert.doesNotMatch(html, /runRafFallback|easingPoints|easingAt|cancelFallback|queueHeightRetry/);
   assert.match(html, /node\.style\.transform = "translate3d\(0, " \+ toY \+ "px, 0\)";\s*node\.animate\(/);
+  assert.match(html, /updateMotionDiagnostic\(\);\s*if \(instant \|\| !inited \|\| text\.length !== currentTemplate\.length\)/);
+  assert.doesNotMatch(html, /instant \|\| reducedMotion \|\| !inited/);
+  assert.match(html, /if \(!inited \|\| !lastShown \|\| diagnostics\.testRunning\) return;/);
+  assert.match(html, /var previousHeight = digitCellHeight;/);
+  assert.match(html, /var nextHeight = refreshCellHeight\(\);/);
+  assert.match(html, /Math\.abs\(nextHeight - previousHeight\) <= 0\.5/);
+  assert.match(html, /setAllInstant\(lastShown, "real-size-change"\)/);
   assert.match(html, /window\.__TEST_BTC_ODOMETER__ = testBtcOdometer/);
   assert.match(html, /diagnostics\.animateToCount \+= 1/);
   assert.match(html, /diagnostics\.setAllInstantCount \+= 1/);
