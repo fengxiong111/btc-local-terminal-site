@@ -9,10 +9,18 @@
     <title>市场</title>
     <style>
       @font-face {
-        font-family: "JetBrains Mono";
-        src: url("./fonts/JetBrainsMono-variable.woff2") format("woff2");
+        font-family: "IBM Plex Mono";
+        src: url("./fonts/IBMPlexMono-Regular.woff2") format("woff2");
         font-style: normal;
-        font-weight: 100 800;
+        font-weight: 400;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("./fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 600;
         font-display: swap;
       }
 
@@ -53,7 +61,7 @@
           radial-gradient(circle at 96% 10%, rgba(214, 229, 218, 0.54), transparent 34%),
           var(--bg);
         color: var(--text);
-        font-family: "JetBrains Mono", "SFMono-Regular", "PingFang SC", "Microsoft YaHei", monospace;
+        font-family: "IBM Plex Mono", "SFMono-Regular", "PingFang SC", "Microsoft YaHei", monospace;
         font-variant-numeric: tabular-nums;
         font-feature-settings: "tnum" 1, "lnum" 1;
         -webkit-font-smoothing: antialiased;
