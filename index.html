@@ -94,16 +94,6 @@
         display: flex;
       }
 
-      .market-source {
-        margin: 0;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 600;
-        line-height: 14px;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-      }
-
       :focus-visible {
         outline: 2px solid var(--strong);
         outline-offset: 3px;
@@ -111,43 +101,56 @@
 
       .market-section { margin-top: 0; }
       .market-list { display: grid; min-width: 0; max-width: 1680px; margin: 0 auto; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 0.8vw, 16px); }
-      .market-row { min-width: 0; min-height: clamp(104px, 7vw, 128px); flex-direction: column; align-items: stretch; justify-content: space-between; gap: 10px; padding: clamp(15px, 1.35vw, 24px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
-      .market-ident { min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 3px; }
-      .market-symbol { color: var(--strong); font-size: clamp(16px, 1.2vw, 20px); font-weight: 600; line-height: 1.25; letter-spacing: -0.35px; }
-      .market-source { overflow: hidden; color: var(--muted); font-size: clamp(10px, 0.68vw, 12px); font-weight: 500; letter-spacing: 0.3px; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
-      .market-row[data-market-state="stale"] .market-source { color: var(--pending); }
-      .market-quote { min-width: 0; align-items: baseline; justify-content: space-between; gap: 12px; }
-      .market-price { min-width: 0; color: var(--text); font-size: clamp(16px, 1.35vw, 22px); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; white-space: nowrap; }
-      .market-change { min-width: 0; color: var(--muted); font-size: clamp(12px, 0.95vw, 16px); line-height: 1.25; text-align: right; white-space: nowrap; }
+      .market-row { min-width: 0; min-height: clamp(92px, 6.4vw, 112px); flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px; padding: clamp(14px, 1.2vw, 22px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); overflow: hidden; }
+      .market-row[data-market-state="stale"],
+      .market-row[data-market-state="fallback"] { opacity: 0.84; }
+      .market-ident { min-width: 0; flex: 0 0 auto; flex-direction: row; align-items: center; gap: 7px; }
+      .market-symbol { color: var(--strong); font-size: clamp(16px, 1.2vw, 20px); font-weight: 600; line-height: 1.2; letter-spacing: -0.35px; }
+      .market-stale-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pending); opacity: 0; flex: 0 0 auto; }
+      .market-row[data-market-state="stale"] .market-stale-dot,
+      .market-row[data-market-state="fallback"] .market-stale-dot { opacity: 0.9; }
+      .market-source { display: none; }
+      .market-quote { min-width: 0; flex: 1 1 auto; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .market-price { display: inline-flex; min-width: 0; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; color: var(--text); font-size: clamp(28px, 1.45vw, 36px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
+      .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; contain: paint; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
+      .market-price .sep { display: inline-block; width: 0.22em; margin: 0 -0.04em; text-align: center; opacity: 0.86; }
+      .market-price .track { position: absolute; inset: 0; }
+      .market-price .digit__num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-right: 0.03em; box-sizing: border-box; will-change: transform; }
+      .market-change { min-width: 0; color: var(--muted); font-size: clamp(13px, 1vw, 18px); line-height: 1.2; text-align: right; white-space: nowrap; }
+      .market-change.is-empty { display: none; }
       .market-change.up { color: var(--up); }
       .market-change.down { color: var(--down); }
 
-      .market-row--btc { grid-column: span 3; min-height: clamp(188px, 14vw, 236px); padding: clamp(22px, 2vw, 36px); background: var(--surface-strong); }
+      .market-row--btc { grid-column: span 3; min-height: clamp(200px, 15vw, 260px); padding: clamp(22px, 2vw, 36px); background: var(--surface-strong); }
       .market-row--btc .market-symbol { font-size: clamp(19px, 1.45vw, 25px); }
-      .market-row--btc .market-source { font-size: clamp(10px, 0.75vw, 13px); }
       .market-row--btc .market-quote { gap: 18px; }
-      .market-row--btc .market-price { display: inline-flex; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; font-size: clamp(36px, 4.2vw, 70px); line-height: 1; letter-spacing: -0.06em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
-      .market-row--btc .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
-      .market-row--btc .market-price .sep { display: inline-block; width: 0.22em; margin: 0 -0.04em; text-align: center; opacity: 0.86; }
-      .market-row--btc .market-price .track { position: absolute; inset: 0; }
-      .market-row--btc .market-price .digit__num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-right: 0.03em; box-sizing: border-box; will-change: transform; }
-      .market-row--btc .market-change { font-size: clamp(16px, 1.25vw, 23px); }
+      .market-row--btc .market-price { font-size: clamp(60px, 3.8vw, 96px); letter-spacing: -0.06em; }
+      .market-row--btc .market-change { font-size: clamp(18px, 1.4vw, 26px); }
       .market-row--ema200,
       .market-row--ma120 { background: var(--surface-muted); }
       .market-row--ema200 .market-price,
-      .market-row--ma120 .market-price { font-size: clamp(18px, 1.5vw, 25px); }
+      .market-row--ma120 .market-price { font-size: clamp(28px, 1.6vw, 40px); }
 
       .empty { padding: 22px 12px; color: var(--muted); font-size: 14.5px; line-height: 18px; text-align: center; }
+
+      @media (max-width: 1024px) and (min-width: 561px) {
+        .market-price { font-size: clamp(24px, 3vw, 32px); }
+        .market-row--btc .market-price { font-size: clamp(48px, 6.5vw, 72px); }
+        .market-row--ema200 .market-price,
+        .market-row--ma120 .market-price { font-size: clamp(26px, 3.4vw, 36px); }
+      }
 
       @media (max-width: 560px) {
         .page { padding-top: max(14px, calc(env(safe-area-inset-top) + 14px)); }
         .market-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-        .market-row { min-height: 92px; gap: 8px; padding: 13px; }
-        .market-row--btc { grid-column: span 2; min-height: clamp(158px, 44vw, 190px); padding: 20px; }
-        .market-row--btc .market-price { font-size: clamp(32px, 10vw, 48px); }
-        .market-row--btc .market-change { font-size: clamp(14px, 4vw, 18px); }
+        .market-row { min-height: 84px; gap: 6px; padding: 12px; }
+        .market-price { font-size: clamp(20px, 5.6vw, 28px); }
+        .market-change { font-size: clamp(12px, 3.4vw, 16px); }
+        .market-row--btc { grid-column: span 2; min-height: clamp(168px, 46vw, 210px); padding: 18px; }
+        .market-row--btc .market-price { font-size: clamp(40px, 11vw, 56px); }
+        .market-row--btc .market-change { font-size: clamp(15px, 4.2vw, 20px); }
         .market-row--ema200 .market-price,
-        .market-row--ma120 .market-price { font-size: clamp(17px, 5vw, 22px); }
+        .market-row--ma120 .market-price { font-size: clamp(22px, 6vw, 30px); }
       }
 
       @media (orientation: landscape) and (max-height: 620px) {
@@ -188,40 +191,58 @@
 
         var CACHE_KEY = "btc-local-terminal-market-v1";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
-        var PRICE_INTERVAL = 500;
+        var BINANCE_WS_URL = "wss://stream.binance.com:9443/ws/btcusdt@bookTicker";
+        var OKX_WS_URL = "wss://ws.okx.com:8443/ws/v5/public";
+        var HYPERLIQUID_WS_URL = "wss://api.hyperliquid.xyz/ws";
+        var RENDER_MS = 350;
+        var REST_FALLBACK_MS = 2000;
+        var STONK_INTERVAL = 2000;
         var STATS_INTERVAL = 15000;
-        var MACRO_INTERVAL = 3000;
         var EMA_INTERVAL = 60000;
+        var BTC_STALE_MS = 4000;
+        var HL_STALE_MS = 8000;
+        var STONK_STALE_MS = 12000;
+        var EMA_STALE_MS = 180000;
         var EMA_PERIOD = 200;
         var EMA_CANDLE_LIMIT = 1000;
-        var marketListElement = document.getElementById("market-list");
-        var priceRequest = false;
-        var statsRequest = false;
-        var macroRequest = false;
-        var emaRequest = false;
-        var marketItemsById = {};
-        var macroItemsById = {};
-        var lastMarketStructure = null;
-        var marketRowsById = {};
-        var btcOdometer = null;
         var ANIM_MS = 450;
         var ANIM_EASE = "linear(0,.005,.019,.039,.066,.096,.129,.165,.202,.24,.278,.316,.354,.39,.426,.461,.494,.526,.557,.586,.614,.64,.665,.689,.711,.731,.751,.769,.786,.802,.817,.831,.844,.856,.867,.877,.887,.896,.904,.912,.919,.925,.931,.937,.942,.947,.951,.955,.959,.962,.965,.968,.971,.973,.976,.978,.98,.981,.983,.984,.986,.987,.988,.989,.99,.991,.992,.992,.993,.994,.994,.995,.995,.996,.996,.9963,.9967,.9969,.9972,.9975,.9977,.9979,.9981,.9982,.9984,.9985,.9987,.9988,.9989,1)";
         var HIP3_STOCK_DEX = "xyz";
         var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
+        var JUPITER_PRICE_URL = "https://lite-api.jup.ag/price/v3?ids=" + STONK_SOLANA_ADDRESS;
+        var marketListElement = document.getElementById("market-list");
+        var priceRequest = false;
+        var statsRequest = false;
+        var macroRequest = false;
+        var stonkRequest = false;
+        var emaRequest = false;
+        var marketItemsById = {};
+        var macroItemsById = {};
+        var priceBuffer = {};
+        var lastMarketStructure = null;
+        var marketRowsById = {};
+        var odometersById = {};
+        var renderTimer = 0;
+        var lastFlushAt = 0;
+        var lastCacheWriteAt = 0;
+        var btcPrimaryLive = false;
+        var btcLastWsAt = 0;
+        var hlPrimaryLive = false;
+        var hlLastWsAt = 0;
+        var cachedState = readCache();
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
           { id: "pons", label: "PONS", source: "hyperliquid" },
-          { id: "stonk", label: "STONK", source: "dexscreener", address: STONK_SOLANA_ADDRESS },
+          { id: "stonk", label: "STONK", source: "solana", address: STONK_SOLANA_ADDRESS },
           { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
-          { id: "ema200", label: "EMA200", source: "BTC daily" },
-          { id: "ma120", label: "MA120", source: "BTC daily" }
+          { id: "ema200", label: "EMA200", source: "btc-daily" },
+          { id: "ma120", label: "MA120", source: "btc-daily" }
         ], macroDefinitions);
-        var cachedState = readCache();
 
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
@@ -237,7 +258,7 @@
 
         function numberText(value, fraction) {
           var number = finite(value);
-          if (number === null) return "—";
+          if (number === null) return "";
           try {
             return new Intl.NumberFormat("en-US", {
               minimumFractionDigits: fraction,
@@ -250,7 +271,7 @@
 
         function pctText(value, fraction) {
           var number = finite(value);
-          if (number === null) return "—";
+          if (number === null) return "";
           var digits = typeof fraction === "number" ? fraction : 2;
           return (number >= 0 ? "+" : "") + number.toFixed(digits) + "%";
         }
@@ -323,12 +344,14 @@
           }
         }
 
-        function sourceLabel(symbol, fallback) {
+        function sourceMeta(symbol, fallback) {
           var value = typeof symbol === "string" ? symbol : "";
-          if (value.indexOf("HYPERLIQUID:") === 0) return "Hyperliquid";
-          if (value.indexOf("DEXSCREENER:") === 0) return "DexScreener · Solana";
-          if (value.indexOf("BINANCE:") === 0 || value.indexOf("BINANCE-") === 0) return "Binance";
-          return fallback || "公开数据";
+          if (value.indexOf("HYPERLIQUID:") === 0) return "hyperliquid";
+          if (value.indexOf("DEXSCREENER:") === 0) return "dexscreener";
+          if (value.indexOf("JUPITER:") === 0) return "jupiter";
+          if (value.indexOf("OKX:") === 0) return "okx";
+          if (value.indexOf("BINANCE:") === 0 || value.indexOf("BINANCE-") === 0) return "binance";
+          return fallback || "public";
         }
 
         function priceFraction(value) {
@@ -341,6 +364,16 @@
           return 6;
         }
 
+        function formatPriceText(value) {
+          var number = finite(value);
+          if (number === null) return "";
+          return numberText(number, priceFraction(number));
+        }
+
+        function priceTemplate(text) {
+          return String(text || "").replace(/[0-9]/g, "#");
+        }
+
         function normalizedChange(item) {
           if (!item) return null;
           return finite(item.change !== undefined ? item.change : item.change24h);
@@ -351,35 +384,36 @@
           element.appendChild(child);
         }
 
-        function createBtcOdometer(priceElement) {
+        function staleLimit(id) {
+          if (id === "btc") return BTC_STALE_MS;
+          if (id === "ema200" || id === "ma120") return EMA_STALE_MS;
+          if (id === "stonk") return STONK_STALE_MS;
+          return HL_STALE_MS;
+        }
+
+        function lookupMid(mids, label, dex) {
+          if (!mids) return null;
+          var keys = dex ? [dex + ":" + label, label, label + "USDT"] : [label];
+          for (var index = 0; index < keys.length; index += 1) {
+            var price = finite(mids[keys[index]]);
+            if (price !== null) return price;
+          }
+          return null;
+        }
+
+        function createPriceOdometer(element) {
           var currentTemplate = "";
           var lastShown = "";
           var inited = false;
           var digitCellHeight = 0;
-          var integerFormatter;
-          try {
-            integerFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-          } catch (error) {
-            integerFormatter = null;
-          }
 
-          function formatIntString(value) {
-            var number = finite(value);
-            if (number === null || number <= 0) return null;
-            try {
-              return integerFormatter ? integerFormatter.format(Math.round(number)) : String(Math.round(number));
-            } catch (error) {
-              return String(Math.round(number));
-            }
-          }
-
-          function cancelAnimations(element) {
-            if (!element || typeof element.getAnimations !== "function") return;
-            element.getAnimations().forEach(function (animation) { animation.cancel(); });
+          function cancelAnimations(node) {
+            if (!node || typeof node.getAnimations !== "function") return;
+            node.getAnimations().forEach(function (animation) { animation.cancel(); });
           }
 
           function buildOdometer(text) {
-            while (priceElement.firstChild) priceElement.removeChild(priceElement.firstChild);
+            while (element.firstChild) element.removeChild(element.firstChild);
             for (var index = 0; index < text.length; index += 1) {
               var character = text.charAt(index);
               if (character >= "0" && character <= "9") {
@@ -398,18 +432,18 @@
                 }
 
                 digit.appendChild(track);
-                priceElement.appendChild(digit);
+                element.appendChild(digit);
               } else {
                 var separator = document.createElement("span");
                 separator.className = "sep";
                 separator.textContent = character;
-                priceElement.appendChild(separator);
+                element.appendChild(separator);
               }
             }
           }
 
           function refreshCellHeight() {
-            var digit = priceElement.querySelector(".digit");
+            var digit = element.querySelector(".digit");
             if (digit) digitCellHeight = digit.getBoundingClientRect().height || digitCellHeight;
             return digitCellHeight;
           }
@@ -451,12 +485,12 @@
           }
 
           function setAllInstant(text) {
-            if (currentTemplate !== text || !priceElement.children.length) {
+            if (currentTemplate !== priceTemplate(text) || !element.children.length) {
               buildOdometer(text);
               refreshCellHeight();
             }
 
-            var nodes = priceElement.children;
+            var nodes = element.children;
             var index = 0;
             for (var characterIndex = 0; characterIndex < text.length; characterIndex += 1) {
               var character = text.charAt(characterIndex);
@@ -470,18 +504,18 @@
               }
             }
 
-            currentTemplate = text;
+            currentTemplate = priceTemplate(text);
             lastShown = text;
             inited = true;
           }
 
           function animateTo(text) {
-            if (!inited || text.length !== currentTemplate.length) {
+            if (!inited || priceTemplate(text) !== currentTemplate) {
               setAllInstant(text);
               return;
             }
 
-            var nodes = priceElement.children;
+            var nodes = element.children;
             var index = 0;
             for (var characterIndex = 0; characterIndex < text.length; characterIndex += 1) {
               var character = text.charAt(characterIndex);
@@ -498,15 +532,15 @@
               }
             }
 
-            currentTemplate = text;
+            currentTemplate = priceTemplate(text);
             lastShown = text;
           }
 
-          function setBtcPrice(value, instant) {
-            var text = formatIntString(value);
+          function setPrice(value, instant) {
+            var text = formatPriceText(value);
             if (!text) return;
             var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            if (instant || reducedMotion || !inited || text.length !== currentTemplate.length) {
+            if (instant || reducedMotion || !inited || priceTemplate(text) !== currentTemplate) {
               setAllInstant(text);
             } else if (text !== lastShown) {
               animateTo(text);
@@ -519,7 +553,7 @@
             setAllInstant(lastShown);
           }
 
-          return { setBtcPrice: setBtcPrice, refitCurrent: refitCurrent };
+          return { setPrice: setPrice, refitCurrent: refitCurrent };
         }
 
         function createMarketRow(item) {
@@ -530,20 +564,28 @@
           ident.className = "market-ident";
           var symbol = document.createElement("strong");
           symbol.className = "market-symbol";
-          var source = document.createElement("span");
-          source.className = "market-source";
-          ident.append(symbol, source);
+          var staleDot = document.createElement("span");
+          staleDot.className = "market-stale-dot";
+          staleDot.setAttribute("aria-hidden", "true");
+          ident.append(symbol, staleDot);
 
           var quote = document.createElement("div");
           quote.className = "market-quote";
           var priceElement = document.createElement("span");
-          priceElement.className = "market-price" + (item.id === "btc" ? " odometer" : "");
+          priceElement.className = "market-price";
           var changeElement = document.createElement("span");
-          changeElement.className = "market-change";
+          changeElement.className = "market-change is-empty";
           quote.append(priceElement, changeElement);
           row.append(ident, quote);
-          row._marketRefs = { symbol: symbol, source: source, price: priceElement, change: changeElement };
+          row._marketRefs = { symbol: symbol, price: priceElement, change: changeElement };
           return row;
+        }
+
+        function rowState(item) {
+          if (!item) return "live";
+          if (item.status === "FALLBACK") return "fallback";
+          if (item.status === "STALE" || item.stale) return "stale";
+          return "live";
         }
 
         function updateMarketRow(item, row) {
@@ -551,22 +593,92 @@
           var refs = row._marketRefs;
           var price = finite(item.price);
           var change = normalizedChange(item);
+          var state = rowState(item);
           row.className = "market-row market-row--" + item.id;
           row.setAttribute("data-market-id", item.id);
-          row.setAttribute("data-market-state", item.stale ? "stale" : "live");
+          row.setAttribute("data-market-state", state);
+          row.setAttribute("data-source", item.source || "");
+          row.setAttribute("data-provider", item.provider || sourceMeta(item.symbol, item.source));
+          row.setAttribute("data-status", item.status || (item.stale ? "STALE" : "LIVE"));
+          if (item.lastUpdateAt) row.setAttribute("data-updated-at", String(item.lastUpdateAt));
           refs.symbol.textContent = item.label || item.id.toUpperCase();
-          refs.source.textContent = sourceLabel(item.symbol, item.source) + (item.stale ? " · 缓存" : "");
 
-          if (item.id === "btc") {
-            if (!btcOdometer) btcOdometer = createBtcOdometer(refs.price);
-            btcOdometer.setBtcPrice(price, false);
-          } else {
-            refs.price.textContent = numberText(price, priceFraction(price));
-          }
+          if (!odometersById[item.id]) odometersById[item.id] = createPriceOdometer(refs.price);
+          odometersById[item.id].setPrice(price, false);
 
           refs.change.className = "market-change";
-          refs.change.textContent = change === null ? "—" : pctText(change);
-          if (change !== null) refs.change.classList.add(change >= 0 ? "up" : "down");
+          if (change === null) {
+            refs.change.textContent = "";
+            refs.change.classList.add("is-empty");
+          } else {
+            refs.change.textContent = pctText(change);
+            refs.change.classList.add(change >= 0 ? "up" : "down");
+          }
+        }
+
+        function ingestQuote(id, quote) {
+          if (!id || !quote) return;
+          var previous = priceBuffer[id] || marketItemsById[id] || {};
+          var next = Object.assign({}, previous, quote, { id: id });
+          if (quote.price !== undefined && finite(quote.price) !== null) next.lastUpdateAt = Date.now();
+          else if (!next.lastUpdateAt) next.lastUpdateAt = Date.now();
+          if (!next.status) next.status = next.stale ? "STALE" : "LIVE";
+          if (next.status === "LIVE") next.stale = false;
+          if (next.status === "STALE" || next.status === "FALLBACK") next.stale = true;
+          priceBuffer[id] = next;
+          scheduleFlush();
+        }
+
+        function scheduleFlush() {
+          if (renderTimer) return;
+          var wait = Math.max(0, RENDER_MS - (Date.now() - lastFlushAt));
+          renderTimer = window.setTimeout(flushQuotes, wait);
+        }
+
+        function persistCachedState() {
+          cachedState = cachedState || {};
+          if (marketItemsById.btc) {
+            cachedState.btc = Object.assign({}, cachedState.btc || {}, {
+              price: marketItemsById.btc.price,
+              change: marketItemsById.btc.change
+            });
+          }
+          if (marketItemsById.ema200) cachedState.ema200 = marketItemsById.ema200.price;
+          if (marketItemsById.ma120) cachedState.ma120 = marketItemsById.ma120.price;
+          cachedState.macro = macroDefinitions.map(function (definition) {
+            return marketItemsById[definition.id];
+          }).filter(function (item) {
+            return item && finite(item.price) !== null;
+          });
+        }
+
+        function markStaleAssets() {
+          var now = Date.now();
+          Object.keys(marketItemsById).forEach(function (id) {
+            var item = marketItemsById[id];
+            if (!item || !item.lastUpdateAt || item.status === "FALLBACK") return;
+            if (now - item.lastUpdateAt > staleLimit(id) && item.status === "LIVE") {
+              item.status = "STALE";
+              item.stale = true;
+            }
+          });
+        }
+
+        function flushQuotes() {
+          renderTimer = 0;
+          lastFlushAt = Date.now();
+          Object.keys(priceBuffer).forEach(function (id) {
+            var item = priceBuffer[id];
+            marketItemsById[id] = item;
+            if (id !== "btc" && id !== "ema200" && id !== "ma120") macroItemsById[id] = item;
+          });
+          markStaleAssets();
+          persistCachedState();
+          renderMarketBoard();
+          if (Date.now() - lastCacheWriteAt > 2000) {
+            lastCacheWriteAt = Date.now();
+            writeCache();
+          }
         }
 
         function renderMarketBoard() {
@@ -584,18 +696,16 @@
               replaceChildrenCompat(marketListElement, empty);
               lastMarketStructure = "empty";
               marketRowsById = {};
-              btcOdometer = null;
+              odometersById = {};
             }
             return;
           }
 
-          var marketStructure = validItems.map(function (item) {
-            return [item.id, item.label, item.source, item.symbol, item.stale ? "stale" : "live"].join(":");
-          }).join("|");
+          var marketStructure = validItems.map(function (item) { return item.id; }).join("|");
           if (marketStructure !== lastMarketStructure) {
             lastMarketStructure = marketStructure;
             marketRowsById = {};
-            btcOdometer = null;
+            odometersById = {};
             var fragment = document.createDocumentFragment();
             validItems.forEach(function (item) {
               var row = createMarketRow(item);
@@ -614,16 +724,30 @@
           var ema = finite(value);
           var ma = finite(ma120);
           var stale = Boolean(isStale);
-          cachedState = cachedState || {};
           if (ema !== null) {
-            cachedState.ema200 = ema;
-            marketItemsById.ema200 = { id: "ema200", label: "EMA200", source: "BTC daily", symbol: "BTC-1D", price: ema, change: null, stale: stale };
+            ingestQuote("ema200", {
+              label: "EMA200",
+              source: "btc-daily",
+              provider: "binance-klines",
+              symbol: "BTC-1D",
+              price: ema,
+              change: null,
+              status: stale ? "STALE" : "LIVE",
+              stale: stale
+            });
           }
           if (ma !== null) {
-            cachedState.ma120 = ma;
-            marketItemsById.ma120 = { id: "ma120", label: "MA120", source: "BTC daily", symbol: "BTC-1D", price: ma, change: null, stale: stale };
+            ingestQuote("ma120", {
+              label: "MA120",
+              source: "btc-daily",
+              provider: "binance-klines",
+              symbol: "BTC-1D",
+              price: ma,
+              change: null,
+              status: stale ? "STALE" : "LIVE",
+              stale: stale
+            });
           }
-          if (ema !== null || ma !== null) renderMarketBoard();
         }
 
         function fetchEma200() {
@@ -641,64 +765,214 @@
             var maSum = 0;
             for (var maIndex = maStart; maIndex < closes.length; maIndex += 1) maSum += closes[maIndex];
             renderEma200(ema, maSum / 120, false);
-            writeCache();
           }).catch(function () {
             if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120, true);
           }).then(function () { emaRequest = false; }, function () { emaRequest = false; });
         }
 
         function renderBtc(btc, isStale) {
-          var previous = cachedState && cachedState.btc ? cachedState.btc : {};
-          var nextBtc = Object.assign({}, previous, btc);
-          var stale = typeof isStale === "boolean" ? isStale : Boolean(marketItemsById.btc && marketItemsById.btc.stale);
-          var price = finite(btc.price);
-          if (price !== null) {
-            marketItemsById.btc = {
-              id: "btc",
-              label: "BTC",
-              source: "binance",
-              symbol: "BINANCE:BTCUSDT",
-              price: price,
-              change: finite(btc.change),
-              stale: stale
-            };
-            renderMarketBoard();
-          }
-          cachedState = cachedState || {};
-          cachedState.btc = nextBtc;
+          var price = finite(btc && btc.price);
+          var change = finite(btc && btc.change);
+          if (price === null && !(cachedState && cachedState.btc)) return;
+          ingestQuote("btc", {
+            label: "BTC",
+            source: (btc && btc.source) || "binance",
+            provider: (btc && btc.provider) || "binance-spot",
+            symbol: (btc && btc.symbol) || "BINANCE:BTCUSDT",
+            price: price !== null ? price : cachedState.btc.price,
+            change: change !== null ? change : (cachedState && cachedState.btc ? cachedState.btc.change : null),
+            status: isStale ? "STALE" : ((btc && btc.status) || "LIVE"),
+            stale: Boolean(isStale)
+          });
         }
 
         function renderMacro(items, isStale) {
-          var hasStaleOverride = typeof isStale === "boolean";
           (items || []).forEach(function (item) {
             if (!item || finite(item.price) === null) return;
-            var nextItem = Object.assign({}, macroItemsById[item.id] || {}, item);
-            if (hasStaleOverride) nextItem.stale = isStale;
-            macroItemsById[item.id] = nextItem;
-            marketItemsById[item.id] = macroItemsById[item.id];
+            ingestQuote(item.id, Object.assign({}, item, {
+              status: isStale ? "STALE" : (item.status || "LIVE"),
+              stale: Boolean(isStale)
+            }));
           });
-          var validItems = macroDefinitions.map(function (definition) { return macroItemsById[definition.id]; }).filter(function (item) { return item && finite(item.price) !== null; });
-          cachedState = cachedState || {};
-          cachedState.macro = validItems;
-          if (validItems.length) {
-            renderMarketBoard();
-          }
         }
 
-        function refitBtcPrice() {
-          if (!btcOdometer) return;
+        function refitAllPrices() {
           window.setTimeout(function () {
-            if (btcOdometer) btcOdometer.refitCurrent();
+            Object.keys(odometersById).forEach(function (id) {
+              if (odometersById[id]) odometersById[id].refitCurrent();
+            });
           }, 80);
         }
 
+        function connectSocket(url, handlers) {
+          var socket = null;
+          var stopped = false;
+          var attempt = 0;
+          var pingTimer = 0;
+          var retryTimer = 0;
+
+          function clearPing() {
+            if (pingTimer) {
+              window.clearInterval(pingTimer);
+              pingTimer = 0;
+            }
+          }
+
+          function open() {
+            if (stopped) return;
+            try {
+              socket = new WebSocket(url);
+            } catch (error) {
+              retry();
+              return;
+            }
+            socket.onopen = function () {
+              attempt = 0;
+              if (handlers.onOpen) handlers.onOpen(socket);
+              if (handlers.ping) {
+                pingTimer = window.setInterval(function () {
+                  if (socket && socket.readyState === 1) handlers.ping(socket);
+                }, handlers.pingMs || 20000);
+              }
+            };
+            socket.onmessage = function (event) {
+              if (handlers.onMessage) handlers.onMessage(event.data);
+            };
+            socket.onclose = function () {
+              clearPing();
+              if (handlers.onDisconnect) handlers.onDisconnect();
+              retry();
+            };
+            socket.onerror = function () {
+              try { socket.close(); } catch (error) {}
+            };
+          }
+
+          function retry() {
+            if (stopped) return;
+            var delay = Math.min(15000, 500 * Math.pow(2, attempt));
+            attempt += 1;
+            retryTimer = window.setTimeout(open, delay);
+          }
+
+          open();
+          return {
+            close: function () {
+              stopped = true;
+              window.clearTimeout(retryTimer);
+              clearPing();
+              try { if (socket) socket.close(); } catch (error) {}
+            }
+          };
+        }
+
+        function startBtcSockets() {
+          connectSocket(BINANCE_WS_URL, {
+            onMessage: function (raw) {
+              var message;
+              try { message = JSON.parse(raw); } catch (error) { return; }
+              var bid = finite(message && message.b);
+              var ask = finite(message && message.a);
+              var price = bid !== null && ask !== null ? (bid + ask) / 2 : finite(message && message.p);
+              if (price === null) return;
+              btcPrimaryLive = true;
+              btcLastWsAt = Date.now();
+              ingestQuote("btc", {
+                label: "BTC",
+                source: "binance",
+                provider: "binance-spot-ws",
+                symbol: "BINANCE:BTCUSDT",
+                price: price,
+                status: "LIVE",
+                stale: false
+              });
+            },
+            onDisconnect: function () {
+              btcPrimaryLive = false;
+              fetchBtc();
+            }
+          });
+
+          connectSocket(OKX_WS_URL, {
+            onOpen: function (socket) {
+              socket.send(JSON.stringify({ op: "subscribe", args: [{ channel: "tickers", instId: "BTC-USDT" }] }));
+            },
+            ping: function (socket) { socket.send("ping"); },
+            pingMs: 20000,
+            onMessage: function (raw) {
+              if (raw === "pong") return;
+              if (btcPrimaryLive) return;
+              var message;
+              try { message = JSON.parse(raw); } catch (error) { return; }
+              var ticker = message && message.data && message.data[0];
+              var price = finite(ticker && ticker.last);
+              if (price === null) return;
+              ingestQuote("btc", {
+                label: "BTC",
+                source: "okx",
+                provider: "okx-spot-ws",
+                symbol: "OKX:BTC-USDT",
+                price: price,
+                status: "FALLBACK",
+                stale: false
+              });
+            }
+          });
+        }
+
+        function applyHyperliquidMids(mids, dex) {
+          if (!mids) return;
+          var targets = dex ? macroDefinitions.filter(function (item) { return item.dex === dex; }) : macroDefinitions.filter(function (item) { return item.source === "hyperliquid" && !item.dex; });
+          targets.forEach(function (definition) {
+            var price = lookupMid(mids, definition.label, dex);
+            if (price === null) return;
+            ingestQuote(definition.id, {
+              label: definition.label,
+              source: "hyperliquid",
+              provider: dex ? "hyperliquid-xyz-ws" : "hyperliquid-ws",
+              symbol: "HYPERLIQUID:" + (dex ? dex + ":" : "") + definition.label,
+              price: price,
+              status: "LIVE",
+              stale: false
+            });
+          });
+        }
+
+        function startHyperliquidSocket() {
+          connectSocket(HYPERLIQUID_WS_URL, {
+            onOpen: function (socket) {
+              socket.send(JSON.stringify({ method: "subscribe", subscription: { type: "allMids" } }));
+              socket.send(JSON.stringify({ method: "subscribe", subscription: { type: "allMids", dex: HIP3_STOCK_DEX } }));
+            },
+            ping: function (socket) { socket.send(JSON.stringify({ method: "ping" })); },
+            pingMs: 20000,
+            onMessage: function (raw) {
+              var message;
+              try { message = JSON.parse(raw); } catch (error) { return; }
+              if (!message || message.channel !== "allMids" || !message.data) return;
+              var mids = message.data.mids || message.data;
+              hlPrimaryLive = true;
+              hlLastWsAt = Date.now();
+              if (message.data.dex === HIP3_STOCK_DEX) applyHyperliquidMids(mids, HIP3_STOCK_DEX);
+              else {
+                applyHyperliquidMids(mids);
+                if (lookupMid(mids, "SPCX", HIP3_STOCK_DEX) !== null) applyHyperliquidMids(mids, HIP3_STOCK_DEX);
+              }
+            },
+            onDisconnect: function () {
+              hlPrimaryLive = false;
+              fetchHyperliquidMacroAll(false);
+            }
+          });
+        }
+
         function fetchBtc() {
-          if (priceRequest) return;
+          if (btcPrimaryLive || priceRequest) return;
           priceRequest = true;
           var fallback = requestJson("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", 2500).then(function (ticker) {
             var price = finite(ticker.price);
             if (price === null) throw new Error("Binance BTC price unavailable");
-            return { price: price };
+            return { price: price, source: "binance", provider: "binance-spot-rest", symbol: "BINANCE:BTCUSDT" };
           }).catch(function () {
             return requestJson(HYPERLIQUID_INFO_URL, 2500, {
               method: "POST",
@@ -707,18 +981,21 @@
             }).then(function (mids) {
               var price = finite(mids && mids.BTC);
               if (price === null) throw new Error("Hyperliquid BTC price unavailable");
-              return { price: price };
+              return { price: price, source: "hyperliquid", provider: "hyperliquid-rest", symbol: "HYPERLIQUID:BTC" };
             });
           });
           fallback.then(function (quote) {
-            var previous = cachedState && cachedState.btc ? cachedState.btc : {};
-            var priceChanged = previous.price !== quote.price;
-            renderBtc({ price: quote.price, change: previous.change }, false);
-            if (priceChanged) writeCache();
+            ingestQuote("btc", {
+              label: "BTC",
+              source: quote.source,
+              provider: quote.provider,
+              symbol: quote.symbol,
+              price: quote.price,
+              status: "FALLBACK",
+              stale: false
+            });
           }).catch(function () {
-            if (cachedState && cachedState.btc) {
-              renderBtc(cachedState.btc, true);
-            }
+            if (cachedState && cachedState.btc) renderBtc(cachedState.btc, true);
           }).then(function () { priceRequest = false; });
         }
 
@@ -726,11 +1003,9 @@
           if (statsRequest) return;
           statsRequest = true;
           requestJson("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", 3000).then(function (ticker) {
-            if (!cachedState || !cachedState.btc) return;
             var change = finite(ticker.priceChangePercent);
-            var changeChanged = cachedState.btc.change !== change;
-            renderBtc({ price: cachedState.btc.price, change: change });
-            if (changeChanged) writeCache();
+            if (change === null) return;
+            ingestQuote("btc", { change: change });
           }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
         }
 
@@ -759,6 +1034,8 @@
               return {
                 id: definition.id,
                 label: definition.label,
+                source: "hyperliquid",
+                provider: dex ? "hyperliquid-xyz-rest" : "hyperliquid-rest",
                 symbol: "HYPERLIQUID:" + sourceName,
                 price: price,
                 change: previous !== null && previous > 0 ? ((price - previous) / previous) * 100 : null
@@ -773,10 +1050,35 @@
               var price = finite(ticker.lastPrice);
               var change = finite(ticker.priceChangePercent);
               if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " price unavailable");
-              return { id: definition.id, label: definition.label, symbol: "BINANCE-FUTURES:" + definition.symbol, price: price, change: change };
+              return {
+                id: definition.id,
+                label: definition.label,
+                source: "binance",
+                provider: "binance-futures-rest",
+                symbol: "BINANCE-FUTURES:" + definition.symbol,
+                price: price,
+                change: change
+              };
             }).catch(function () { return null; });
           })).then(function (items) {
             return items.filter(function (item) { return item !== null; });
+          });
+        }
+
+        function fetchJupiterStonk() {
+          return requestJson(JUPITER_PRICE_URL, 3000).then(function (payload) {
+            var quote = payload && payload[STONK_SOLANA_ADDRESS];
+            var price = finite(quote && (quote.usdPrice !== undefined ? quote.usdPrice : quote.price));
+            if (price === null) throw new Error("STONK price unavailable");
+            return {
+              id: "stonk",
+              label: "STONK",
+              source: "solana",
+              provider: "jupiter-price",
+              symbol: "JUPITER:SOLANA:" + STONK_SOLANA_ADDRESS,
+              price: price,
+              change: finite(quote && quote.priceChange24h)
+            };
           });
         }
 
@@ -792,6 +1094,8 @@
               return {
                 id: definition.id,
                 label: definition.label,
+                source: "solana",
+                provider: "dexscreener",
                 symbol: "DEXSCREENER:SOLANA:" + definition.address,
                 price: finite(pair.priceUsd),
                 change: pair.priceChange ? finite(pair.priceChange.h24) : null
@@ -802,54 +1106,103 @@
           });
         }
 
-        function fetchMacro() {
+        function applyMacroItems(items, fallback) {
+          (items || []).forEach(function (item) {
+            if (!item || finite(item.price) === null) return;
+            var live = marketItemsById[item.id];
+            if (hlPrimaryLive && live && live.status === "LIVE" && finite(live.price) !== null) {
+              ingestQuote(item.id, { change: item.change });
+              return;
+            }
+            ingestQuote(item.id, Object.assign({}, item, {
+              status: fallback ? "FALLBACK" : "LIVE",
+              stale: false
+            }));
+          });
+        }
+
+        function fetchHyperliquidMacroAll(changeOnly) {
           if (macroRequest) return;
+          if (!changeOnly && hlPrimaryLive) return;
           macroRequest = true;
           var hypeDefinitions = macroDefinitions.filter(function (definition) { return definition.source === "hyperliquid" && !definition.dex; });
           var stockDefinitions = macroDefinitions.filter(function (definition) { return definition.dex === HIP3_STOCK_DEX; });
-          var dexDefinitions = macroDefinitions.filter(function (definition) { return definition.source === "dexscreener"; });
           Promise.all([
             fetchHyperliquidMacro(hypeDefinitions).catch(function () { return []; }),
-            fetchHyperliquidMacro(stockDefinitions, HIP3_STOCK_DEX).catch(function () { return []; }),
-            fetchDexScreenerMacro(dexDefinitions)
+            fetchHyperliquidMacro(stockDefinitions, HIP3_STOCK_DEX).catch(function () { return []; })
           ]).then(function (groups) {
-            var items = groups[0].concat(groups[1], groups[2]);
-            if (items.length > 0) {
-              renderMacro(items, false);
-              writeCache();
-            }
+            var items = groups[0].concat(groups[1]);
+            applyMacroItems(items, !hlPrimaryLive);
             var available = {};
             items.forEach(function (item) { available[item.id] = true; });
             var missingStocks = stockDefinitions.filter(function (definition) { return !available[definition.id]; });
+            if (!missingStocks.length) return [];
             return fetchBinanceMacro(missingStocks);
           }).then(function (fallbackItems) {
-            if (fallbackItems.length > 0) {
-              renderMacro(fallbackItems, false);
-              writeCache();
-            }
+            if (fallbackItems && fallbackItems.length) applyMacroItems(fallbackItems, true);
           }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
+        }
+
+        function fetchStonk() {
+          if (stonkRequest) return;
+          stonkRequest = true;
+          fetchJupiterStonk().catch(function () {
+            return fetchDexScreenerMacro(macroDefinitions.filter(function (definition) { return definition.id === "stonk"; })).then(function (items) {
+              if (!items.length) throw new Error("STONK price unavailable");
+              return items[0];
+            });
+          }).then(function (item) {
+            ingestQuote("stonk", Object.assign({}, item, { status: "LIVE", stale: false }));
+          }).catch(function () {
+            if (cachedState && cachedState.macro) {
+              var cached = (cachedState.macro || []).filter(function (item) { return item && item.id === "stonk"; })[0];
+              if (cached) ingestQuote("stonk", Object.assign({}, cached, { status: "STALE", stale: true }));
+            }
+          }).then(function () { stonkRequest = false; }, function () { stonkRequest = false; });
+        }
+
+        function watchdog() {
+          var now = Date.now();
+          if (btcPrimaryLive && now - btcLastWsAt > BTC_STALE_MS) {
+            btcPrimaryLive = false;
+            fetchBtc();
+          }
+          if (hlPrimaryLive && now - hlLastWsAt > HL_STALE_MS) {
+            hlPrimaryLive = false;
+            fetchHyperliquidMacroAll(false);
+          }
+          markStaleAssets();
+          scheduleFlush();
         }
 
         function refreshAll() {
           fetchBtc();
           fetchBtcStats();
           fetchEma200();
-          fetchMacro();
+          fetchHyperliquidMacroAll(hlPrimaryLive);
+          fetchStonk();
         }
 
+        startBtcSockets();
+        startHyperliquidSocket();
         refreshAll();
-        window.setInterval(fetchBtc, PRICE_INTERVAL);
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
-        window.setInterval(fetchMacro, MACRO_INTERVAL);
+        window.setInterval(fetchStonk, STONK_INTERVAL);
+        window.setInterval(function () {
+          if (!btcPrimaryLive) fetchBtc();
+          if (!hlPrimaryLive) fetchHyperliquidMacroAll(false);
+        }, REST_FALLBACK_MS);
+        window.setInterval(function () { fetchHyperliquidMacroAll(true); }, STATS_INTERVAL);
+        window.setInterval(watchdog, 1000);
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", function () {
           refreshAll();
-          refitBtcPrice();
+          refitAllPrices();
         }, { passive: true });
-        window.addEventListener("orientationchange", refitBtcPrice, { passive: true });
-        window.addEventListener("resize", refitBtcPrice, { passive: true });
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(refitBtcPrice).catch(function () {});
+        window.addEventListener("orientationchange", refitAllPrices, { passive: true });
+        window.addEventListener("resize", refitAllPrices, { passive: true });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(refitAllPrices).catch(function () {});
         document.addEventListener("visibilitychange", function () {
           if (document.visibilityState === "visible") refreshAll();
         });

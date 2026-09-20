@@ -2,16 +2,15 @@
 
 这是只用于 GitHub Pages 远程查看的静态价格 / 市场监控终端，不依赖本地服务或本机文件。页面以 BTC 为视觉锚点，其他行情按响应式网格排列；手机与 iPad 使用原生页面滚动，不设置内部滚动容器。
 
-- BTC：Binance 现货公开行情与日线 EMA200
-- HYPE：Hyperliquid 永续实时标记价格
-- PONS：Hyperliquid 永续实时标记价格
-- STONK：Solana 最高流动性池的 DexScreener 美元价格
-- SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` 股票永续公开行情；单个标的缺失时回退 Binance USDⓈ-M 行情
+- BTC：Binance 现货 WebSocket 优先，OKX WebSocket / Hyperliquid REST 回退；日线 EMA200 / MA120
+- HYPE / PONS：Hyperliquid WebSocket 优先，REST 回退
+- STONK：Jupiter Solana 美元价，DexScreener 回退
+- SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` WebSocket 优先；单个标的缺失时回退 Binance USDⓈ-M 行情
 - Uniswap 快照：仓库保留真实 ExploreStats 数据，静态首页不展示榜单
-- 页面端轮询、浏览器缓存和失败回退均在 `index.html` 内完成
+- WebSocket 优先、REST 回退、浏览器缓存和失败回退均在 `index.html` 内完成
 - Binance 日线 EMA200 / MA120
 - BTC 使用更高视觉权重，确保打开页面即可先读到价格和 24h 涨跌
-- BTC 主价格使用独立数字滚轮渲染器；仅变化的数字位执行 450ms 最短路径滚动，窗口尺寸变化时重新测量字高
+- 全部实时价格使用同一套数字滚轮；仅变化的数字位执行 450ms 最短路径滚动，逗号和小数点保持静止，窗口尺寸变化时重新测量字高
 
 此仓库只包含静态页面，不包含本地 `.env`、API key、局域网地址或本地文件路径。
 
