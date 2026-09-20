@@ -601,6 +601,7 @@
             if (!inited || !lastShown || diagnostics.testRunning) return;
             diagnostics.refitCount += 1;
             window.setTimeout(function () {
+              if (diagnostics.testRunning) return;
               var previousHeight = digitCellHeight;
               var nextHeight = refreshCellHeight();
               if (previousHeight && nextHeight && Math.abs(nextHeight - previousHeight) <= 0.5) return;

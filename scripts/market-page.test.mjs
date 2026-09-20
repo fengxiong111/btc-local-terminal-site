@@ -80,6 +80,7 @@ test("btc-screen animation core is ported without extra execution layers", () =>
   assert.match(html, /updateMotionDiagnostic\(\);\s*if \(instant \|\| !inited \|\| text\.length !== currentTemplate\.length\)/);
   assert.doesNotMatch(html, /instant \|\| reducedMotion \|\| !inited/);
   assert.match(html, /if \(!inited \|\| !lastShown \|\| diagnostics\.testRunning\) return;/);
+  assert.match(html, /window\.setTimeout\(function \(\) \{\s*if \(diagnostics\.testRunning\) return;/);
   assert.match(html, /var previousHeight = digitCellHeight;/);
   assert.match(html, /var nextHeight = refreshCellHeight\(\);/);
   assert.match(html, /Math\.abs\(nextHeight - previousHeight\) <= 0\.5/);
