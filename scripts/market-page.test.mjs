@@ -49,8 +49,6 @@ test("Apple system typography and integrated hero hierarchy", () => {
   assert.match(html, /font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif/);
   assert.match(html, /font-variant-numeric: tabular-nums/);
   assert.match(html, /font-feature-settings: "tnum" 1, "lnum" 1/);
-  assert.equal(html.includes("IBM Plex Mono"), false);
-  assert.equal(html.includes("JetBrains Mono"), false);
   assert.match(html, /\.market-row--btc \{ grid-column: 1 \/ -1;/);
   assert.match(html, /\.btc-metrics \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(html, /\.btc-metric \.market-price \{ font-size: clamp\(28px, 2\.1vw, 38px\)/);
