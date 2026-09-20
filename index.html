@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#eef2ee" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -24,15 +24,12 @@
         --surface-muted: #e7ece8;
         --text: #202925;
         --muted: #78847d;
-        --soft: #a1aaa4;
         --strong: #2d3933;
-        --track: #d9e1db;
         --up: #147c5b;
         --down: #b6535c;
         --pending: #a4773c;
         --shadow-card: 0 16px 32px rgba(43, 61, 50, 0.09), 0 3px 8px rgba(43, 61, 50, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.88);
         --radius-card: 16px;
-        --radius-large: 18px;
       }
 
       * { box-sizing: border-box; }
@@ -41,6 +38,9 @@
         min-width: 0;
         min-height: 100%;
         background: var(--bg);
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: 100%;
+        overscroll-behavior-x: none;
       }
 
       body {
@@ -61,7 +61,6 @@
       }
 
       a { color: inherit; }
-      button { font: inherit; }
 
       .skip-link {
         position: fixed;
@@ -80,13 +79,13 @@
       .skip-link:focus { transform: translateY(0); }
 
       .page {
-        width: min(100%, 860px);
+        width: min(100%, 1760px);
         min-height: 100svh;
         margin: 0 auto;
-        padding: max(18px, calc(env(safe-area-inset-top) + 18px))
-          max(16px, calc(env(safe-area-inset-right) + 16px))
-          max(28px, calc(env(safe-area-inset-bottom) + 28px))
-          max(16px, calc(env(safe-area-inset-left) + 16px));
+        padding-top: max(18px, calc(env(safe-area-inset-top) + 18px));
+        padding-right: max(clamp(16px, 3.4vw, 64px), calc(env(safe-area-inset-right) + 16px));
+        padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px));
+        padding-left: max(clamp(16px, 3.4vw, 64px), calc(env(safe-area-inset-left) + 16px));
       }
 
       .market-row,
@@ -110,50 +109,65 @@
         outline-offset: 3px;
       }
 
-      .section { margin-top: 30px; }
-
-      .news-section { margin-top: 30px; }
-      .news-stack { min-width: 0; overflow: hidden; border-radius: var(--radius-large); background: var(--surface); box-shadow: var(--shadow-card); }
-      .news-item { min-width: 0; }
-      .news-item + .news-item { border-top: 1px solid var(--track); }
-      .news-item a { display: block; padding: 17px 18px 16px; text-decoration: none; }
-      .news-item a:hover { background: rgba(255, 255, 255, 0.36); }
-      .news-item a:focus-visible { border-radius: inherit; }
-      .news-item-title { margin: 0; color: var(--text); font-size: 16px; font-weight: 500; line-height: 22px; letter-spacing: -0.12px; overflow-wrap: anywhere; }
-      .news-item-meta { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 16px; }
-
-      .market-section { margin-top: 14px; }
-      .market-list { display: grid; min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-      .market-row { min-width: 0; min-height: 86px; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px; padding: 14px; border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+      .market-section { margin-top: 0; }
+      .market-list { display: grid; min-width: 0; max-width: 1680px; margin: 0 auto; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 0.8vw, 16px); }
+      .market-row { min-width: 0; min-height: clamp(104px, 7vw, 128px); flex-direction: column; align-items: stretch; justify-content: space-between; gap: 10px; padding: clamp(15px, 1.35vw, 24px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
       .market-ident { min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 3px; }
-      .market-symbol { color: var(--strong); font-size: 17px; font-weight: 600; line-height: 21px; letter-spacing: -0.35px; }
-      .market-source { overflow: hidden; color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: 0.3px; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
-      .market-quote { min-width: 0; align-items: baseline; justify-content: space-between; gap: 8px; }
-      .market-price { min-width: 0; color: var(--text); font-size: 16px; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
-      .market-change { min-width: 0; color: var(--muted); font-size: 13px; line-height: 18px; text-align: right; white-space: nowrap; }
+      .market-symbol { color: var(--strong); font-size: clamp(16px, 1.2vw, 20px); font-weight: 600; line-height: 1.25; letter-spacing: -0.35px; }
+      .market-source { overflow: hidden; color: var(--muted); font-size: clamp(10px, 0.68vw, 12px); font-weight: 500; letter-spacing: 0.3px; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
+      .market-row[data-market-state="stale"] .market-source { color: var(--pending); }
+      .market-quote { min-width: 0; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .market-price { min-width: 0; color: var(--text); font-size: clamp(16px, 1.35vw, 22px); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; white-space: nowrap; }
+      .market-change { min-width: 0; color: var(--muted); font-size: clamp(12px, 0.95vw, 16px); line-height: 1.25; text-align: right; white-space: nowrap; }
       .market-change.up { color: var(--up); }
       .market-change.down { color: var(--down); }
+
+      .market-row--btc { grid-column: span 3; min-height: clamp(188px, 14vw, 236px); padding: clamp(22px, 2vw, 36px); background: var(--surface-strong); }
+      .market-row--btc .market-symbol { font-size: clamp(19px, 1.45vw, 25px); }
+      .market-row--btc .market-source { font-size: clamp(10px, 0.75vw, 13px); }
+      .market-row--btc .market-quote { gap: 18px; }
+      .market-row--btc .market-price { display: inline-flex; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; font-size: clamp(36px, 4.2vw, 70px); line-height: 1; letter-spacing: -0.06em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
+      .market-row--btc .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
+      .market-row--btc .market-price .sep { display: inline-block; width: 0.22em; margin: 0 -0.04em; text-align: center; opacity: 0.86; }
+      .market-row--btc .market-price .track { position: absolute; inset: 0; }
+      .market-row--btc .market-price .digit__num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-right: 0.03em; box-sizing: border-box; will-change: transform; }
+      .market-row--btc .market-change { font-size: clamp(16px, 1.25vw, 23px); }
+      .market-row--ema200,
+      .market-row--ma120 { background: var(--surface-muted); }
+      .market-row--ema200 .market-price,
+      .market-row--ma120 .market-price { font-size: clamp(18px, 1.5vw, 25px); }
 
       .empty { padding: 22px 12px; color: var(--muted); font-size: 14.5px; line-height: 18px; text-align: center; }
 
       @media (max-width: 560px) {
         .page { padding-top: max(14px, calc(env(safe-area-inset-top) + 14px)); }
-        .section { margin-top: 25px; }
-        .market-section { margin-top: 10px; }
         .market-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-        .market-row { min-height: 76px; gap: 8px; padding: 12px; }
-        .market-ident { min-width: 0; }
-        .market-symbol { font-size: 16px; }
-        .market-source { font-size: 9px; }
-        .market-quote { gap: 6px; }
-        .market-price { font-size: 15px; }
-        .market-change { font-size: 12px; }
+        .market-row { min-height: 92px; gap: 8px; padding: 13px; }
+        .market-row--btc { grid-column: span 2; min-height: clamp(158px, 44vw, 190px); padding: 20px; }
+        .market-row--btc .market-price { font-size: clamp(32px, 10vw, 48px); }
+        .market-row--btc .market-change { font-size: clamp(14px, 4vw, 18px); }
+        .market-row--ema200 .market-price,
+        .market-row--ma120 .market-price { font-size: clamp(17px, 5vw, 22px); }
       }
 
       @media (orientation: landscape) and (max-height: 620px) {
         .page { padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)); }
-        .section { margin-top: 20px; }
-        .news-section, .market-section { margin-top: 18px; }
+        .market-row--btc { min-height: 170px; }
+      }
+
+      @media (max-width: 1399px) and (min-width: 901px) {
+        .market-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .market-row--btc { grid-column: span 2; }
+      }
+
+      @media (max-width: 900px) and (min-width: 561px) {
+        .market-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .market-row--btc { grid-column: span 3; min-height: 190px; }
+      }
+
+      @media (min-width: 561px) {
+        .page { display: flex; align-items: center; }
+        .market-section { width: 100%; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -162,40 +176,36 @@
     </style>
   </head>
   <body>
-    <a class="skip-link" href="#market">跳到公开行情</a>
+    <a class="skip-link" href="#market">跳到市场行情</a>
     <main class="page">
-      <section id="market" class="section market-section" aria-label="公开行情">
-        <div id="market-list" class="market-list" aria-live="polite"><p class="empty">正在读取公开行情…</p></div>
-      </section>
-
-      <section id="news" class="section news-section" aria-label="市场快讯">
-        <div id="news-stack" class="news-stack" aria-live="polite"><p class="empty">正在读取公开快讯…</p></div>
+      <section id="market" class="market-section" aria-label="市场行情">
+        <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
       </section>
     </main>
     <script>
       (function () {
         "use strict";
 
-        var CACHE_KEY = "btc-local-terminal-public-v7";
+        var CACHE_KEY = "btc-local-terminal-market-v1";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
-        var STALE_MS = 60 * 60 * 1000;
         var PRICE_INTERVAL = 500;
         var STATS_INTERVAL = 15000;
         var MACRO_INTERVAL = 3000;
-        var NEWS_INTERVAL = 20000;
         var EMA_INTERVAL = 60000;
         var EMA_PERIOD = 200;
         var EMA_CANDLE_LIMIT = 1000;
         var marketListElement = document.getElementById("market-list");
-        var newsStackElement = document.getElementById("news-stack");
         var priceRequest = false;
         var statsRequest = false;
         var macroRequest = false;
-        var newsRequest = false;
         var emaRequest = false;
         var marketItemsById = {};
         var macroItemsById = {};
-        var lastMarketMarkup = "";
+        var lastMarketStructure = null;
+        var marketRowsById = {};
+        var btcOdometer = null;
+        var ANIM_MS = 450;
+        var ANIM_EASE = "linear(0,.005,.019,.039,.066,.096,.129,.165,.202,.24,.278,.316,.354,.39,.426,.461,.494,.526,.557,.586,.614,.64,.665,.689,.711,.731,.751,.769,.786,.802,.817,.831,.844,.856,.867,.877,.887,.896,.904,.912,.919,.925,.931,.937,.942,.947,.951,.955,.959,.962,.965,.968,.971,.973,.976,.978,.98,.981,.983,.984,.986,.987,.988,.989,.99,.991,.992,.992,.993,.994,.994,.995,.995,.996,.996,.9963,.9967,.9969,.9972,.9975,.9977,.9979,.9981,.9982,.9984,.9985,.9987,.9988,.9989,1)";
         var HIP3_STOCK_DEX = "xyz";
         var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
         var macroDefinitions = [
@@ -207,21 +217,16 @@
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
         ];
-        var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat(macroDefinitions, [
+        var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
           { id: "ema200", label: "EMA200", source: "BTC daily" },
           { id: "ma120", label: "MA120", source: "BTC daily" }
-        ]);
+        ], macroDefinitions);
         var cachedState = readCache();
 
-        if (/kindle|silk|kftt|kfot|kfjw|kfsowi|kfarwi|kfapwi|kfmawi/i.test(navigator.userAgent || "")) {
-          document.documentElement.className = "kindle";
-        }
-
         if (cachedState) {
-          if (cachedState.btc) renderBtc(cachedState.btc);
-          if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120);
-          if (cachedState.macro) renderMacro(cachedState.macro);
-          if (cachedState.news) renderNews(cachedState.news);
+          if (cachedState.btc) renderBtc(cachedState.btc, true);
+          if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120, true);
+          if (cachedState.macro) renderMacro(cachedState.macro, true);
         }
 
         function finite(value) {
@@ -294,11 +299,11 @@
 
         function readCache() {
           try {
+            window.localStorage.removeItem("btc-local-terminal-public-v7");
             var value = window.localStorage.getItem(CACHE_KEY);
             if (!value) return null;
             var parsed = JSON.parse(value);
-            if (!parsed || !parsed.savedAt || Date.now() - parsed.savedAt > STALE_MS) return parsed;
-            return parsed;
+            return parsed && parsed.savedAt ? parsed : null;
           } catch (error) {
             return null;
           }
@@ -311,63 +316,11 @@
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
               ema200: cachedState && cachedState.ema200,
-              ma120: cachedState && cachedState.ma120,
-              news: cachedState && cachedState.news
+              ma120: cachedState && cachedState.ma120
             }));
           } catch (error) {
-            // Private browsing or a restricted Kindle browser may disable storage.
+            // Private browsing or a restricted browser may disable storage.
           }
-        }
-
-        function formatClock(value) {
-          var date = value instanceof Date ? value : new Date(value);
-          if (!isFinite(date.getTime())) return "—";
-          try {
-            return new Intl.DateTimeFormat("zh-CN", {
-              timeZone: "Asia/Shanghai",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false
-            }).format(date);
-          } catch (error) {
-            return String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
-          }
-        }
-
-        function parseNewsDate(value) {
-          if (typeof value !== "string" || !value.trim()) return null;
-          var timestamp = Date.parse(value);
-          var now = Date.now();
-          if (!isFinite(timestamp) || timestamp < Date.UTC(2000, 0, 1) || timestamp > now + 24 * 60 * 60 * 1000) return null;
-          return new Date(timestamp);
-        }
-
-        function formatNewsDate(date) {
-          if (!(date instanceof Date) || !isFinite(date.getTime())) return "";
-          try {
-            return new Intl.DateTimeFormat("zh-CN", {
-              timeZone: "Asia/Shanghai",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false
-            }).format(date);
-          } catch (error) {
-            return String(date.getMonth() + 1).padStart(2, "0") + "/" + String(date.getDate()).padStart(2, "0") + " " + formatClock(date);
-          }
-        }
-
-        function formatNewsAge(date) {
-          if (!(date instanceof Date) || !isFinite(date.getTime())) return "";
-          var diff = Date.now() - date.getTime();
-          if (diff < 0 || diff > 30 * 24 * 60 * 60 * 1000) return formatNewsDate(date);
-          var minutes = Math.floor(diff / 60000);
-          if (minutes < 1) return "刚刚";
-          if (minutes < 60) return minutes + " 分钟前";
-          var hours = Math.floor(minutes / 60);
-          if (hours < 24) return hours + " 小时前";
-          return Math.floor(hours / 24) + " 天前";
         }
 
         function sourceLabel(symbol, fallback) {
@@ -398,6 +351,224 @@
           element.appendChild(child);
         }
 
+        function createBtcOdometer(priceElement) {
+          var currentTemplate = "";
+          var lastShown = "";
+          var inited = false;
+          var digitCellHeight = 0;
+          var integerFormatter;
+          try {
+            integerFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+          } catch (error) {
+            integerFormatter = null;
+          }
+
+          function formatIntString(value) {
+            var number = finite(value);
+            if (number === null || number <= 0) return null;
+            try {
+              return integerFormatter ? integerFormatter.format(Math.round(number)) : String(Math.round(number));
+            } catch (error) {
+              return String(Math.round(number));
+            }
+          }
+
+          function cancelAnimations(element) {
+            if (!element || typeof element.getAnimations !== "function") return;
+            element.getAnimations().forEach(function (animation) { animation.cancel(); });
+          }
+
+          function buildOdometer(text) {
+            while (priceElement.firstChild) priceElement.removeChild(priceElement.firstChild);
+            for (var index = 0; index < text.length; index += 1) {
+              var character = text.charAt(index);
+              if (character >= "0" && character <= "9") {
+                var digit = document.createElement("span");
+                digit.className = "digit";
+                digit.dataset.value = character;
+
+                var track = document.createElement("span");
+                track.className = "track";
+                for (var number = 0; number <= 9; number += 1) {
+                  var cell = document.createElement("span");
+                  cell.className = "digit__num";
+                  cell.textContent = String(number);
+                  cell.dataset.num = String(number);
+                  track.appendChild(cell);
+                }
+
+                digit.appendChild(track);
+                priceElement.appendChild(digit);
+              } else {
+                var separator = document.createElement("span");
+                separator.className = "sep";
+                separator.textContent = character;
+                priceElement.appendChild(separator);
+              }
+            }
+          }
+
+          function refreshCellHeight() {
+            var digit = priceElement.querySelector(".digit");
+            if (digit) digitCellHeight = digit.getBoundingClientRect().height || digitCellHeight;
+            return digitCellHeight;
+          }
+
+          function digitOffset(value, current) {
+            var offset = (value - current + 10) % 10;
+            if (offset > 5) offset -= 10;
+            return offset;
+          }
+
+          function digitTranslatePx(value, digit, cellHeight) {
+            return digitOffset(value, Number(digit)) * cellHeight;
+          }
+
+          function positionDigit(track, digit, instant, previousDigit) {
+            var cellHeight = refreshCellHeight();
+            if (!cellHeight) return;
+            var previous = previousDigit === undefined ? digit : previousDigit;
+            cancelAnimations(track);
+            var nodes = track.querySelectorAll(".digit__num");
+            for (var index = 0; index < nodes.length; index += 1) {
+              var node = nodes[index];
+              var value = Number(node.dataset.num);
+              var fromY = digitTranslatePx(value, previous, cellHeight);
+              var toY = digitTranslatePx(value, digit, cellHeight);
+
+              cancelAnimations(node);
+              if (instant || typeof node.animate !== "function") {
+                node.style.transform = "translate3d(0, " + toY + "px, 0)";
+                continue;
+              }
+
+              node.style.transform = "translate3d(0, " + toY + "px, 0)";
+              node.animate([
+                { transform: "translate3d(0, " + fromY + "px, 0)" },
+                { transform: "translate3d(0, " + toY + "px, 0)" }
+              ], { duration: ANIM_MS, easing: ANIM_EASE, fill: "both" });
+            }
+          }
+
+          function setAllInstant(text) {
+            if (currentTemplate !== text || !priceElement.children.length) {
+              buildOdometer(text);
+              refreshCellHeight();
+            }
+
+            var nodes = priceElement.children;
+            var index = 0;
+            for (var characterIndex = 0; characterIndex < text.length; characterIndex += 1) {
+              var character = text.charAt(characterIndex);
+              var node = nodes[index++];
+              if (!node) break;
+              if (node.classList.contains("digit")) {
+                node.dataset.value = character;
+                positionDigit(node.querySelector(".track"), character, true);
+              } else {
+                node.textContent = character;
+              }
+            }
+
+            currentTemplate = text;
+            lastShown = text;
+            inited = true;
+          }
+
+          function animateTo(text) {
+            if (!inited || text.length !== currentTemplate.length) {
+              setAllInstant(text);
+              return;
+            }
+
+            var nodes = priceElement.children;
+            var index = 0;
+            for (var characterIndex = 0; characterIndex < text.length; characterIndex += 1) {
+              var character = text.charAt(characterIndex);
+              var node = nodes[index++];
+              if (!node) break;
+              if (node.classList.contains("digit")) {
+                if (node.dataset.value !== character) {
+                  var previous = node.dataset.value;
+                  node.dataset.value = character;
+                  positionDigit(node.querySelector(".track"), character, false, previous);
+                }
+              } else if (node.textContent !== character) {
+                node.textContent = character;
+              }
+            }
+
+            currentTemplate = text;
+            lastShown = text;
+          }
+
+          function setBtcPrice(value, instant) {
+            var text = formatIntString(value);
+            if (!text) return;
+            var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (instant || reducedMotion || !inited || text.length !== currentTemplate.length) {
+              setAllInstant(text);
+            } else if (text !== lastShown) {
+              animateTo(text);
+            }
+          }
+
+          function refitCurrent() {
+            if (!inited || !lastShown) return;
+            refreshCellHeight();
+            setAllInstant(lastShown);
+          }
+
+          return { setBtcPrice: setBtcPrice, refitCurrent: refitCurrent };
+        }
+
+        function createMarketRow(item) {
+          var row = document.createElement("div");
+          row.className = "market-row market-row--" + item.id;
+
+          var ident = document.createElement("div");
+          ident.className = "market-ident";
+          var symbol = document.createElement("strong");
+          symbol.className = "market-symbol";
+          var source = document.createElement("span");
+          source.className = "market-source";
+          ident.append(symbol, source);
+
+          var quote = document.createElement("div");
+          quote.className = "market-quote";
+          var priceElement = document.createElement("span");
+          priceElement.className = "market-price" + (item.id === "btc" ? " odometer" : "");
+          var changeElement = document.createElement("span");
+          changeElement.className = "market-change";
+          quote.append(priceElement, changeElement);
+          row.append(ident, quote);
+          row._marketRefs = { symbol: symbol, source: source, price: priceElement, change: changeElement };
+          return row;
+        }
+
+        function updateMarketRow(item, row) {
+          if (!row || !row._marketRefs) return;
+          var refs = row._marketRefs;
+          var price = finite(item.price);
+          var change = normalizedChange(item);
+          row.className = "market-row market-row--" + item.id;
+          row.setAttribute("data-market-id", item.id);
+          row.setAttribute("data-market-state", item.stale ? "stale" : "live");
+          refs.symbol.textContent = item.label || item.id.toUpperCase();
+          refs.source.textContent = sourceLabel(item.symbol, item.source) + (item.stale ? " · 缓存" : "");
+
+          if (item.id === "btc") {
+            if (!btcOdometer) btcOdometer = createBtcOdometer(refs.price);
+            btcOdometer.setBtcPrice(price, false);
+          } else {
+            refs.price.textContent = numberText(price, priceFraction(price));
+          }
+
+          refs.change.className = "market-change";
+          refs.change.textContent = change === null ? "—" : pctText(change);
+          if (change !== null) refs.change.classList.add(change >= 0 ? "up" : "down");
+        }
+
         function renderMarketBoard() {
           if (!marketListElement) return;
           var validItems = marketDefinitions.map(function (definition) {
@@ -405,63 +576,52 @@
           }).filter(function (item) {
             return item && finite(item.price) !== null;
           });
-          var marketKey = validItems.map(function (item) {
-            return [item.id, item.price, normalizedChange(item), item.symbol].join(":");
-          }).join("|");
-          if (marketKey === lastMarketMarkup) return;
-          lastMarketMarkup = marketKey;
           if (!validItems.length) {
-            var empty = document.createElement("p");
-            empty.className = "empty";
-            empty.textContent = "正在读取公开行情…";
-            replaceChildrenCompat(marketListElement, empty);
+            if (lastMarketStructure !== "empty") {
+              var empty = document.createElement("p");
+              empty.className = "empty";
+              empty.textContent = "正在读取公开行情…";
+              replaceChildrenCompat(marketListElement, empty);
+              lastMarketStructure = "empty";
+              marketRowsById = {};
+              btcOdometer = null;
+            }
             return;
           }
-          var fragment = document.createDocumentFragment();
+
+          var marketStructure = validItems.map(function (item) {
+            return [item.id, item.label, item.source, item.symbol, item.stale ? "stale" : "live"].join(":");
+          }).join("|");
+          if (marketStructure !== lastMarketStructure) {
+            lastMarketStructure = marketStructure;
+            marketRowsById = {};
+            btcOdometer = null;
+            var fragment = document.createDocumentFragment();
+            validItems.forEach(function (item) {
+              var row = createMarketRow(item);
+              marketRowsById[item.id] = row;
+              fragment.append(row);
+            });
+            replaceChildrenCompat(marketListElement, fragment);
+          }
+
           validItems.forEach(function (item) {
-            var price = finite(item.price);
-            var change = normalizedChange(item);
-            var row = document.createElement("div");
-            row.className = "market-row";
-            row.setAttribute("data-market-id", item.id);
-
-            var ident = document.createElement("div");
-            ident.className = "market-ident";
-            var symbol = document.createElement("strong");
-            symbol.className = "market-symbol";
-            symbol.textContent = item.label || item.id.toUpperCase();
-            var source = document.createElement("span");
-            source.className = "market-source";
-            source.textContent = sourceLabel(item.symbol, item.source);
-            ident.append(symbol, source);
-
-            var quote = document.createElement("div");
-            quote.className = "market-quote";
-            var priceElement = document.createElement("span");
-            priceElement.className = "market-price";
-            priceElement.textContent = numberText(price, priceFraction(price));
-            var changeElement = document.createElement("span");
-            changeElement.className = "market-change";
-            changeElement.textContent = change === null ? "—" : pctText(change);
-            if (change !== null) changeElement.classList.add(change >= 0 ? "up" : "down");
-            quote.append(priceElement, changeElement);
-            row.append(ident, quote);
-            fragment.append(row);
+            updateMarketRow(item, marketRowsById[item.id]);
           });
-          replaceChildrenCompat(marketListElement, fragment);
         }
 
-        function renderEma200(value, ma120) {
+        function renderEma200(value, ma120, isStale) {
           var ema = finite(value);
           var ma = finite(ma120);
+          var stale = Boolean(isStale);
           cachedState = cachedState || {};
           if (ema !== null) {
             cachedState.ema200 = ema;
-            marketItemsById.ema200 = { id: "ema200", label: "EMA200", source: "BTC daily", symbol: "BTC-1D", price: ema, change: null };
+            marketItemsById.ema200 = { id: "ema200", label: "EMA200", source: "BTC daily", symbol: "BTC-1D", price: ema, change: null, stale: stale };
           }
           if (ma !== null) {
             cachedState.ma120 = ma;
-            marketItemsById.ma120 = { id: "ma120", label: "MA120", source: "BTC daily", symbol: "BTC-1D", price: ma, change: null };
+            marketItemsById.ma120 = { id: "ma120", label: "MA120", source: "BTC daily", symbol: "BTC-1D", price: ma, change: null, stale: stale };
           }
           if (ema !== null || ma !== null) renderMarketBoard();
         }
@@ -480,16 +640,17 @@
             var maStart = closes.length - 120;
             var maSum = 0;
             for (var maIndex = maStart; maIndex < closes.length; maIndex += 1) maSum += closes[maIndex];
-            renderEma200(ema, maSum / 120);
+            renderEma200(ema, maSum / 120, false);
             writeCache();
           }).catch(function () {
-            if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120);
+            if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120, true);
           }).then(function () { emaRequest = false; }, function () { emaRequest = false; });
         }
 
-        function renderBtc(btc) {
+        function renderBtc(btc, isStale) {
           var previous = cachedState && cachedState.btc ? cachedState.btc : {};
           var nextBtc = Object.assign({}, previous, btc);
+          var stale = typeof isStale === "boolean" ? isStale : Boolean(marketItemsById.btc && marketItemsById.btc.stale);
           var price = finite(btc.price);
           if (price !== null) {
             marketItemsById.btc = {
@@ -498,7 +659,8 @@
               source: "binance",
               symbol: "BINANCE:BTCUSDT",
               price: price,
-              change: finite(btc.change)
+              change: finite(btc.change),
+              stale: stale
             };
             renderMarketBoard();
           }
@@ -506,10 +668,13 @@
           cachedState.btc = nextBtc;
         }
 
-        function renderMacro(items) {
+        function renderMacro(items, isStale) {
+          var hasStaleOverride = typeof isStale === "boolean";
           (items || []).forEach(function (item) {
             if (!item || finite(item.price) === null) return;
-            macroItemsById[item.id] = Object.assign({}, macroItemsById[item.id] || {}, item);
+            var nextItem = Object.assign({}, macroItemsById[item.id] || {}, item);
+            if (hasStaleOverride) nextItem.stale = isStale;
+            macroItemsById[item.id] = nextItem;
             marketItemsById[item.id] = macroItemsById[item.id];
           });
           var validItems = macroDefinitions.map(function (definition) { return macroItemsById[definition.id]; }).filter(function (item) { return item && finite(item.price) !== null; });
@@ -520,69 +685,11 @@
           }
         }
 
-        function cleanTitle(value) {
-          if (typeof value !== "string") return null;
-          var title = value.replace(/^观点[:：]\s*/, "").replace(/\s+/g, " ").trim();
-          return title.length > 0 ? title : null;
-        }
-
-        function safeHref(value) {
-          var raw = typeof value === "string" && value ? value : "https://fengxiong111.github.io/lydong-screen/";
-          return /^https?:\/\//i.test(raw) ? raw : "https://fengxiong111.github.io/lydong-screen/";
-        }
-
-        function normalizedNewsItem(item) {
-          var title = cleanTitle(item && item.title);
-          var rawDate = item && (item.ts || item.time || item.date);
-          var date = parseNewsDate(rawDate);
-          if (!title || !date) return null;
-          return {
-            id: item.id || title,
-            title: title,
-            ts: typeof rawDate === "string" ? rawDate : date.toISOString(),
-            url: safeHref(item.url),
-            date: date
-          };
-        }
-
-        function createNewsItem(item) {
-          var article = document.createElement("article");
-          article.className = "news-item";
-          var link = document.createElement("a");
-          link.href = item.url;
-          link.target = "_blank";
-          link.rel = "noreferrer";
-          var title = document.createElement("h3");
-          title.className = "news-item-title";
-          title.textContent = item.title;
-          var time = document.createElement("time");
-          time.className = "news-item-meta";
-          time.dateTime = item.date.toISOString();
-          time.textContent = formatNewsAge(item.date);
-          link.append(title, time);
-          article.append(link);
-          return article;
-        }
-
-        function renderNews(items) {
-          var validItems = (items || []).map(normalizedNewsItem).filter(function (item) { return item !== null; }).sort(function (left, right) {
-            return right.date.getTime() - left.date.getTime();
-          }).slice(0, 12);
-          if (!newsStackElement) return;
-          var fragment = document.createDocumentFragment();
-          if (!validItems.length) {
-            var empty = document.createElement("p");
-            empty.className = "empty";
-            empty.textContent = "暂无可用快讯";
-            fragment.append(empty);
-          } else {
-            validItems.forEach(function (item) { fragment.append(createNewsItem(item)); });
-          }
-          replaceChildrenCompat(newsStackElement, fragment);
-          cachedState = cachedState || {};
-          cachedState.news = validItems.map(function (item) {
-            return { id: item.id, title: item.title, ts: item.ts, url: item.url };
-          });
+        function refitBtcPrice() {
+          if (!btcOdometer) return;
+          window.setTimeout(function () {
+            if (btcOdometer) btcOdometer.refitCurrent();
+          }, 80);
         }
 
         function fetchBtc() {
@@ -606,11 +713,11 @@
           fallback.then(function (quote) {
             var previous = cachedState && cachedState.btc ? cachedState.btc : {};
             var priceChanged = previous.price !== quote.price;
-            renderBtc({ price: quote.price, change: previous.change });
+            renderBtc({ price: quote.price, change: previous.change }, false);
             if (priceChanged) writeCache();
           }).catch(function () {
             if (cachedState && cachedState.btc) {
-              renderBtc(cachedState.btc);
+              renderBtc(cachedState.btc, true);
             }
           }).then(function () { priceRequest = false; });
         }
@@ -708,7 +815,7 @@
           ]).then(function (groups) {
             var items = groups[0].concat(groups[1], groups[2]);
             if (items.length > 0) {
-              renderMacro(items);
+              renderMacro(items, false);
               writeCache();
             }
             var available = {};
@@ -717,33 +824,10 @@
             return fetchBinanceMacro(missingStocks);
           }).then(function (fallbackItems) {
             if (fallbackItems.length > 0) {
-              renderMacro(fallbackItems);
+              renderMacro(fallbackItems, false);
               writeCache();
             }
           }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
-        }
-
-        function fetchNews() {
-          if (newsRequest) return;
-          newsRequest = true;
-          var urls = [
-            "https://fengxiong111.github.io/lydong-screen/feed.json",
-            "https://raw.githubusercontent.com/fengxiong111/lydong-screen/main/feed.json"
-          ];
-          var attempt = function (index) {
-            if (index >= urls.length) return Promise.reject(new Error("news unavailable"));
-            return requestJson(urls[index], 9000).catch(function () { return attempt(index + 1); });
-          };
-          attempt(0).then(function (items) {
-            var list = Array.isArray(items) ? items : (items && Array.isArray(items.items) ? items.items : []);
-            list.sort(function (a, b) { return String(b.ts || b.time || "").localeCompare(String(a.ts || a.time || "")); });
-            renderNews(list);
-            writeCache();
-          }).catch(function () {
-            if (cachedState && cachedState.news) {
-              renderNews(cachedState.news);
-            }
-          }).then(function () { newsRequest = false; });
         }
 
         function refreshAll() {
@@ -751,7 +835,6 @@
           fetchBtcStats();
           fetchEma200();
           fetchMacro();
-          fetchNews();
         }
 
         refreshAll();
@@ -759,9 +842,14 @@
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
         window.setInterval(fetchMacro, MACRO_INTERVAL);
-        window.setInterval(fetchNews, NEWS_INTERVAL);
         window.addEventListener("focus", refreshAll, { passive: true });
-        window.addEventListener("pageshow", refreshAll, { passive: true });
+        window.addEventListener("pageshow", function () {
+          refreshAll();
+          refitBtcPrice();
+        }, { passive: true });
+        window.addEventListener("orientationchange", refitBtcPrice, { passive: true });
+        window.addEventListener("resize", refitBtcPrice, { passive: true });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(refitBtcPrice).catch(function () {});
         document.addEventListener("visibilitychange", function () {
           if (document.visibilityState === "visible") refreshAll();
         });
