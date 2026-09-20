@@ -45,12 +45,20 @@ test("websocket is primary and rest is fallback", () => {
   assert.equal(html.includes("MACRO_INTERVAL = 3000"), false);
 });
 
-test("price type scale is larger and responsive", () => {
-  assert.match(html, /font-size: clamp\(28px, 1\.45vw, 36px\)/);
-  assert.match(html, /font-size: clamp\(60px, 3\.8vw, 96px\)/);
-  assert.match(html, /font-size: clamp\(28px, 1\.6vw, 40px\)/);
-  assert.match(html, /font-size: clamp\(24px, 3vw, 32px\)/);
-  assert.match(html, /font-size: clamp\(20px, 5\.6vw, 28px\)/);
+test("Apple system typography and integrated hero hierarchy", () => {
+  assert.match(html, /font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif/);
+  assert.match(html, /font-variant-numeric: tabular-nums/);
+  assert.match(html, /font-feature-settings: "tnum" 1, "lnum" 1/);
+  assert.equal(html.includes("IBM Plex Mono"), false);
+  assert.equal(html.includes("JetBrains Mono"), false);
+  assert.match(html, /\.market-row--btc \{ grid-column: 1 \/ -1;/);
+  assert.match(html, /\.btc-metrics \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(html, /\.btc-metric \.market-price \{ font-size: clamp\(28px, 2\.1vw, 38px\)/);
+  assert.match(html, /\.market-row--btc \.market-price \{ font-size: clamp\(68px, 5vw, 96px\)/);
+  assert.match(html, /\.market-price \{.*font-size: clamp\(28px, 2vw, 36px\)/);
+  assert.match(html, /function createBtcHeroRow\(/);
+  assert.match(html, /metricRows\[item\.id\] = metric/);
+  assert.match(html, /\.btc-metrics \{ grid-template-columns: 1fr;/);
 });
 
 test("digit offset uses shortest path", () => {
