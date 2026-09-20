@@ -219,16 +219,19 @@
           buildId: BUILD_ID,
           webSocketAvailable: typeof WebSocket === "function",
           webAnimationsAvailable: typeof Element !== "undefined" && Element.prototype && typeof Element.prototype.animate === "function",
-          cssLinearEasingAvailable: typeof CSS !== "undefined" && typeof CSS.supports === "function" ? CSS.supports("animation-timing-function", ANIM_EASE) : false,
           reducedMotion: Boolean(reduceMotionQuery && reduceMotionQuery.matches),
-          animationMode: "unknown",
-          animationFallbacks: 0,
           quoteUpdates: 0,
           lastQuoteAt: 0,
           lastFlushAt: 0,
           lastRefitAt: 0,
-          lastDigitCellHeight: 0,
-          digitMeasurementFailures: 0,
+          odometerInstancesCreated: 0,
+          odometerBuildCount: 0,
+          domRebuildCount: 0,
+          animateToCount: 0,
+          setAllInstantCount: 0,
+          refitCount: 0,
+          animationCancelCount: 0,
+          odometerInstanceIds: {},
           socketStates: {}
         };
         window.__BUILD_ID__ = BUILD_ID;
@@ -260,6 +263,7 @@
         var lastMarketStructure = null;
         var marketRowsById = {};
         var odometersById = {};
+        var odometerInstanceSequence = 0;
         var renderTimer = 0;
         var lastFlushAt = 0;
         var lastCacheWriteAt = 0;
@@ -404,10 +408,6 @@
           return numberText(fraction === 0 ? Math.round(number) : number, fraction);
         }
 
-        function priceTemplate(text) {
-          return String(text || "").replace(/[0-9]/g, "#");
-        }
-
         function normalizedChange(item) {
           if (!item) return null;
           return finite(item.change !== undefined ? item.change : item.change24h);
@@ -436,53 +436,23 @@
         }
 
         function createPriceOdometer(element) {
+          var instanceId = odometerInstanceSequence += 1;
           var currentTemplate = "";
           var lastShown = "";
           var inited = false;
           var digitCellHeight = 0;
-          var heightRetryTimer = 0;
-          var heightRetryCount = 0;
-          var easingPoints = String(ANIM_EASE).replace(/^linear\(|\)$/g, "").split(",").map(function (value) {
-            return Number(value);
-          }).filter(function (value) { return isFinite(value); });
-
-          function clockNow() {
-            return window.performance && typeof window.performance.now === "function" ? window.performance.now() : Date.now();
-          }
-
-          function easingAt(progress) {
-            if (!easingPoints.length) return progress;
-            var position = progress * (easingPoints.length - 1);
-            var lower = Math.floor(position);
-            var upper = Math.min(easingPoints.length - 1, lower + 1);
-            var remainder = position - lower;
-            return easingPoints[lower] + (easingPoints[upper] - easingPoints[lower]) * remainder;
-          }
-
-          function cancelFallback(node) {
-            if (!node) return;
-            if (node._odometerFallbackRaf && typeof window.cancelAnimationFrame === "function") {
-              window.cancelAnimationFrame(node._odometerFallbackRaf);
-            }
-            if (node._odometerFallbackTimer) window.clearTimeout(node._odometerFallbackTimer);
-            node._odometerFallbackRaf = 0;
-            node._odometerFallbackTimer = 0;
-            node._odometerFallbackToken = (node._odometerFallbackToken || 0) + 1;
-          }
+          diagnostics.odometerInstancesCreated += 1;
 
           function cancelAnimations(node) {
-            if (!node) return;
-            cancelFallback(node);
-            if (typeof node.getAnimations !== "function") return;
-            try {
-              node.getAnimations().forEach(function (animation) { animation.cancel(); });
-            } catch (error) {
-              // A partially detached Safari animation must not stop the next quote.
-            }
+            node.getAnimations().forEach(function (animation) {
+              diagnostics.animationCancelCount += 1;
+              animation.cancel();
+            });
           }
 
           function buildOdometer(text) {
-            while (element.firstChild) element.removeChild(element.firstChild);
+            diagnostics.odometerBuildCount += 1;
+            element.innerHTML = "";
             for (var index = 0; index < text.length; index += 1) {
               var character = text.charAt(index);
               if (character >= "0" && character <= "9") {
@@ -492,6 +462,7 @@
 
                 var track = document.createElement("span");
                 track.className = "track";
+
                 for (var number = 0; number <= 9; number += 1) {
                   var cell = document.createElement("span");
                   cell.className = "digit__num";
@@ -513,33 +484,8 @@
 
           function refreshCellHeight() {
             var digit = element.querySelector(".digit");
-            if (!digit) return digitCellHeight;
-            var measured = digit.getBoundingClientRect().height;
-            if (!(measured > 0) && window.getComputedStyle) {
-              var computed = window.getComputedStyle(digit);
-              var lineHeight = parseFloat(computed.lineHeight);
-              var fontSize = parseFloat(computed.fontSize);
-              measured = lineHeight > 0 ? lineHeight : fontSize;
-            }
-            if (measured > 0 && isFinite(measured)) {
-              digitCellHeight = measured;
-              heightRetryCount = 0;
-            } else {
-              diagnostics.digitMeasurementFailures += 1;
-            }
-            diagnostics.lastDigitCellHeight = digitCellHeight;
+            if (digit) digitCellHeight = digit.getBoundingClientRect().height || digitCellHeight;
             return digitCellHeight;
-          }
-
-          function queueHeightRetry() {
-            if (heightRetryTimer || !inited || !lastShown || heightRetryCount >= 4) return;
-            heightRetryCount += 1;
-            var delay = heightRetryCount === 1 ? 0 : Math.min(240, 40 * Math.pow(2, heightRetryCount - 1));
-            heightRetryTimer = window.setTimeout(function () {
-              heightRetryTimer = 0;
-              if (refreshCellHeight()) setAllInstant(lastShown);
-              else queueHeightRetry();
-            }, delay);
           }
 
           function digitOffset(value, current) {
@@ -552,63 +498,10 @@
             return digitOffset(value, Number(digit)) * cellHeight;
           }
 
-          function runRafFallback(node, fromY, toY) {
-            cancelFallback(node);
-            var token = node._odometerFallbackToken;
-            var start = clockNow();
-            var apply = function (progress) {
-              var eased = easingAt(progress);
-              var value = fromY + (toY - fromY) * eased;
-              node.style.transform = "translate3d(0, " + value + "px, 0)";
-            };
-            var step = function (timestamp) {
-              if (node._odometerFallbackToken !== token) return;
-              var progress = Math.min(1, Math.max(0, (timestamp - start) / ANIM_MS));
-              apply(progress);
-              if (progress >= 1) {
-                node._odometerFallbackRaf = 0;
-                node._odometerFallbackTimer = 0;
-                node.style.transform = "translate3d(0, " + toY + "px, 0)";
-                return;
-              }
-              if (typeof window.requestAnimationFrame === "function") {
-                node._odometerFallbackRaf = window.requestAnimationFrame(step);
-              } else {
-                node._odometerFallbackTimer = window.setTimeout(function () { step(clockNow()); }, 16);
-              }
-            };
-            node.style.transform = "translate3d(0, " + fromY + "px, 0)";
-            diagnostics.animationMode = "raf";
-            if (typeof window.requestAnimationFrame === "function") node._odometerFallbackRaf = window.requestAnimationFrame(step);
-            else node._odometerFallbackTimer = window.setTimeout(function () { step(clockNow()); }, 16);
-          }
-
-          function animateNode(node, fromY, toY) {
-            if (typeof node.animate === "function") {
-              try {
-                node.style.transform = "translate3d(0, " + toY + "px, 0)";
-                var animation = node.animate([
-                  { transform: "translate3d(0, " + fromY + "px, 0)" },
-                  { transform: "translate3d(0, " + toY + "px, 0)" }
-                ], { duration: ANIM_MS, easing: ANIM_EASE, fill: "both" });
-                if (animation && animation.finished && typeof animation.finished.then === "function") {
-                  animation.finished.then(function () { animation.cancel(); }, function () {});
-                }
-                diagnostics.animationMode = "waapi";
-                return;
-              } catch (error) {
-                diagnostics.animationFallbacks += 1;
-              }
-            }
-            runRafFallback(node, fromY, toY);
-          }
-
           function positionDigit(track, digit, instant, previousDigit) {
             var cellHeight = refreshCellHeight();
-            if (!cellHeight) {
-              queueHeightRetry();
-              return;
-            }
+            if (!cellHeight) return;
+
             var previous = previousDigit === undefined ? digit : previousDigit;
             cancelAnimations(track);
             var nodes = track.querySelectorAll(".digit__num");
@@ -618,17 +511,25 @@
               var fromY = digitTranslatePx(value, previous, cellHeight);
               var toY = digitTranslatePx(value, digit, cellHeight);
 
-              cancelAnimations(node);
               if (instant) {
+                cancelAnimations(node);
                 node.style.transform = "translate3d(0, " + toY + "px, 0)";
                 continue;
               }
-              animateNode(node, fromY, toY);
+
+              cancelAnimations(node);
+              node.style.transform = "translate3d(0, " + toY + "px, 0)";
+              node.animate([
+                { transform: "translate3d(0, " + fromY + "px, 0)" },
+                { transform: "translate3d(0, " + toY + "px, 0)" }
+              ], { duration: ANIM_MS, easing: ANIM_EASE, fill: "both" });
             }
           }
 
-          function setAllInstant(text) {
-            if (currentTemplate !== priceTemplate(text) || !element.children.length) {
+          function setAllInstant(text, reason) {
+            diagnostics.setAllInstantCount += 1;
+            diagnostics.lastSetAllInstantReason = reason || "unspecified";
+            if (currentTemplate !== text) {
               buildOdometer(text);
               refreshCellHeight();
             }
@@ -640,22 +541,23 @@
               var node = nodes[index++];
               if (!node) break;
               if (node.classList.contains("digit")) {
+                var track = node.querySelector(".track");
                 node.dataset.value = character;
-                positionDigit(node.querySelector(".track"), character, true);
+                positionDigit(track, character, true);
               } else {
                 node.textContent = character;
               }
             }
 
-            currentTemplate = priceTemplate(text);
+            currentTemplate = text;
             lastShown = text;
             inited = true;
-            if (!digitCellHeight) queueHeightRetry();
           }
 
           function animateTo(text) {
-            if (!inited || priceTemplate(text) !== currentTemplate) {
-              setAllInstant(text);
+            diagnostics.animateToCount += 1;
+            if (!inited || text.length !== currentTemplate.length) {
+              setAllInstant(text, "animate-fallback");
               return;
             }
 
@@ -669,22 +571,23 @@
                 if (node.dataset.value !== character) {
                   var previous = node.dataset.value;
                   node.dataset.value = character;
-                  positionDigit(node.querySelector(".track"), character, false, previous);
+                  var track = node.querySelector(".track");
+                  positionDigit(track, character, false, previous);
                 }
-              } else if (node.textContent !== character) {
+              } else {
                 node.textContent = character;
               }
             }
 
-            currentTemplate = priceTemplate(text);
+            currentTemplate = text;
             lastShown = text;
           }
 
           function setDisplayText(text, instant) {
             if (!text) return;
             var reducedMotion = updateMotionDiagnostic();
-            if (instant || reducedMotion || !inited || priceTemplate(text) !== currentTemplate) {
-              setAllInstant(text);
+            if (instant || reducedMotion || !inited || text.length !== currentTemplate.length) {
+              setAllInstant(text, instant ? "explicit" : "display-rebuild");
             } else if (text !== lastShown) {
               animateTo(text);
             }
@@ -696,16 +599,14 @@
 
           function refitCurrent() {
             if (!inited || !lastShown) return;
-            var previousHeight = digitCellHeight;
-            var measuredHeight = refreshCellHeight();
-            if (!measuredHeight) {
-              queueHeightRetry();
-              return;
-            }
-            if (!previousHeight || Math.abs(measuredHeight - previousHeight) > 0.5) setAllInstant(lastShown);
+            diagnostics.refitCount += 1;
+            window.setTimeout(function () {
+              refreshCellHeight();
+              setAllInstant(lastShown, "refit");
+            }, 80);
           }
 
-          return { setPrice: setPrice, setDisplayText: setDisplayText, refitCurrent: refitCurrent };
+          return { instanceId: instanceId, setPrice: setPrice, setDisplayText: setDisplayText, refitCurrent: refitCurrent };
         }
 
         function createMarketRow(item) {
@@ -805,9 +706,13 @@
           if (item.lastUpdateAt) row.setAttribute("data-updated-at", String(item.lastUpdateAt));
           refs.symbol.textContent = item.label || item.id.toUpperCase();
 
-          if (!odometersById[item.id]) odometersById[item.id] = createPriceOdometer(refs.price);
+          if (!odometersById[item.id]) {
+            odometersById[item.id] = createPriceOdometer(refs.price);
+            diagnostics.odometerInstanceIds[item.id] = odometersById[item.id].instanceId;
+            if (item.id === "btc") window.__ODOMETER_INSTANCE_ID__ = odometersById[item.id].instanceId;
+          }
           var displayPrice = typeof item.displayPrice === "string" ? item.displayPrice : formatPriceText(price);
-          odometersById[item.id].setDisplayText(displayPrice, false);
+          if (!(item.id === "btc" && diagnostics.testRunning)) odometersById[item.id].setDisplayText(displayPrice, false);
 
           if (refs.change) {
             refs.change.className = "market-change";
@@ -907,6 +812,7 @@
               empty.textContent = "正在读取公开行情…";
               replaceChildrenCompat(marketListElement, empty);
               lastMarketStructure = "empty";
+              diagnostics.domRebuildCount += 1;
               marketRowsById = {};
               odometersById = {};
             }
@@ -916,6 +822,7 @@
           var marketStructure = validItems.map(function (item) { return item.id; }).join("|");
           if (marketStructure !== lastMarketStructure) {
             lastMarketStructure = marketStructure;
+            diagnostics.domRebuildCount += 1;
             marketRowsById = {};
             odometersById = {};
             var fragment = document.createDocumentFragment();
@@ -1030,6 +937,34 @@
             });
           }, 180);
         }
+
+        function testBtcOdometer() {
+          var odometer = odometersById.btc;
+          if (!odometer) return Promise.reject(new Error("BTC odometer is not ready"));
+          var sequence = ["80,364", "80,365", "80,369", "80,371"];
+          diagnostics.testRunning = true;
+          diagnostics.testSequence = sequence.slice();
+          odometer.setDisplayText(sequence[0], true);
+
+          return new Promise(function (resolve) {
+            var index = 1;
+            function next() {
+              if (index >= sequence.length) {
+                diagnostics.testRunning = false;
+                resolve(sequence[sequence.length - 1]);
+                return;
+              }
+              window.setTimeout(function () {
+                odometer.setDisplayText(sequence[index], false);
+                index += 1;
+                next();
+              }, 1000);
+            }
+            next();
+          });
+        }
+
+        window.__TEST_BTC_ODOMETER__ = testBtcOdometer;
 
         function socketLabel(url) {
           if (url === BINANCE_WS_URL) return "binance";

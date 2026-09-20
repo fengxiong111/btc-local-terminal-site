@@ -26,7 +26,7 @@ test("EMA and MA do not render a dash change", () => {
 
 test("generic decimal odometer is shared", () => {
   assert.match(html, /function createPriceOdometer\(/);
-  assert.match(html, /function priceTemplate\(/);
+  assert.doesNotMatch(html, /function priceTemplate\(/);
   assert.match(html, /ANIM_MS = 450/);
   assert.match(html, /translate3d\(/);
   assert.match(html, /function setDisplayText\(text, instant\)/);
@@ -71,9 +71,17 @@ test("desktop grouping and display precision", () => {
   assert.match(html, /fraction === 0 \? Math\.round\(number\) : number/);
 });
 
-test("mobile animation keeps the golden renderer without permanent containment hints", () => {
+test("btc-screen animation core is ported without extra execution layers", () => {
   assert.doesNotMatch(html, /contain:\s*paint/);
   assert.doesNotMatch(html, /will-change:\s*transform/);
+  assert.doesNotMatch(html, /animation\.finished/);
+  assert.doesNotMatch(html, /runRafFallback|easingPoints|easingAt|cancelFallback|queueHeightRetry/);
+  assert.match(html, /node\.style\.transform = "translate3d\(0, " \+ toY \+ "px, 0\)";\s*node\.animate\(/);
+  assert.match(html, /window\.__TEST_BTC_ODOMETER__ = testBtcOdometer/);
+  assert.match(html, /diagnostics\.animateToCount \+= 1/);
+  assert.match(html, /diagnostics\.setAllInstantCount \+= 1/);
+  assert.match(html, /diagnostics\.refitCount \+= 1/);
+  assert.match(html, /diagnostics\.domRebuildCount \+= 1/);
   assert.match(html, /function refitAllPrices\(reason\)/);
   assert.match(html, /\}, 180\);/);
   assert.match(html, /window\.visualViewport\.addEventListener\("resize"/);
@@ -88,11 +96,4 @@ test("digit offset uses shortest path", () => {
   }
   assert.equal(digitOffset(3, 1), 2);
   assert.equal(digitOffset(9, 1), -2);
-  assert.equal(priceTemplate("0.5728"), "#.####");
-  assert.equal(priceTemplate("1,004"), "#,###");
-  assert.notEqual(priceTemplate("0.9999"), priceTemplate("1.000"));
 });
-
-function priceTemplate(text) {
-  return String(text || "").replace(/[0-9]/g, "#");
-}
