@@ -29,6 +29,8 @@ test("generic decimal odometer is shared", () => {
   assert.match(html, /function priceTemplate\(/);
   assert.match(html, /ANIM_MS = 450/);
   assert.match(html, /translate3d\(/);
+  assert.match(html, /function setDisplayText\(text, instant\)/);
+  assert.match(html, /next\.displayPrice = formatPriceText\(quote\.price\)/);
   assert.match(html, /prefers-reduced-motion: reduce/);
   assert.equal(html.includes("createBtcOdometer"), false);
   assert.equal(html.includes("setBtcPrice"), false);
@@ -39,7 +41,8 @@ test("websocket is primary and rest is fallback", () => {
   assert.match(html, /wss:\/\/ws\.okx\.com:8443\/ws\/v5\/public/);
   assert.match(html, /wss:\/\/api\.hyperliquid\.xyz\/ws/);
   assert.match(html, /lite-api\.jup\.ag\/price\/v3/);
-  assert.match(html, /RENDER_MS = 350/);
+  assert.match(html, /VISUAL_RENDER_MS = 1000/);
+  assert.doesNotMatch(html, /RENDER_MS = 350/);
   assert.match(html, /REST_FALLBACK_MS = 2000/);
   assert.equal(html.includes("PRICE_INTERVAL = 500"), false);
   assert.equal(html.includes("MACRO_INTERVAL = 3000"), false);
@@ -59,12 +62,22 @@ test("Apple system typography and integrated hero hierarchy", () => {
   assert.match(html, /\.btc-metrics \{ grid-template-columns: 1fr;/);
 });
 
-test("desktop grouping and fixed two-decimal prices", () => {
+test("desktop grouping and display precision", () => {
   assert.match(html, /\.market-quote \{[^}]*justify-content: flex-start;[^}]*gap: clamp\(18px, 1\.6vw, 28px\)/);
   assert.match(html, /\.market-row--btc \.market-quote \{[^}]*gap: clamp\(24px, 2\.2vw, 40px\)/);
   assert.match(html, /@media \(min-width: 1400px\) \{\s*\.market-list \{ max-width: 1520px; \}/);
   assert.match(html, /\.btc-metrics \{[^}]*width: min\(100%, 620px\); max-width: 620px;/);
-  assert.match(html, /function priceFraction\(value\) \{\s*return 2;\s*\}/);
+  assert.match(html, /function priceFraction\(value\) \{\s*var price = finite\(value\);\s*return price !== null && price >= 1 \? 0 : 2;\s*\}/);
+  assert.match(html, /fraction === 0 \? Math\.round\(number\) : number/);
+});
+
+test("mobile animation keeps the golden renderer without permanent containment hints", () => {
+  assert.doesNotMatch(html, /contain:\s*paint/);
+  assert.doesNotMatch(html, /will-change:\s*transform/);
+  assert.match(html, /function refitAllPrices\(reason\)/);
+  assert.match(html, /\}, 180\);/);
+  assert.match(html, /window\.visualViewport\.addEventListener\("resize"/);
+  assert.match(html, /window\.__REDUCED_MOTION_MATCHES__/);
 });
 
 test("digit offset uses shortest path", () => {

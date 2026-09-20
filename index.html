@@ -72,6 +72,7 @@
       .page {
         width: min(100%, 1760px);
         max-width: 100%;
+        min-height: 100vh;
         min-height: 100svh;
         margin: 0 auto;
         padding-top: max(18px, calc(env(safe-area-inset-top) + 18px));
@@ -104,10 +105,10 @@
       .market-source { display: none; }
       .market-quote { width: 100%; min-width: 0; flex: 1 1 auto; align-items: baseline; justify-content: flex-start; gap: clamp(18px, 1.6vw, 28px); }
       .market-price { display: inline-flex; min-width: 0; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; color: var(--text); font-size: clamp(28px, 2vw, 36px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
-      .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; contain: paint; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
+      .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
       .market-price .sep { display: inline-block; width: 0.22em; margin: 0 -0.04em; text-align: center; opacity: 0.86; }
       .market-price .track { position: absolute; inset: 0; }
-      .market-price .digit__num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-right: 0.03em; box-sizing: border-box; will-change: transform; }
+      .market-price .digit__num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-right: 0.03em; box-sizing: border-box; }
       .market-change { min-width: 0; color: var(--muted); font-size: clamp(15px, 1.1vw, 20px); line-height: 1.2; text-align: right; white-space: nowrap; }
       .market-change.is-empty { display: none; }
       .market-change.up { color: var(--up); }
@@ -171,6 +172,13 @@
         .market-section { width: 100%; }
       }
 
+      /* iPad portrait has enough vertical room to read the board from the top.
+         Avoid flex-centering the shorter market board into a large empty well. */
+      @media (max-width: 900px) and (min-width: 561px) {
+        .page { align-items: flex-start; }
+        .market-section { padding-top: clamp(12px, 3svh, 32px); }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
       }
@@ -192,7 +200,7 @@
         var BINANCE_WS_URL = "wss://stream.binance.com:9443/ws/btcusdt@bookTicker";
         var OKX_WS_URL = "wss://ws.okx.com:8443/ws/v5/public";
         var HYPERLIQUID_WS_URL = "wss://api.hyperliquid.xyz/ws";
-        var RENDER_MS = 350;
+        var VISUAL_RENDER_MS = 1000;
         var REST_FALLBACK_MS = 2000;
         var STONK_INTERVAL = 2000;
         var STATS_INTERVAL = 15000;
@@ -205,6 +213,38 @@
         var EMA_CANDLE_LIMIT = 1000;
         var ANIM_MS = 450;
         var ANIM_EASE = "linear(0,.005,.019,.039,.066,.096,.129,.165,.202,.24,.278,.316,.354,.39,.426,.461,.494,.526,.557,.586,.614,.64,.665,.689,.711,.731,.751,.769,.786,.802,.817,.831,.844,.856,.867,.877,.887,.896,.904,.912,.919,.925,.931,.937,.942,.947,.951,.955,.959,.962,.965,.968,.971,.973,.976,.978,.98,.981,.983,.984,.986,.987,.988,.989,.99,.991,.992,.992,.993,.994,.994,.995,.995,.996,.996,.9963,.9967,.9969,.9972,.9975,.9977,.9979,.9981,.9982,.9984,.9985,.9987,.9988,.9989,1)";
+        var BUILD_ID = "f5df0bc";
+        var reduceMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+        var diagnostics = {
+          buildId: BUILD_ID,
+          webSocketAvailable: typeof WebSocket === "function",
+          webAnimationsAvailable: typeof Element !== "undefined" && Element.prototype && typeof Element.prototype.animate === "function",
+          cssLinearEasingAvailable: typeof CSS !== "undefined" && typeof CSS.supports === "function" ? CSS.supports("animation-timing-function", ANIM_EASE) : false,
+          reducedMotion: Boolean(reduceMotionQuery && reduceMotionQuery.matches),
+          animationMode: "unknown",
+          animationFallbacks: 0,
+          quoteUpdates: 0,
+          lastQuoteAt: 0,
+          lastFlushAt: 0,
+          lastRefitAt: 0,
+          lastDigitCellHeight: 0,
+          digitMeasurementFailures: 0,
+          socketStates: {}
+        };
+        window.__BUILD_ID__ = BUILD_ID;
+        window.__MARKET_DIAGNOSTICS__ = diagnostics;
+        window.__REDUCED_MOTION_MATCHES__ = diagnostics.reducedMotion;
+
+        function updateMotionDiagnostic() {
+          diagnostics.reducedMotion = Boolean(reduceMotionQuery && reduceMotionQuery.matches);
+          window.__REDUCED_MOTION_MATCHES__ = diagnostics.reducedMotion;
+          return diagnostics.reducedMotion;
+        }
+
+        if (reduceMotionQuery) {
+          if (typeof reduceMotionQuery.addEventListener === "function") reduceMotionQuery.addEventListener("change", updateMotionDiagnostic);
+          else if (typeof reduceMotionQuery.addListener === "function") reduceMotionQuery.addListener(updateMotionDiagnostic);
+        }
         var HIP3_STOCK_DEX = "xyz";
         var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
         var JUPITER_PRICE_URL = "https://lite-api.jup.ag/price/v3?ids=" + STONK_SOLANA_ADDRESS;
@@ -353,13 +393,15 @@
         }
 
         function priceFraction(value) {
-          return 2;
+          var price = finite(value);
+          return price !== null && price >= 1 ? 0 : 2;
         }
 
         function formatPriceText(value) {
           var number = finite(value);
           if (number === null) return "";
-          return numberText(number, priceFraction(number));
+          var fraction = priceFraction(number);
+          return numberText(fraction === 0 ? Math.round(number) : number, fraction);
         }
 
         function priceTemplate(text) {
@@ -398,10 +440,45 @@
           var lastShown = "";
           var inited = false;
           var digitCellHeight = 0;
+          var heightRetryTimer = 0;
+          var heightRetryCount = 0;
+          var easingPoints = String(ANIM_EASE).replace(/^linear\(|\)$/g, "").split(",").map(function (value) {
+            return Number(value);
+          }).filter(function (value) { return isFinite(value); });
+
+          function clockNow() {
+            return window.performance && typeof window.performance.now === "function" ? window.performance.now() : Date.now();
+          }
+
+          function easingAt(progress) {
+            if (!easingPoints.length) return progress;
+            var position = progress * (easingPoints.length - 1);
+            var lower = Math.floor(position);
+            var upper = Math.min(easingPoints.length - 1, lower + 1);
+            var remainder = position - lower;
+            return easingPoints[lower] + (easingPoints[upper] - easingPoints[lower]) * remainder;
+          }
+
+          function cancelFallback(node) {
+            if (!node) return;
+            if (node._odometerFallbackRaf && typeof window.cancelAnimationFrame === "function") {
+              window.cancelAnimationFrame(node._odometerFallbackRaf);
+            }
+            if (node._odometerFallbackTimer) window.clearTimeout(node._odometerFallbackTimer);
+            node._odometerFallbackRaf = 0;
+            node._odometerFallbackTimer = 0;
+            node._odometerFallbackToken = (node._odometerFallbackToken || 0) + 1;
+          }
 
           function cancelAnimations(node) {
-            if (!node || typeof node.getAnimations !== "function") return;
-            node.getAnimations().forEach(function (animation) { animation.cancel(); });
+            if (!node) return;
+            cancelFallback(node);
+            if (typeof node.getAnimations !== "function") return;
+            try {
+              node.getAnimations().forEach(function (animation) { animation.cancel(); });
+            } catch (error) {
+              // A partially detached Safari animation must not stop the next quote.
+            }
           }
 
           function buildOdometer(text) {
@@ -436,8 +513,33 @@
 
           function refreshCellHeight() {
             var digit = element.querySelector(".digit");
-            if (digit) digitCellHeight = digit.getBoundingClientRect().height || digitCellHeight;
+            if (!digit) return digitCellHeight;
+            var measured = digit.getBoundingClientRect().height;
+            if (!(measured > 0) && window.getComputedStyle) {
+              var computed = window.getComputedStyle(digit);
+              var lineHeight = parseFloat(computed.lineHeight);
+              var fontSize = parseFloat(computed.fontSize);
+              measured = lineHeight > 0 ? lineHeight : fontSize;
+            }
+            if (measured > 0 && isFinite(measured)) {
+              digitCellHeight = measured;
+              heightRetryCount = 0;
+            } else {
+              diagnostics.digitMeasurementFailures += 1;
+            }
+            diagnostics.lastDigitCellHeight = digitCellHeight;
             return digitCellHeight;
+          }
+
+          function queueHeightRetry() {
+            if (heightRetryTimer || !inited || !lastShown || heightRetryCount >= 4) return;
+            heightRetryCount += 1;
+            var delay = heightRetryCount === 1 ? 0 : Math.min(240, 40 * Math.pow(2, heightRetryCount - 1));
+            heightRetryTimer = window.setTimeout(function () {
+              heightRetryTimer = 0;
+              if (refreshCellHeight()) setAllInstant(lastShown);
+              else queueHeightRetry();
+            }, delay);
           }
 
           function digitOffset(value, current) {
@@ -450,9 +552,63 @@
             return digitOffset(value, Number(digit)) * cellHeight;
           }
 
+          function runRafFallback(node, fromY, toY) {
+            cancelFallback(node);
+            var token = node._odometerFallbackToken;
+            var start = clockNow();
+            var apply = function (progress) {
+              var eased = easingAt(progress);
+              var value = fromY + (toY - fromY) * eased;
+              node.style.transform = "translate3d(0, " + value + "px, 0)";
+            };
+            var step = function (timestamp) {
+              if (node._odometerFallbackToken !== token) return;
+              var progress = Math.min(1, Math.max(0, (timestamp - start) / ANIM_MS));
+              apply(progress);
+              if (progress >= 1) {
+                node._odometerFallbackRaf = 0;
+                node._odometerFallbackTimer = 0;
+                node.style.transform = "translate3d(0, " + toY + "px, 0)";
+                return;
+              }
+              if (typeof window.requestAnimationFrame === "function") {
+                node._odometerFallbackRaf = window.requestAnimationFrame(step);
+              } else {
+                node._odometerFallbackTimer = window.setTimeout(function () { step(clockNow()); }, 16);
+              }
+            };
+            node.style.transform = "translate3d(0, " + fromY + "px, 0)";
+            diagnostics.animationMode = "raf";
+            if (typeof window.requestAnimationFrame === "function") node._odometerFallbackRaf = window.requestAnimationFrame(step);
+            else node._odometerFallbackTimer = window.setTimeout(function () { step(clockNow()); }, 16);
+          }
+
+          function animateNode(node, fromY, toY) {
+            if (typeof node.animate === "function") {
+              try {
+                node.style.transform = "translate3d(0, " + toY + "px, 0)";
+                var animation = node.animate([
+                  { transform: "translate3d(0, " + fromY + "px, 0)" },
+                  { transform: "translate3d(0, " + toY + "px, 0)" }
+                ], { duration: ANIM_MS, easing: ANIM_EASE, fill: "both" });
+                if (animation && animation.finished && typeof animation.finished.then === "function") {
+                  animation.finished.then(function () { animation.cancel(); }, function () {});
+                }
+                diagnostics.animationMode = "waapi";
+                return;
+              } catch (error) {
+                diagnostics.animationFallbacks += 1;
+              }
+            }
+            runRafFallback(node, fromY, toY);
+          }
+
           function positionDigit(track, digit, instant, previousDigit) {
             var cellHeight = refreshCellHeight();
-            if (!cellHeight) return;
+            if (!cellHeight) {
+              queueHeightRetry();
+              return;
+            }
             var previous = previousDigit === undefined ? digit : previousDigit;
             cancelAnimations(track);
             var nodes = track.querySelectorAll(".digit__num");
@@ -463,16 +619,11 @@
               var toY = digitTranslatePx(value, digit, cellHeight);
 
               cancelAnimations(node);
-              if (instant || typeof node.animate !== "function") {
+              if (instant) {
                 node.style.transform = "translate3d(0, " + toY + "px, 0)";
                 continue;
               }
-
-              node.style.transform = "translate3d(0, " + toY + "px, 0)";
-              node.animate([
-                { transform: "translate3d(0, " + fromY + "px, 0)" },
-                { transform: "translate3d(0, " + toY + "px, 0)" }
-              ], { duration: ANIM_MS, easing: ANIM_EASE, fill: "both" });
+              animateNode(node, fromY, toY);
             }
           }
 
@@ -499,6 +650,7 @@
             currentTemplate = priceTemplate(text);
             lastShown = text;
             inited = true;
+            if (!digitCellHeight) queueHeightRetry();
           }
 
           function animateTo(text) {
@@ -528,10 +680,9 @@
             lastShown = text;
           }
 
-          function setPrice(value, instant) {
-            var text = formatPriceText(value);
+          function setDisplayText(text, instant) {
             if (!text) return;
-            var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            var reducedMotion = updateMotionDiagnostic();
             if (instant || reducedMotion || !inited || priceTemplate(text) !== currentTemplate) {
               setAllInstant(text);
             } else if (text !== lastShown) {
@@ -539,13 +690,22 @@
             }
           }
 
-          function refitCurrent() {
-            if (!inited || !lastShown) return;
-            refreshCellHeight();
-            setAllInstant(lastShown);
+          function setPrice(value, instant) {
+            setDisplayText(formatPriceText(value), instant);
           }
 
-          return { setPrice: setPrice, refitCurrent: refitCurrent };
+          function refitCurrent() {
+            if (!inited || !lastShown) return;
+            var previousHeight = digitCellHeight;
+            var measuredHeight = refreshCellHeight();
+            if (!measuredHeight) {
+              queueHeightRetry();
+              return;
+            }
+            if (!previousHeight || Math.abs(measuredHeight - previousHeight) > 0.5) setAllInstant(lastShown);
+          }
+
+          return { setPrice: setPrice, setDisplayText: setDisplayText, refitCurrent: refitCurrent };
         }
 
         function createMarketRow(item) {
@@ -646,7 +806,8 @@
           refs.symbol.textContent = item.label || item.id.toUpperCase();
 
           if (!odometersById[item.id]) odometersById[item.id] = createPriceOdometer(refs.price);
-          odometersById[item.id].setPrice(price, false);
+          var displayPrice = typeof item.displayPrice === "string" ? item.displayPrice : formatPriceText(price);
+          odometersById[item.id].setDisplayText(displayPrice, false);
 
           if (refs.change) {
             refs.change.className = "market-change";
@@ -662,9 +823,15 @@
 
         function ingestQuote(id, quote) {
           if (!id || !quote) return;
+          diagnostics.quoteUpdates += 1;
+          diagnostics.lastQuoteAt = Date.now();
+          diagnostics.lastQuoteId = id;
           var previous = priceBuffer[id] || marketItemsById[id] || {};
           var next = Object.assign({}, previous, quote, { id: id });
-          if (quote.price !== undefined && finite(quote.price) !== null) next.lastUpdateAt = Date.now();
+          if (quote.price !== undefined && finite(quote.price) !== null) {
+            next.displayPrice = formatPriceText(quote.price);
+            next.lastUpdateAt = Date.now();
+          }
           else if (!next.lastUpdateAt) next.lastUpdateAt = Date.now();
           if (!next.status) next.status = next.stale ? "STALE" : "LIVE";
           if (next.status === "LIVE") next.stale = false;
@@ -675,7 +842,7 @@
 
         function scheduleFlush() {
           if (renderTimer) return;
-          var wait = Math.max(0, RENDER_MS - (Date.now() - lastFlushAt));
+          var wait = Math.max(0, VISUAL_RENDER_MS - (Date.now() - lastFlushAt));
           renderTimer = window.setTimeout(flushQuotes, wait);
         }
 
@@ -711,6 +878,7 @@
         function flushQuotes() {
           renderTimer = 0;
           lastFlushAt = Date.now();
+          diagnostics.lastFlushAt = lastFlushAt;
           Object.keys(priceBuffer).forEach(function (id) {
             var item = priceBuffer[id];
             marketItemsById[id] = item;
@@ -849,12 +1017,25 @@
           });
         }
 
-        function refitAllPrices() {
-          window.setTimeout(function () {
+        var refitTimer = 0;
+
+        function refitAllPrices(reason) {
+          if (refitTimer) window.clearTimeout(refitTimer);
+          refitTimer = window.setTimeout(function () {
+            refitTimer = 0;
+            diagnostics.lastRefitAt = Date.now();
+            diagnostics.lastRefitReason = reason || "viewport";
             Object.keys(odometersById).forEach(function (id) {
               if (odometersById[id]) odometersById[id].refitCurrent();
             });
-          }, 80);
+          }, 180);
+        }
+
+        function socketLabel(url) {
+          if (url === BINANCE_WS_URL) return "binance";
+          if (url === OKX_WS_URL) return "okx";
+          if (url === HYPERLIQUID_WS_URL) return "hyperliquid";
+          return "unknown";
         }
 
         function connectSocket(url, handlers) {
@@ -863,6 +1044,12 @@
           var attempt = 0;
           var pingTimer = 0;
           var retryTimer = 0;
+          var label = socketLabel(url);
+
+          function setSocketState(state) {
+            diagnostics.socketStates[label] = state;
+            diagnostics.lastSocketStateAt = Date.now();
+          }
 
           function clearPing() {
             if (pingTimer) {
@@ -873,14 +1060,17 @@
 
           function open() {
             if (stopped) return;
+            setSocketState("CONNECTING");
             try {
               socket = new WebSocket(url);
             } catch (error) {
+              setSocketState("UNAVAILABLE");
               retry();
               return;
             }
             socket.onopen = function () {
               attempt = 0;
+              setSocketState("OPEN");
               if (handlers.onOpen) handlers.onOpen(socket);
               if (handlers.ping) {
                 pingTimer = window.setInterval(function () {
@@ -893,10 +1083,12 @@
             };
             socket.onclose = function () {
               clearPing();
+              setSocketState("CLOSED_RETRYING");
               if (handlers.onDisconnect) handlers.onDisconnect();
               retry();
             };
             socket.onerror = function () {
+              setSocketState("ERROR");
               try { socket.close(); } catch (error) {}
             };
           }
@@ -1251,11 +1443,13 @@
         window.addEventListener("focus", refreshAll, { passive: true });
         window.addEventListener("pageshow", function () {
           refreshAll();
-          refitAllPrices();
+          refitAllPrices("pageshow");
         }, { passive: true });
-        window.addEventListener("orientationchange", refitAllPrices, { passive: true });
-        window.addEventListener("resize", refitAllPrices, { passive: true });
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(refitAllPrices).catch(function () {});
+        window.addEventListener("orientationchange", function () { refitAllPrices("orientationchange"); }, { passive: true });
+        window.addEventListener("resize", function () { refitAllPrices("resize"); }, { passive: true });
+        if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { refitAllPrices("visualViewport"); }, { passive: true });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { refitAllPrices("fonts-ready"); }).catch(function () {});
+        if (document.fonts && typeof document.fonts.addEventListener === "function") document.fonts.addEventListener("loadingdone", function () { refitAllPrices("fonts-loadingdone"); });
         document.addEventListener("visibilitychange", function () {
           if (document.visibilityState === "visible") refreshAll();
         });
