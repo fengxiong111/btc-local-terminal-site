@@ -115,7 +115,9 @@ test("compact market-cap examples use no currency prefix", () => {
 test("new prices reuse existing live source paths", () => {
   assert.match(html, /id: "sol", label: "SOL", source: "hyperliquid"/);
   assert.match(html, /id: "uni", label: "UNI", source: "hyperliquid"/);
-  assert.match(html, /id: "paid", label: "PAID", source: "dexscreener"/);
+  assert.match(html, /id: "paid", label: "PAID", source: "dexscreener", chain: "solana", address: PAID_SOLANA_ADDRESS/);
+  assert.match(html, /98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump/);
+  assert.doesNotMatch(html, /PAID_BASE_ADDRESS|chain: "base"/);
   assert.match(html, /return definition\.id === "stonk" \|\| definition\.source === "dexscreener"/);
   assert.match(html, /fetchDexScreenerMacro\(dexDefinitions\)/);
   assert.match(html, /definition\.chain \|\| "solana"/);

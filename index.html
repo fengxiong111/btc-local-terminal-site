@@ -264,7 +264,7 @@
         }
         var HIP3_STOCK_DEX = "xyz";
         var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
-        var PAID_BASE_ADDRESS = "0x655a51e6803faf50d4ace80fa501af2f29c856cf";
+        var PAID_SOLANA_ADDRESS = "98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump";
         var JUPITER_PRICE_URL = "https://lite-api.jup.ag/price/v3?ids=" + STONK_SOLANA_ADDRESS;
         var MARKET_CAP_BY_ID = {
           btc: 1644320920318,
@@ -277,7 +277,7 @@
           nvda: 4440000000000,
           sol: 66390963717,
           uni: 5497666617,
-          paid: 44515
+          paid: 13018357
         };
         var marketListElement = document.getElementById("market-list");
         var priceRequest = false;
@@ -310,7 +310,7 @@
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
           { id: "sol", label: "SOL", source: "hyperliquid" },
           { id: "uni", label: "UNI", source: "hyperliquid" },
-          { id: "paid", label: "PAID", source: "dexscreener", chain: "base", address: PAID_BASE_ADDRESS }
+          { id: "paid", label: "PAID", source: "dexscreener", chain: "solana", address: PAID_SOLANA_ADDRESS }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },
