@@ -18,6 +18,10 @@ test("source labels stay out of the visible row", () => {
   assert.equal(html.includes(" · 缓存"), false);
 });
 
+test("static page has no implicit favicon request", () => {
+  assert.match(html, /<link rel="icon" href="data:," \/>/);
+});
+
 test("EMA and MA do not render a dash change", () => {
   assert.match(html, /market-change\.is-empty \{ display: none; \}/);
   assert.match(html, /refs\.change\.classList\.add\("is-empty"\)/);
