@@ -92,6 +92,18 @@
         outline-offset: 3px;
       }
 
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
       .market-section { margin-top: 0; }
       .market-list { display: grid; width: 100%; min-width: 0; max-width: 1680px; margin: 0 auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(10px, 0.8vw, 16px); }
       .market-row { min-width: 0; min-height: clamp(88px, 5.5vw, 108px); flex-direction: column; align-items: stretch; justify-content: space-between; gap: 6px; padding: clamp(14px, 1vw, 18px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); overflow: hidden; }
@@ -629,11 +641,14 @@
           quote.className = "market-quote";
           var priceElement = document.createElement("span");
           priceElement.className = "market-price";
+          priceElement.setAttribute("aria-hidden", "true");
+          var accessiblePriceElement = document.createElement("span");
+          accessiblePriceElement.className = "market-price-accessible sr-only";
           var changeElement = document.createElement("span");
           changeElement.className = "market-change is-empty";
-          quote.append(priceElement, changeElement);
+          quote.append(priceElement, accessiblePriceElement, changeElement);
           row.append(ident, quote);
-          row._marketRefs = { symbol: symbol, price: priceElement, change: changeElement };
+          row._marketRefs = { symbol: symbol, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
           return row;
         }
 
@@ -656,11 +671,14 @@
             quote.className = "market-quote";
             var priceElement = document.createElement("span");
             priceElement.className = "market-price";
+            priceElement.setAttribute("aria-hidden", "true");
+            var accessiblePriceElement = document.createElement("span");
+            accessiblePriceElement.className = "market-price-accessible sr-only";
             var changeElement = document.createElement("span");
             changeElement.className = "market-change is-empty";
-            quote.append(priceElement, changeElement);
+            quote.append(priceElement, accessiblePriceElement, changeElement);
             row.append(ident, quote);
-            row._marketRefs = { symbol: symbol, price: priceElement, change: changeElement };
+            row._marketRefs = { symbol: symbol, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
           }
 
           if (metricItems.length) {
@@ -674,9 +692,12 @@
               metricSymbol.textContent = item.label || item.id.toUpperCase();
               var metricPrice = document.createElement("span");
               metricPrice.className = "market-price";
-              metric.append(metricSymbol, metricPrice);
+              metricPrice.setAttribute("aria-hidden", "true");
+              var accessibleMetricPrice = document.createElement("span");
+              accessibleMetricPrice.className = "market-price-accessible sr-only";
+              metric.append(metricSymbol, metricPrice, accessibleMetricPrice);
               metric._isBtcMetric = true;
-              metric._marketRefs = { symbol: metricSymbol, price: metricPrice, change: null };
+              metric._marketRefs = { symbol: metricSymbol, price: metricPrice, priceAccessible: accessibleMetricPrice, change: null };
               metricRows[item.id] = metric;
               metrics.appendChild(metric);
             });
@@ -715,6 +736,7 @@
             if (item.id === "btc") window.__ODOMETER_INSTANCE_ID__ = odometersById[item.id].instanceId;
           }
           var displayPrice = typeof item.displayPrice === "string" ? item.displayPrice : formatPriceText(price);
+          if (refs.priceAccessible) refs.priceAccessible.textContent = displayPrice;
           if (!(item.id === "btc" && diagnostics.testRunning)) odometersById[item.id].setDisplayText(displayPrice, false);
 
           if (refs.change) {

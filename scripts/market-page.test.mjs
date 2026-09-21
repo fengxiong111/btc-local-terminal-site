@@ -62,6 +62,13 @@ test("Apple system typography and integrated hero hierarchy", () => {
   assert.match(html, /\.btc-metrics \{ grid-template-columns: 1fr;/);
 });
 
+test("odometer digits expose an accessible display value", () => {
+  assert.match(html, /\.sr-only\s*\{/);
+  assert.match(html, /priceElement\.setAttribute\("aria-hidden", "true"\)/);
+  assert.match(html, /priceAccessible: accessiblePriceElement/);
+  assert.match(html, /refs\.priceAccessible\.textContent = displayPrice/);
+});
+
 test("desktop grouping and display precision", () => {
   assert.match(html, /\.market-quote \{[^}]*justify-content: flex-start;[^}]*gap: clamp\(18px, 1\.6vw, 28px\)/);
   assert.match(html, /\.market-row--btc \.market-quote \{[^}]*gap: clamp\(24px, 2\.2vw, 40px\)/);
