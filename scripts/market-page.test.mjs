@@ -82,6 +82,45 @@ test("desktop grouping and display precision", () => {
   assert.match(html, /fraction === 0 \? Math\.round\(number\) : number/);
 });
 
+test("market caps stay compact, quiet, and custom ordered", () => {
+  assert.match(html, /\.market-cap \{[^}]*margin-left: auto;[^}]*color: var\(--muted\)/);
+  assert.match(html, /function formatCompactMarketCap\(value\)/);
+  assert.match(html, /if \(refs\.marketCap\) refs\.marketCap\.textContent = marketCapText\(item\)/);
+  assert.doesNotMatch(html, /MC:/);
+  assert.doesNotMatch(html, /Market Cap/);
+  assert.doesNotMatch(html, /\$[0-9]/);
+  ["hype", "pons", "stonk", "spcx", "mu", "sndk", "nvda", "sol", "uni", "paid"].forEach((id) => {
+    assert.match(html, new RegExp(`id: "${id}"`));
+  });
+  assert.match(html, /id: "nvda"[\s\S]*id: "sol"[\s\S]*id: "uni"[\s\S]*id: "paid"/);
+});
+
+test("compact market-cap examples use no currency prefix", () => {
+  function compact(value) {
+    const suffixes = [[1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]];
+    const [divisor, suffix] = suffixes.find(([threshold]) => value >= threshold) ?? [1, ""];
+    const scaled = value / divisor;
+    const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+    let text = scaled.toFixed(digits);
+    if (digits > 0) text = text.replace(/0+$/, "").replace(/\.$/, "");
+    return text + suffix;
+  }
+
+  assert.equal(compact(262e9), "262B");
+  assert.equal(compact(20.6e9), "20.6B");
+  assert.equal(compact(454e6), "454M");
+  assert.equal(compact(1.63e12), "1.63T");
+});
+
+test("new prices reuse existing live source paths", () => {
+  assert.match(html, /id: "sol", label: "SOL", source: "hyperliquid"/);
+  assert.match(html, /id: "uni", label: "UNI", source: "hyperliquid"/);
+  assert.match(html, /id: "paid", label: "PAID", source: "dexscreener"/);
+  assert.match(html, /return definition\.id === "stonk" \|\| definition\.source === "dexscreener"/);
+  assert.match(html, /fetchDexScreenerMacro\(dexDefinitions\)/);
+  assert.match(html, /definition\.chain \|\| "solana"/);
+});
+
 test("btc-screen animation core is ported without extra execution layers", () => {
   assert.doesNotMatch(html, /contain:\s*paint/);
   assert.doesNotMatch(html, /will-change:\s*transform/);

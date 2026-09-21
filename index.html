@@ -110,8 +110,9 @@
       .market-row { min-width: 0; min-height: clamp(88px, 5.5vw, 108px); flex-direction: column; align-items: stretch; justify-content: space-between; gap: 6px; padding: clamp(14px, 1vw, 18px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); overflow: hidden; }
       .market-row[data-market-state="stale"],
       .market-row[data-market-state="fallback"] { opacity: 0.84; }
-      .market-ident { min-width: 0; flex: 0 0 auto; flex-direction: row; align-items: center; gap: 7px; }
+      .market-ident { width: 100%; min-width: 0; flex: 0 0 auto; flex-direction: row; align-items: center; gap: 7px; }
       .market-symbol { color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 600; line-height: 1.2; letter-spacing: -0.35px; }
+      .market-cap { min-width: 0; margin-left: auto; color: var(--muted); font-size: clamp(9px, 0.7vw, 13px); font-weight: 500; line-height: 1.2; letter-spacing: 0; white-space: nowrap; }
       .market-stale-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pending); opacity: 0; flex: 0 0 auto; }
       .market-row[data-market-state="stale"] .market-stale-dot,
       .market-row[data-market-state="fallback"] .market-stale-dot { opacity: 0.9; }
@@ -263,7 +264,21 @@
         }
         var HIP3_STOCK_DEX = "xyz";
         var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
+        var PAID_BASE_ADDRESS = "0x655a51e6803faf50d4ace80fa501af2f29c856cf";
         var JUPITER_PRICE_URL = "https://lite-api.jup.ag/price/v3?ids=" + STONK_SOLANA_ADDRESS;
+        var MARKET_CAP_BY_ID = {
+          btc: 1644320920318,
+          hype: 20959322489,
+          pons: 414659631,
+          stonk: 298877883,
+          spcx: 454000000000,
+          mu: 262000000000,
+          sndk: 20600000000,
+          nvda: 4440000000000,
+          sol: 66390963717,
+          uni: 5497666617,
+          paid: 44515
+        };
         var marketListElement = document.getElementById("market-list");
         var priceRequest = false;
         var statsRequest = false;
@@ -292,12 +307,37 @@
           { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
-          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
+          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
+          { id: "sol", label: "SOL", source: "hyperliquid" },
+          { id: "uni", label: "UNI", source: "hyperliquid" },
+          { id: "paid", label: "PAID", source: "dexscreener", chain: "base", address: PAID_BASE_ADDRESS }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },
           { id: "ma120", label: "MA120", source: "btc-daily" }
         ], macroDefinitions);
+
+        function formatCompactMarketCap(value) {
+          var number = finite(value);
+          if (number === null || number < 0) return "";
+          var divisor = 1;
+          var suffix = "";
+          if (number >= 1e12) { divisor = 1e12; suffix = "T"; }
+          else if (number >= 1e9) { divisor = 1e9; suffix = "B"; }
+          else if (number >= 1e6) { divisor = 1e6; suffix = "M"; }
+          else if (number >= 1e3) { divisor = 1e3; suffix = "K"; }
+          var scaled = number / divisor;
+          var digits = scaled >= 100 ? 0 : (scaled >= 10 ? 1 : 2);
+          var formatted = scaled.toFixed(digits);
+          if (digits > 0) formatted = formatted.replace(/0+$/, "").replace(/\.$/, "");
+          return formatted + suffix;
+        }
+
+        function marketCapText(item) {
+          var liveValue = finite(item && item.marketCap);
+          var fallbackValue = item && MARKET_CAP_BY_ID[item.id];
+          return formatCompactMarketCap(liveValue !== null ? liveValue : fallbackValue);
+        }
 
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
@@ -636,7 +676,9 @@
           var staleDot = document.createElement("span");
           staleDot.className = "market-stale-dot";
           staleDot.setAttribute("aria-hidden", "true");
-          ident.append(symbol, staleDot);
+          var marketCapElement = document.createElement("span");
+          marketCapElement.className = "market-cap";
+          ident.append(symbol, staleDot, marketCapElement);
 
           var quote = document.createElement("div");
           quote.className = "market-quote";
@@ -649,7 +691,7 @@
           changeElement.className = "market-change is-empty";
           quote.append(priceElement, accessiblePriceElement, changeElement);
           row.append(ident, quote);
-          row._marketRefs = { symbol: symbol, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
+          row._marketRefs = { symbol: symbol, marketCap: marketCapElement, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
           return row;
         }
 
@@ -666,7 +708,9 @@
             var staleDot = document.createElement("span");
             staleDot.className = "market-stale-dot";
             staleDot.setAttribute("aria-hidden", "true");
-            ident.append(symbol, staleDot);
+            var marketCapElement = document.createElement("span");
+            marketCapElement.className = "market-cap";
+            ident.append(symbol, staleDot, marketCapElement);
 
             var quote = document.createElement("div");
             quote.className = "market-quote";
@@ -679,7 +723,7 @@
             changeElement.className = "market-change is-empty";
             quote.append(priceElement, accessiblePriceElement, changeElement);
             row.append(ident, quote);
-            row._marketRefs = { symbol: symbol, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
+            row._marketRefs = { symbol: symbol, marketCap: marketCapElement, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
           }
 
           if (metricItems.length) {
@@ -730,6 +774,7 @@
           row.setAttribute("data-status", item.status || (item.stale ? "STALE" : "LIVE"));
           if (item.lastUpdateAt) row.setAttribute("data-updated-at", String(item.lastUpdateAt));
           refs.symbol.textContent = item.label || item.id.toUpperCase();
+          if (refs.marketCap) refs.marketCap.textContent = marketCapText(item);
 
           if (!odometersById[item.id]) {
             odometersById[item.id] = createPriceOdometer(refs.price);
@@ -1292,18 +1337,20 @@
           return Promise.all(definitions.map(function (definition) {
             return requestJson("https://api.dexscreener.com/latest/dex/tokens/" + definition.address, 3000).then(function (payload) {
               var pairs = payload && Array.isArray(payload.pairs) ? payload.pairs : [];
+              var chain = definition.chain || "solana";
               pairs = pairs.filter(function (pair) {
-                return pair && pair.chainId === "solana" && pair.baseToken && pair.baseToken.address === definition.address && finite(pair.priceUsd) !== null;
+                return pair && pair.chainId === chain && pair.baseToken && String(pair.baseToken.address).toLowerCase() === String(definition.address).toLowerCase() && finite(pair.priceUsd) !== null;
               }).sort(function (left, right) { return (right.liquidity && finite(right.liquidity.usd) || 0) - (left.liquidity && finite(left.liquidity.usd) || 0); });
               var pair = pairs[0];
               if (!pair) throw new Error(definition.label + " price unavailable");
               return {
                 id: definition.id,
                 label: definition.label,
-                source: "solana",
+                source: definition.source === "dexscreener" ? "dexscreener" : "solana",
                 provider: "dexscreener",
-                symbol: "DEXSCREENER:SOLANA:" + definition.address,
+                symbol: "DEXSCREENER:" + chain.toUpperCase() + ":" + definition.address,
                 price: finite(pair.priceUsd),
+                marketCap: finite(pair.marketCap),
                 change: pair.priceChange ? finite(pair.priceChange.h24) : null
               };
             }).catch(function () { return null; });
@@ -1352,17 +1399,28 @@
         function fetchStonk() {
           if (stonkRequest) return;
           stonkRequest = true;
-          fetchJupiterStonk().catch(function () {
-            return fetchDexScreenerMacro(macroDefinitions.filter(function (definition) { return definition.id === "stonk"; })).then(function (items) {
-              if (!items.length) throw new Error("STONK price unavailable");
-              return items[0];
+          var dexDefinitions = macroDefinitions.filter(function (definition) {
+            return definition.id === "stonk" || definition.source === "dexscreener";
+          });
+          Promise.all([
+            fetchJupiterStonk().catch(function () { return null; }),
+            fetchDexScreenerMacro(dexDefinitions).catch(function () { return []; })
+          ]).then(function (groups) {
+            var jupiterItem = groups[0];
+            var dexItems = groups[1] || [];
+            var stonkItem = jupiterItem || dexItems.filter(function (item) { return item && item.id === "stonk"; })[0];
+            if (stonkItem) ingestQuote("stonk", Object.assign({}, stonkItem, { status: "LIVE", stale: false }));
+            dexItems.forEach(function (item) {
+              if (item && item.id !== "stonk") ingestQuote(item.id, Object.assign({}, item, { status: "LIVE", stale: false }));
             });
-          }).then(function (item) {
-            ingestQuote("stonk", Object.assign({}, item, { status: "LIVE", stale: false }));
+            if (!stonkItem) throw new Error("STONK price unavailable");
           }).catch(function () {
             if (cachedState && cachedState.macro) {
-              var cached = (cachedState.macro || []).filter(function (item) { return item && item.id === "stonk"; })[0];
-              if (cached) ingestQuote("stonk", Object.assign({}, cached, { status: "STALE", stale: true }));
+              (cachedState.macro || []).filter(function (item) {
+                return item && dexDefinitions.some(function (definition) { return definition.id === item.id; });
+              }).forEach(function (item) {
+                ingestQuote(item.id, Object.assign({}, item, { status: "STALE", stale: true }));
+              });
             }
           }).then(function () { stonkRequest = false; }, function () { stonkRequest = false; });
         }
