@@ -20,4 +20,8 @@
 
 数据生成脚本：`scripts/update-uniswap-fee.mjs`。GitHub Actions：`.github/workflows/update-uniswap-fee.yml`。
 
-静态页仅展示 token 行情，不加载或展示 Uniswap Fee 榜单与 HIP-3 股票资金费率榜。
+静态页展示 token 行情，并在同一页下方展示币安 USDT 加密期权 Put 的尾部凸性筛选。筛选只买 Put，单笔最大损失不超过 5 USDT，年度保险费上限 300 USDT。页面和定时任务都只读公开盘口，不会提交委托。
+
+数据生成脚本：`scripts/update-tail-convexity.mjs`。结果：`tail-convexity.json`。账本：`tail-ledger.json`。GitHub Actions：`.github/workflows/update-tail-convexity.yml`，每 30 分钟刷新一次快照。打开页面后也可以点「刷新全池」，在浏览器里重跑同一套硬门。
+
+静态页不加载或展示 Uniswap Fee 榜单与 HIP-3 股票资金费率榜。

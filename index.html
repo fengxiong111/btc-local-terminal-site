@@ -182,15 +182,68 @@
       }
 
       @media (min-width: 561px) {
-        .page { display: flex; align-items: center; }
+        .page { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
         .market-section { width: 100%; }
       }
 
       /* iPad portrait has enough vertical room to read the board from the top.
          Avoid flex-centering the shorter market board into a large empty well. */
       @media (max-width: 900px) and (min-width: 561px) {
-        .page { align-items: flex-start; }
         .market-section { padding-top: clamp(12px, 3svh, 32px); }
+      }
+
+      .tail-section { width: 100%; margin-top: clamp(28px, 3.2vw, 52px); }
+      .tail-board { width: 100%; max-width: 1680px; margin: 0 auto; }
+      .tail-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+      .tail-kicker { margin: 0 0 4px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; }
+      .tail-title { margin: 0; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 600; letter-spacing: -0.35px; }
+      .tail-state { margin: 0; font-size: clamp(15px, 1.1vw, 20px); font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+      .tail-state[data-tone="quiet"] { color: var(--muted); }
+      .tail-state[data-tone="pending"] { color: var(--pending); }
+      .tail-state[data-tone="risk"] { color: var(--down); }
+      .tail-state[data-tone="live"] { color: var(--up); }
+      .tail-summary { max-width: 78ch; margin: 12px 0 0; color: var(--strong); font-size: 14.5px; line-height: 1.55; }
+      .tail-meta,
+      .tail-budget,
+      .tail-radar { max-width: 92ch; margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .tail-actions { margin-top: 12px; }
+      .tail-refresh { margin: 0; padding: 0; border: 0; background: transparent; color: var(--strong); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+      .tail-refresh:disabled { color: var(--muted); cursor: default; }
+      .tail-list { display: grid; gap: clamp(10px, 0.8vw, 16px); margin: 14px 0 0; padding: 0; list-style: none; }
+      .tail-card { display: grid; gap: 12px; min-width: 0; padding: clamp(16px, 1.2vw, 22px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+      .tail-card[data-market-state="stale"] { opacity: 0.84; }
+      .tail-card-top { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+      .tail-card .market-stale-dot { align-self: center; }
+      .tail-card[data-market-state="stale"] .market-stale-dot { opacity: 0.9; }
+      .tail-rank { color: var(--muted); font-size: 13px; font-weight: 600; }
+      .tail-symbol { min-width: 0; margin: 0; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 600; letter-spacing: -0.35px; overflow-wrap: anywhere; }
+      .tail-loss { margin: 0 0 0 auto; color: var(--text); font-size: clamp(28px, 2vw, 36px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; text-align: right; white-space: nowrap; }
+      .tail-loss small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+      .tail-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 18px; margin: 0; padding-top: 12px; border-top: 1px solid rgba(120, 132, 125, 0.25); }
+      .tail-metrics div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+      .tail-metrics dt { color: var(--muted); font-size: 12px; font-weight: 500; }
+      .tail-metrics dd { margin: 0; color: var(--text); font-size: clamp(14px, 1vw, 16px); font-weight: 600; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+      .tail-metrics dd.is-wide { color: var(--pending); }
+      .tail-metrics dd.is-edge { color: var(--strong); }
+      .tail-metrics dd.is-rich { color: var(--muted); }
+      .tail-evidence { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .tail-foot { display: grid; gap: 6px; max-width: 92ch; margin: 14px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+      .tail-section[data-market-state="stale"] .tail-kicker { color: var(--pending); }
+
+      @media (min-width: 1400px) {
+        .tail-board { max-width: 1520px; }
+      }
+
+      @media (max-width: 900px) {
+        .tail-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+
+      @media (max-width: 560px) {
+        .tail-head { flex-direction: column; align-items: flex-start; }
+        .tail-state { white-space: normal; }
+        .tail-card-top { flex-wrap: wrap; }
+        .tail-loss { margin-left: 0; font-size: clamp(28px, 8vw, 34px); }
+        .tail-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -203,6 +256,26 @@
     <main class="page">
       <section id="market" class="market-section" aria-label="市场行情">
         <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
+      </section>
+      <section id="tail" class="tail-section" aria-label="尾部凸性">
+        <div class="tail-board">
+          <div class="tail-head">
+            <div>
+              <p class="tail-kicker">TAIL_CONVEXITY_V1</p>
+              <h2 class="tail-title">尾部凸性</h2>
+            </div>
+            <p id="tail-state" class="tail-state" data-tone="quiet">正在读取期权盘口…</p>
+          </div>
+          <p id="tail-summary" class="tail-summary">全池筛选结果会显示在这里。</p>
+          <p id="tail-meta" class="tail-meta"></p>
+          <p id="tail-budget" class="tail-budget"></p>
+          <p id="tail-radar" class="tail-radar"></p>
+          <div class="tail-actions">
+            <button id="tail-refresh" class="tail-refresh" type="button">刷新全池</button>
+          </div>
+          <ol id="tail-list" class="tail-list"></ol>
+          <div id="tail-foot" class="tail-foot"></div>
+        </div>
       </section>
     </main>
     <script>
@@ -1474,5 +1547,6 @@
         });
       }());
     </script>
+    <script type="module" src="tail-board.js"></script>
   </body>
 </html>
