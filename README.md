@@ -3,8 +3,7 @@
 这是只用于 GitHub Pages 远程查看的静态价格 / 市场监控终端，不依赖本地服务或本机文件。页面以 BTC 为视觉锚点，其他行情按响应式网格排列；手机与 iPad 使用原生页面滚动，不设置内部滚动容器。
 
 - BTC：Binance 现货 WebSocket 优先，OKX WebSocket / Hyperliquid REST 回退；日线 EMA200 / MA120
-- HYPE / PONS：Hyperliquid WebSocket 优先，REST 回退
-- STONK：Jupiter Solana 美元价，DexScreener 回退
+- HYPE / UNI：Hyperliquid WebSocket 优先，REST 回退
 - SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` WebSocket 优先；单个标的缺失时回退 Binance USDⓈ-M 行情
 - Uniswap 快照：仓库保留真实 ExploreStats 数据，静态首页不展示榜单
 - WebSocket 优先、REST 回退、浏览器缓存和失败回退均在 `index.html` 内完成

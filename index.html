@@ -289,12 +289,10 @@
         var HYPERLIQUID_WS_URL = "wss://api.hyperliquid.xyz/ws";
         var VISUAL_RENDER_MS = 1000;
         var REST_FALLBACK_MS = 2000;
-        var STONK_INTERVAL = 2000;
         var STATS_INTERVAL = 15000;
         var EMA_INTERVAL = 60000;
         var BTC_STALE_MS = 4000;
         var HL_STALE_MS = 8000;
-        var STONK_STALE_MS = 12000;
         var EMA_STALE_MS = 180000;
         var EMA_PERIOD = 200;
         var EMA_CANDLE_LIMIT = 1000;
@@ -336,27 +334,19 @@
           else if (typeof reduceMotionQuery.addListener === "function") reduceMotionQuery.addListener(updateMotionDiagnostic);
         }
         var HIP3_STOCK_DEX = "xyz";
-        var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
-        var PAID_SOLANA_ADDRESS = "98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump";
-        var JUPITER_PRICE_URL = "https://lite-api.jup.ag/price/v3?ids=" + STONK_SOLANA_ADDRESS;
         var MARKET_CAP_BY_ID = {
           btc: 1644320920318,
           hype: 20959322489,
-          pons: 414659631,
-          stonk: 298877883,
           spcx: 454000000000,
           mu: 262000000000,
           sndk: 20600000000,
           nvda: 4440000000000,
-          sol: 66390963717,
-          uni: 5497666617,
-          paid: 13018357
+          uni: 5497666617
         };
         var marketListElement = document.getElementById("market-list");
         var priceRequest = false;
         var statsRequest = false;
         var macroRequest = false;
-        var stonkRequest = false;
         var emaRequest = false;
         var marketItemsById = {};
         var macroItemsById = {};
@@ -375,15 +365,11 @@
         var cachedState = readCache();
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
-          { id: "pons", label: "PONS", source: "hyperliquid" },
-          { id: "stonk", label: "STONK", source: "solana", address: STONK_SOLANA_ADDRESS },
           { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
-          { id: "sol", label: "SOL", source: "hyperliquid" },
-          { id: "uni", label: "UNI", source: "hyperliquid" },
-          { id: "paid", label: "PAID", source: "dexscreener", chain: "solana", address: PAID_SOLANA_ADDRESS }
+          { id: "uni", label: "UNI", source: "hyperliquid" }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },
@@ -515,8 +501,6 @@
         function sourceMeta(symbol, fallback) {
           var value = typeof symbol === "string" ? symbol : "";
           if (value.indexOf("HYPERLIQUID:") === 0) return "hyperliquid";
-          if (value.indexOf("DEXSCREENER:") === 0) return "dexscreener";
-          if (value.indexOf("JUPITER:") === 0) return "jupiter";
           if (value.indexOf("OKX:") === 0) return "okx";
           if (value.indexOf("BINANCE:") === 0 || value.indexOf("BINANCE-") === 0) return "binance";
           return fallback || "public";
@@ -547,7 +531,6 @@
         function staleLimit(id) {
           if (id === "btc") return BTC_STALE_MS;
           if (id === "ema200" || id === "ma120") return EMA_STALE_MS;
-          if (id === "stonk") return STONK_STALE_MS;
           return HL_STALE_MS;
         }
 
@@ -1389,49 +1372,6 @@
           });
         }
 
-        function fetchJupiterStonk() {
-          return requestJson(JUPITER_PRICE_URL, 3000).then(function (payload) {
-            var quote = payload && payload[STONK_SOLANA_ADDRESS];
-            var price = finite(quote && (quote.usdPrice !== undefined ? quote.usdPrice : quote.price));
-            if (price === null) throw new Error("STONK price unavailable");
-            return {
-              id: "stonk",
-              label: "STONK",
-              source: "solana",
-              provider: "jupiter-price",
-              symbol: "JUPITER:SOLANA:" + STONK_SOLANA_ADDRESS,
-              price: price,
-              change: finite(quote && quote.priceChange24h)
-            };
-          });
-        }
-
-        function fetchDexScreenerMacro(definitions) {
-          return Promise.all(definitions.map(function (definition) {
-            return requestJson("https://api.dexscreener.com/latest/dex/tokens/" + definition.address, 3000).then(function (payload) {
-              var pairs = payload && Array.isArray(payload.pairs) ? payload.pairs : [];
-              var chain = definition.chain || "solana";
-              pairs = pairs.filter(function (pair) {
-                return pair && pair.chainId === chain && pair.baseToken && String(pair.baseToken.address).toLowerCase() === String(definition.address).toLowerCase() && finite(pair.priceUsd) !== null;
-              }).sort(function (left, right) { return (right.liquidity && finite(right.liquidity.usd) || 0) - (left.liquidity && finite(left.liquidity.usd) || 0); });
-              var pair = pairs[0];
-              if (!pair) throw new Error(definition.label + " price unavailable");
-              return {
-                id: definition.id,
-                label: definition.label,
-                source: definition.source === "dexscreener" ? "dexscreener" : "solana",
-                provider: "dexscreener",
-                symbol: "DEXSCREENER:" + chain.toUpperCase() + ":" + definition.address,
-                price: finite(pair.priceUsd),
-                marketCap: finite(pair.marketCap),
-                change: pair.priceChange ? finite(pair.priceChange.h24) : null
-              };
-            }).catch(function () { return null; });
-          })).then(function (items) {
-            return items.filter(function (item) { return item !== null; });
-          });
-        }
-
         function applyMacroItems(items, fallback) {
           (items || []).forEach(function (item) {
             if (!item || finite(item.price) === null) return;
@@ -1469,35 +1409,6 @@
           }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
         }
 
-        function fetchStonk() {
-          if (stonkRequest) return;
-          stonkRequest = true;
-          var dexDefinitions = macroDefinitions.filter(function (definition) {
-            return definition.id === "stonk" || definition.source === "dexscreener";
-          });
-          Promise.all([
-            fetchJupiterStonk().catch(function () { return null; }),
-            fetchDexScreenerMacro(dexDefinitions).catch(function () { return []; })
-          ]).then(function (groups) {
-            var jupiterItem = groups[0];
-            var dexItems = groups[1] || [];
-            var stonkItem = jupiterItem || dexItems.filter(function (item) { return item && item.id === "stonk"; })[0];
-            if (stonkItem) ingestQuote("stonk", Object.assign({}, stonkItem, { status: "LIVE", stale: false }));
-            dexItems.forEach(function (item) {
-              if (item && item.id !== "stonk") ingestQuote(item.id, Object.assign({}, item, { status: "LIVE", stale: false }));
-            });
-            if (!stonkItem) throw new Error("STONK price unavailable");
-          }).catch(function () {
-            if (cachedState && cachedState.macro) {
-              (cachedState.macro || []).filter(function (item) {
-                return item && dexDefinitions.some(function (definition) { return definition.id === item.id; });
-              }).forEach(function (item) {
-                ingestQuote(item.id, Object.assign({}, item, { status: "STALE", stale: true }));
-              });
-            }
-          }).then(function () { stonkRequest = false; }, function () { stonkRequest = false; });
-        }
-
         function watchdog() {
           var now = Date.now();
           if (btcPrimaryLive && now - btcLastWsAt > BTC_STALE_MS) {
@@ -1517,7 +1428,6 @@
           fetchBtcStats();
           fetchEma200();
           fetchHyperliquidMacroAll(hlPrimaryLive);
-          fetchStonk();
         }
 
         startBtcSockets();
@@ -1525,7 +1435,6 @@
         refreshAll();
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
-        window.setInterval(fetchStonk, STONK_INTERVAL);
         window.setInterval(function () {
           if (!btcPrimaryLive) fetchBtc();
           if (!hlPrimaryLive) fetchHyperliquidMacroAll(false);

@@ -44,7 +44,7 @@ test("websocket is primary and rest is fallback", () => {
   assert.match(html, /wss:\/\/stream\.binance\.com:9443\/ws\/btcusdt@bookTicker/);
   assert.match(html, /wss:\/\/ws\.okx\.com:8443\/ws\/v5\/public/);
   assert.match(html, /wss:\/\/api\.hyperliquid\.xyz\/ws/);
-  assert.match(html, /lite-api\.jup\.ag\/price\/v3/);
+  assert.doesNotMatch(html, /lite-api\.jup\.ag|api\.dexscreener\.com/);
   assert.match(html, /VISUAL_RENDER_MS = 1000/);
   assert.doesNotMatch(html, /RENDER_MS = 350/);
   assert.match(html, /REST_FALLBACK_MS = 2000/);
@@ -89,10 +89,13 @@ test("market caps stay compact, quiet, and custom ordered", () => {
   assert.doesNotMatch(html, /MC:/);
   assert.doesNotMatch(html, /Market Cap/);
   assert.doesNotMatch(html, /\$[0-9]/);
-  ["hype", "pons", "stonk", "spcx", "mu", "sndk", "nvda", "sol", "uni", "paid"].forEach((id) => {
+  ["hype", "spcx", "mu", "sndk", "nvda", "uni"].forEach((id) => {
     assert.match(html, new RegExp(`id: "${id}"`));
   });
-  assert.match(html, /id: "nvda"[\s\S]*id: "sol"[\s\S]*id: "uni"[\s\S]*id: "paid"/);
+  ["pons", "stonk", "sol", "paid"].forEach((id) => {
+    assert.doesNotMatch(html, new RegExp(`id: "${id}"`));
+  });
+  assert.match(html, /id: "hype"[\s\S]*id: "spcx"[\s\S]*id: "mu"[\s\S]*id: "sndk"[\s\S]*id: "nvda"[\s\S]*id: "uni"/);
 });
 
 test("compact market-cap examples use no currency prefix", () => {
@@ -112,15 +115,12 @@ test("compact market-cap examples use no currency prefix", () => {
   assert.equal(compact(1.63e12), "1.63T");
 });
 
-test("new prices reuse existing live source paths", () => {
-  assert.match(html, /id: "sol", label: "SOL", source: "hyperliquid"/);
+test("removed prices stay off the board", () => {
   assert.match(html, /id: "uni", label: "UNI", source: "hyperliquid"/);
-  assert.match(html, /id: "paid", label: "PAID", source: "dexscreener", chain: "solana", address: PAID_SOLANA_ADDRESS/);
-  assert.match(html, /98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump/);
-  assert.doesNotMatch(html, /PAID_BASE_ADDRESS|chain: "base"/);
-  assert.match(html, /return definition\.id === "stonk" \|\| definition\.source === "dexscreener"/);
-  assert.match(html, /fetchDexScreenerMacro\(dexDefinitions\)/);
-  assert.match(html, /definition\.chain \|\| "solana"/);
+  assert.match(html, /id: "hype", label: "HYPE", source: "hyperliquid"/);
+  assert.doesNotMatch(html, /label: "PONS"|label: "STONK"|label: "SOL"|label: "PAID"/);
+  assert.doesNotMatch(html, /fetchStonk|fetchJupiterStonk|fetchDexScreenerMacro|STONK_SOLANA_ADDRESS|PAID_SOLANA_ADDRESS/);
+  assert.doesNotMatch(html, /6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx|98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump/);
 });
 
 test("btc-screen animation core is ported without extra execution layers", () => {
