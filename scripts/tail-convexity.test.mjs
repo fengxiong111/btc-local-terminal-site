@@ -294,9 +294,11 @@ test("display formatters stay compact", () => {
 });
 
 test("tail board is part of the static page and does not pretend an order filled", () => {
+  const board = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "tail-board.js"), "utf8");
   assert.match(html, /id="tail"/);
   assert.match(html, /src="tail-board\.js"/);
   assert.match(html, /尾部凸性/);
   assert.equal(html.includes("order_sent: true"), false);
   assert.equal(html.includes("PROBE_OPEN"), false);
+  assert.equal(board.includes('["SOLUSDT", "SOL"]'), false);
 });

@@ -19,7 +19,6 @@ const STALE_MS = 45 * 60 * 1000;
 const SPOTS = [
   ["BTCUSDT", "BTC"],
   ["ETHUSDT", "ETH"],
-  ["SOLUSDT", "SOL"],
   ["BNBUSDT", "BNB"],
   ["XRPUSDT", "XRP"],
   ["DOGEUSDT", "DOGE"]
