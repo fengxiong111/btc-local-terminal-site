@@ -182,15 +182,68 @@
       }
 
       @media (min-width: 561px) {
-        .page { display: flex; align-items: center; }
+        .page { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
         .market-section { width: 100%; }
       }
 
       /* iPad portrait has enough vertical room to read the board from the top.
          Avoid flex-centering the shorter market board into a large empty well. */
       @media (max-width: 900px) and (min-width: 561px) {
-        .page { align-items: flex-start; }
         .market-section { padding-top: clamp(12px, 3svh, 32px); }
+      }
+
+      .tail-section { width: 100%; margin-top: clamp(28px, 3.2vw, 52px); }
+      .tail-board { width: 100%; max-width: 1680px; margin: 0 auto; }
+      .tail-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+      .tail-kicker { margin: 0 0 4px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; }
+      .tail-title { margin: 0; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 600; letter-spacing: -0.35px; }
+      .tail-state { margin: 0; font-size: clamp(15px, 1.1vw, 20px); font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+      .tail-state[data-tone="quiet"] { color: var(--muted); }
+      .tail-state[data-tone="pending"] { color: var(--pending); }
+      .tail-state[data-tone="risk"] { color: var(--down); }
+      .tail-state[data-tone="live"] { color: var(--up); }
+      .tail-summary { max-width: 78ch; margin: 12px 0 0; color: var(--strong); font-size: 14.5px; line-height: 1.55; }
+      .tail-meta,
+      .tail-budget,
+      .tail-radar { max-width: 92ch; margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .tail-actions { margin-top: 12px; }
+      .tail-refresh { margin: 0; padding: 0; border: 0; background: transparent; color: var(--strong); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+      .tail-refresh:disabled { color: var(--muted); cursor: default; }
+      .tail-list { display: grid; gap: clamp(10px, 0.8vw, 16px); margin: 14px 0 0; padding: 0; list-style: none; }
+      .tail-card { display: grid; gap: 12px; min-width: 0; padding: clamp(16px, 1.2vw, 22px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+      .tail-card[data-market-state="stale"] { opacity: 0.84; }
+      .tail-card-top { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+      .tail-card .market-stale-dot { align-self: center; }
+      .tail-card[data-market-state="stale"] .market-stale-dot { opacity: 0.9; }
+      .tail-rank { color: var(--muted); font-size: 13px; font-weight: 600; }
+      .tail-symbol { min-width: 0; margin: 0; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 600; letter-spacing: -0.35px; overflow-wrap: anywhere; }
+      .tail-loss { margin: 0 0 0 auto; color: var(--text); font-size: clamp(28px, 2vw, 36px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; text-align: right; white-space: nowrap; }
+      .tail-loss small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+      .tail-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 18px; margin: 0; padding-top: 12px; border-top: 1px solid rgba(120, 132, 125, 0.25); }
+      .tail-metrics div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+      .tail-metrics dt { color: var(--muted); font-size: 12px; font-weight: 500; }
+      .tail-metrics dd { margin: 0; color: var(--text); font-size: clamp(14px, 1vw, 16px); font-weight: 600; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+      .tail-metrics dd.is-wide { color: var(--pending); }
+      .tail-metrics dd.is-edge { color: var(--strong); }
+      .tail-metrics dd.is-rich { color: var(--muted); }
+      .tail-evidence { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .tail-foot { display: grid; gap: 6px; max-width: 92ch; margin: 14px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+      .tail-section[data-market-state="stale"] .tail-kicker { color: var(--pending); }
+
+      @media (min-width: 1400px) {
+        .tail-board { max-width: 1520px; }
+      }
+
+      @media (max-width: 900px) {
+        .tail-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+
+      @media (max-width: 560px) {
+        .tail-head { flex-direction: column; align-items: flex-start; }
+        .tail-state { white-space: normal; }
+        .tail-card-top { flex-wrap: wrap; }
+        .tail-loss { margin-left: 0; font-size: clamp(28px, 8vw, 34px); }
+        .tail-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -204,6 +257,26 @@
       <section id="market" class="market-section" aria-label="市场行情">
         <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
       </section>
+      <section id="tail" class="tail-section" aria-label="尾部凸性">
+        <div class="tail-board">
+          <div class="tail-head">
+            <div>
+              <p class="tail-kicker">TAIL_CONVEXITY_V1</p>
+              <h2 class="tail-title">尾部凸性</h2>
+            </div>
+            <p id="tail-state" class="tail-state" data-tone="quiet">正在读取期权盘口…</p>
+          </div>
+          <p id="tail-summary" class="tail-summary">全池筛选结果会显示在这里。</p>
+          <p id="tail-meta" class="tail-meta"></p>
+          <p id="tail-budget" class="tail-budget"></p>
+          <p id="tail-radar" class="tail-radar"></p>
+          <div class="tail-actions">
+            <button id="tail-refresh" class="tail-refresh" type="button">刷新全池</button>
+          </div>
+          <ol id="tail-list" class="tail-list"></ol>
+          <div id="tail-foot" class="tail-foot"></div>
+        </div>
+      </section>
     </main>
     <script>
       (function () {
@@ -216,12 +289,10 @@
         var HYPERLIQUID_WS_URL = "wss://api.hyperliquid.xyz/ws";
         var VISUAL_RENDER_MS = 1000;
         var REST_FALLBACK_MS = 2000;
-        var STONK_INTERVAL = 2000;
         var STATS_INTERVAL = 15000;
         var EMA_INTERVAL = 60000;
         var BTC_STALE_MS = 4000;
         var HL_STALE_MS = 8000;
-        var STONK_STALE_MS = 12000;
         var EMA_STALE_MS = 180000;
         var EMA_PERIOD = 200;
         var EMA_CANDLE_LIMIT = 1000;
@@ -263,27 +334,19 @@
           else if (typeof reduceMotionQuery.addListener === "function") reduceMotionQuery.addListener(updateMotionDiagnostic);
         }
         var HIP3_STOCK_DEX = "xyz";
-        var STONK_SOLANA_ADDRESS = "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx";
-        var PAID_SOLANA_ADDRESS = "98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump";
-        var JUPITER_PRICE_URL = "https://lite-api.jup.ag/price/v3?ids=" + STONK_SOLANA_ADDRESS;
         var MARKET_CAP_BY_ID = {
           btc: 1644320920318,
           hype: 20959322489,
-          pons: 414659631,
-          stonk: 298877883,
           spcx: 454000000000,
           mu: 262000000000,
           sndk: 20600000000,
           nvda: 4440000000000,
-          sol: 66390963717,
-          uni: 5497666617,
-          paid: 13018357
+          uni: 5497666617
         };
         var marketListElement = document.getElementById("market-list");
         var priceRequest = false;
         var statsRequest = false;
         var macroRequest = false;
-        var stonkRequest = false;
         var emaRequest = false;
         var marketItemsById = {};
         var macroItemsById = {};
@@ -302,15 +365,11 @@
         var cachedState = readCache();
         var macroDefinitions = [
           { id: "hype", label: "HYPE", source: "hyperliquid" },
-          { id: "pons", label: "PONS", source: "hyperliquid" },
-          { id: "stonk", label: "STONK", source: "solana", address: STONK_SOLANA_ADDRESS },
           { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
-          { id: "sol", label: "SOL", source: "hyperliquid" },
-          { id: "uni", label: "UNI", source: "hyperliquid" },
-          { id: "paid", label: "PAID", source: "dexscreener", chain: "solana", address: PAID_SOLANA_ADDRESS }
+          { id: "uni", label: "UNI", source: "hyperliquid" }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },
@@ -442,8 +501,6 @@
         function sourceMeta(symbol, fallback) {
           var value = typeof symbol === "string" ? symbol : "";
           if (value.indexOf("HYPERLIQUID:") === 0) return "hyperliquid";
-          if (value.indexOf("DEXSCREENER:") === 0) return "dexscreener";
-          if (value.indexOf("JUPITER:") === 0) return "jupiter";
           if (value.indexOf("OKX:") === 0) return "okx";
           if (value.indexOf("BINANCE:") === 0 || value.indexOf("BINANCE-") === 0) return "binance";
           return fallback || "public";
@@ -474,7 +531,6 @@
         function staleLimit(id) {
           if (id === "btc") return BTC_STALE_MS;
           if (id === "ema200" || id === "ma120") return EMA_STALE_MS;
-          if (id === "stonk") return STONK_STALE_MS;
           return HL_STALE_MS;
         }
 
@@ -1316,49 +1372,6 @@
           });
         }
 
-        function fetchJupiterStonk() {
-          return requestJson(JUPITER_PRICE_URL, 3000).then(function (payload) {
-            var quote = payload && payload[STONK_SOLANA_ADDRESS];
-            var price = finite(quote && (quote.usdPrice !== undefined ? quote.usdPrice : quote.price));
-            if (price === null) throw new Error("STONK price unavailable");
-            return {
-              id: "stonk",
-              label: "STONK",
-              source: "solana",
-              provider: "jupiter-price",
-              symbol: "JUPITER:SOLANA:" + STONK_SOLANA_ADDRESS,
-              price: price,
-              change: finite(quote && quote.priceChange24h)
-            };
-          });
-        }
-
-        function fetchDexScreenerMacro(definitions) {
-          return Promise.all(definitions.map(function (definition) {
-            return requestJson("https://api.dexscreener.com/latest/dex/tokens/" + definition.address, 3000).then(function (payload) {
-              var pairs = payload && Array.isArray(payload.pairs) ? payload.pairs : [];
-              var chain = definition.chain || "solana";
-              pairs = pairs.filter(function (pair) {
-                return pair && pair.chainId === chain && pair.baseToken && String(pair.baseToken.address).toLowerCase() === String(definition.address).toLowerCase() && finite(pair.priceUsd) !== null;
-              }).sort(function (left, right) { return (right.liquidity && finite(right.liquidity.usd) || 0) - (left.liquidity && finite(left.liquidity.usd) || 0); });
-              var pair = pairs[0];
-              if (!pair) throw new Error(definition.label + " price unavailable");
-              return {
-                id: definition.id,
-                label: definition.label,
-                source: definition.source === "dexscreener" ? "dexscreener" : "solana",
-                provider: "dexscreener",
-                symbol: "DEXSCREENER:" + chain.toUpperCase() + ":" + definition.address,
-                price: finite(pair.priceUsd),
-                marketCap: finite(pair.marketCap),
-                change: pair.priceChange ? finite(pair.priceChange.h24) : null
-              };
-            }).catch(function () { return null; });
-          })).then(function (items) {
-            return items.filter(function (item) { return item !== null; });
-          });
-        }
-
         function applyMacroItems(items, fallback) {
           (items || []).forEach(function (item) {
             if (!item || finite(item.price) === null) return;
@@ -1396,35 +1409,6 @@
           }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
         }
 
-        function fetchStonk() {
-          if (stonkRequest) return;
-          stonkRequest = true;
-          var dexDefinitions = macroDefinitions.filter(function (definition) {
-            return definition.id === "stonk" || definition.source === "dexscreener";
-          });
-          Promise.all([
-            fetchJupiterStonk().catch(function () { return null; }),
-            fetchDexScreenerMacro(dexDefinitions).catch(function () { return []; })
-          ]).then(function (groups) {
-            var jupiterItem = groups[0];
-            var dexItems = groups[1] || [];
-            var stonkItem = jupiterItem || dexItems.filter(function (item) { return item && item.id === "stonk"; })[0];
-            if (stonkItem) ingestQuote("stonk", Object.assign({}, stonkItem, { status: "LIVE", stale: false }));
-            dexItems.forEach(function (item) {
-              if (item && item.id !== "stonk") ingestQuote(item.id, Object.assign({}, item, { status: "LIVE", stale: false }));
-            });
-            if (!stonkItem) throw new Error("STONK price unavailable");
-          }).catch(function () {
-            if (cachedState && cachedState.macro) {
-              (cachedState.macro || []).filter(function (item) {
-                return item && dexDefinitions.some(function (definition) { return definition.id === item.id; });
-              }).forEach(function (item) {
-                ingestQuote(item.id, Object.assign({}, item, { status: "STALE", stale: true }));
-              });
-            }
-          }).then(function () { stonkRequest = false; }, function () { stonkRequest = false; });
-        }
-
         function watchdog() {
           var now = Date.now();
           if (btcPrimaryLive && now - btcLastWsAt > BTC_STALE_MS) {
@@ -1444,7 +1428,6 @@
           fetchBtcStats();
           fetchEma200();
           fetchHyperliquidMacroAll(hlPrimaryLive);
-          fetchStonk();
         }
 
         startBtcSockets();
@@ -1452,7 +1435,6 @@
         refreshAll();
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
-        window.setInterval(fetchStonk, STONK_INTERVAL);
         window.setInterval(function () {
           if (!btcPrimaryLive) fetchBtc();
           if (!hlPrimaryLive) fetchHyperliquidMacroAll(false);
@@ -1474,5 +1456,6 @@
         });
       }());
     </script>
+    <script type="module" src="tail-board.js"></script>
   </body>
 </html>
