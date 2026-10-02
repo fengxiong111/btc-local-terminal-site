@@ -15,23 +15,27 @@ async function readLedger() {
   }
 }
 
-async function venueReachable() {
+async function readPrevious() {
   try {
-    const response = await fetch("https://eapi.binance.com/eapi/v1/ping", { signal: AbortSignal.timeout(8000) });
-    return response.ok;
+    const previous = JSON.parse(await readFile(outputPath, "utf8"));
+    return {
+      symbols: Array.isArray(previous.board) ? previous.board.map((item) => item.symbol) : [],
+      fingerprint: previous.fingerprint || ""
+    };
   } catch {
-    return false;
+    return { symbols: [], fingerprint: "" };
   }
 }
 
 async function main() {
   const ledger = await readLedger();
+  const previous = await readPrevious();
   try {
     const scan = await scanTailConvexity();
     const snapshot = composeSnapshot(scan, {
       ledger,
-      credentialsPresent: Boolean(process.env.BINANCE_API_KEY && process.env.BINANCE_API_SECRET),
-      venueReachable: await venueReachable()
+      previousSymbols: previous.symbols,
+      previousFingerprint: previous.fingerprint
     });
     await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`);
     console.log(`${snapshot.state} qualified=${snapshot.funnel.qualified} edge=${snapshot.funnel.edge} top=${snapshot.board[0]?.symbol ?? "none"}`);

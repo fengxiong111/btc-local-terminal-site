@@ -1,28 +1,31 @@
-import { scanTailConvexity } from "./tail-convexity-load.js";
 import {
-  cardStatus,
-  composeSnapshot,
+  DISPLAY_LIMIT,
+  annotateBoard,
   formatDelta,
   formatDte,
   formatMultiple,
   formatPercent,
   formatPremium,
   formatQty,
-  formatSpot,
   formatStrikeSpot,
   formatUsdt,
   mispricingLabel,
-  stateCopy
+  cardStatus
 } from "./tail-convexity-lib.js";
 
 const STALE_MS = 45 * 60 * 1000;
-const SPOTS = [
-  ["BTCUSDT", "BTC"],
-  ["ETHUSDT", "ETH"],
-  ["BNBUSDT", "BNB"],
-  ["XRPUSDT", "XRP"],
-  ["DOGEUSDT", "DOGE"]
-];
+const INSTRUMENT = {
+  LONG_PUT: "买 Put",
+  PERP_SHORT: "逐仓永续空",
+  INVERSE_RWA: "反向 RWA",
+  NONE: "没有"
+};
+const PERP = {
+  OFF: "永续关闭",
+  SIMULATION: "永续仅模拟",
+  FAIL_CLOSED: "永续未通过",
+  ELIGIBLE: "逐仓永续空"
+};
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -37,51 +40,52 @@ function metric(label, value, className) {
   return wrap;
 }
 
-function renderBoard(snapshot) {
-  const stateNode = document.querySelector("#tail-state");
-  const summaryNode = document.querySelector("#tail-summary");
-  const metaNode = document.querySelector("#tail-meta");
-  const budgetNode = document.querySelector("#tail-budget");
-  const radarNode = document.querySelector("#tail-radar");
-  const listNode = document.querySelector("#tail-list");
-  const footNode = document.querySelector("#tail-foot");
-  const sectionNode = document.querySelector("#tail");
-  if (!stateNode || !listNode) return;
+function instrumentLabel(code) {
+  return INSTRUMENT[code] || "没有";
+}
 
-  const [label, tone] = stateCopy(snapshot.state);
-  stateNode.textContent = label;
-  stateNode.dataset.tone = tone;
-  summaryNode.textContent = snapshot.probe?.summary || "";
+function secondLabel(route) {
+  if (!route) return "—";
+  if (route.second_instrument) return instrumentLabel(route.second_instrument);
+  return PERP[route.perp_state] || "—";
+}
+
+function executionLabel(item) {
+  if (item.cluster_full) return "同一标的已满";
+  return "只展示";
+}
+
+function fundingText(value) {
+  if (!Number.isFinite(value)) return "—";
+  return formatPercent(value);
+}
+
+function carryText(value) {
+  if (!Number.isFinite(value)) return "—";
+  return formatPercent(value);
+}
+
+function renderBoard(snapshot) {
+  const listNode = document.querySelector("#tail-list");
+  const replacementNode = document.querySelector("#tail-replacement");
+  const sectionNode = document.querySelector("#tail");
+  if (!listNode) return;
+
   const age = Date.now() - (snapshot.generated_at_ms || 0);
   const stale = !snapshot.generated_at_ms || age > STALE_MS;
-  sectionNode.dataset.marketState = stale ? "stale" : "live";
+  if (sectionNode) sectionNode.dataset.marketState = stale ? "stale" : "live";
 
-  const spotText = SPOTS
-    .filter(([key]) => Number.isFinite(snapshot.spots?.[key]))
-    .map(([key, name]) => `${name} ${formatSpot(snapshot.spots[key])}`)
-    .join(" · ");
-  const when = snapshot.generated_at_ms
-    ? new Date(snapshot.generated_at_ms).toLocaleString("zh-CN", { hour12: false, month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })
-    : "没有时间";
-  const funnel = snapshot.funnel || {};
-  metaNode.textContent = [
-    spotText,
-    `快照 ${when}${stale ? " · 已旧" : ""}`,
-    `硬门 ${funnel.qualified ?? 0}`,
-    `帕累托 ${funnel.pareto ?? 0}`,
-    `错价 ${funnel.edge ?? 0}`
-  ].filter(Boolean).join(" · ");
-
-  const budget = snapshot.budget || {};
-  budgetNode.textContent = `年度上限 ${formatUsdt(budget.annual_budget_usdt)} USDT · 已计入 ${formatUsdt(budget.spent_usdt)} · 单笔 ${formatUsdt(budget.per_order_cap_usdt)} · 风险状态 ${snapshot.tail_state || "NORMAL"}`;
-  radarNode.textContent = snapshot.radar?.note || "";
+  const ranked = Array.isArray(snapshot.board) ? snapshot.board : [];
+  const rows = ranked[0]?.route
+    ? ranked.slice(0, DISPLAY_LIMIT)
+    : annotateBoard(ranked, { tailState: snapshot.tail_state || "NORMAL" });
 
   listNode.replaceChildren();
-  const rows = Array.isArray(snapshot.board) ? snapshot.board : [];
   if (!rows.length) {
-    listNode.append(el("li", "empty", snapshot.state === "BLOCKED_DATA" ? "这轮没有读到期权链。" : "这轮没有可展示的候选。"));
+    listNode.append(el("li", "empty", "这轮没有可展示的期权。"));
   }
   for (const item of rows) {
+    const route = item.route || {};
     const card = el("li", "tail-card");
     card.dataset.symbol = item.symbol;
     card.dataset.mispricing = item.mispricing || "UNKNOWN";
@@ -98,34 +102,43 @@ function renderBoard(snapshot) {
     const metrics = el("dl", "tail-metrics");
     const statusClass = item.mispricing === "FAIL" ? "is-rich" : item.mispricing === "PASS" ? "is-edge" : "";
     metrics.append(
+      metric("工具", instrumentLabel(route.best_instrument)),
+      metric("次选", secondLabel(route)),
+      metric("执行", executionLabel(item)),
       metric("剩余", formatDte(item.dte)),
       metric("行权 / 现价", formatStrikeSpot(item.strike, item.spot)),
       metric("Delta", formatDelta(item.delta)),
       metric("卖价 IV", formatPercent(item.ask_iv)),
       metric("买 / 卖", `${formatPremium(item.bid)} / ${formatPremium(item.ask)}`),
       metric("价差", formatPercent(item.spread), item.spread > 0.05 ? "is-wide" : ""),
-      metric("最小数量", formatQty(item.min_qty)),
       metric("权利金", formatUsdt(item.premium)),
       metric("费用", formatUsdt(item.fees)),
-      metric("最大损失", formatUsdt(item.all_in_max_loss)),
+      metric("最大损失", formatUsdt(route.max_loss ?? item.all_in_max_loss)),
       metric("错价", mispricingLabel(item.mispricing, item.mispricing_vol_points), statusClass),
       metric("状态", cardStatus(item), statusClass),
-      metric("跌 30%", formatMultiple(item.payoff_30)),
-      metric("跌 50%", formatMultiple(item.payoff_50)),
-      metric("跌 70%", formatMultiple(item.payoff_70)),
-      metric("跌 90%", formatMultiple(item.payoff_90)),
-      metric("盘口", `${formatQty(item.bid_size)} / ${formatQty(item.ask_size)} · 24h ${formatQty(item.volume)}`),
-      metric("脆弱性", Number.isFinite(item.fragility_score) ? formatUsdt(item.fragility_score) : "未知")
+      metric("跌 50%", formatMultiple(route.crash_payoff ?? item.payoff_50)),
+      metric("路径依赖", route.path_dependency || "低"),
+      metric("清算", route.liquidation_risk || "无"),
+      metric("资金费", fundingText(route.funding)),
+      metric("盘口", `${formatQty(item.bid_size)} / ${formatQty(item.ask_size)}`),
+      metric("持有成本", carryText(item.burn_ratio))
     );
     card.append(top, metrics, el("p", "tail-evidence", item.mispricing_evidence || ""));
     listNode.append(card);
   }
 
-  footNode.replaceChildren(
-    el("span", null, snapshot.method || ""),
-    el("span", null, snapshot.equity_proxy?.reason || ""),
-    el("span", null, snapshot.inverse_rwa?.reason || "")
-  );
+  if (replacementNode) {
+    const report = Array.isArray(snapshot.replacement_report) ? snapshot.replacement_report : [];
+    replacementNode.textContent = report
+      .map((row) => {
+        const parts = [];
+        if (row.added) parts.push(`换入 ${row.added}`);
+        if (row.removed) parts.push(`换出 ${row.removed}`);
+        return parts.join("，");
+      })
+      .filter(Boolean)
+      .join(" · ");
+  }
   window.__TAIL_BOARD__ = snapshot;
 }
 
@@ -135,60 +148,16 @@ async function loadSnapshot() {
   return response.json();
 }
 
-async function refreshLive(button, current) {
-  button.disabled = true;
-  const previous = button.textContent;
-  button.textContent = "正在刷新全池…";
-  try {
-    const scan = await scanTailConvexity();
-    let venueReachable = false;
-    try {
-      const ping = await fetch("https://eapi.binance.com/eapi/v1/ping", { signal: AbortSignal.timeout(8000) });
-      venueReachable = ping.ok;
-    } catch {
-      venueReachable = false;
-    }
-    const ledger = {
-      annual_budget_usdt: current?.budget?.annual_budget_usdt,
-      spent_usdt: current?.budget?.spent_usdt,
-      reauthorized: current?.budget?.reauthorized === true
-    };
-    renderBoard(composeSnapshot(scan, { ledger, credentialsPresent: false, venueReachable }));
-  } catch {
-    const summaryNode = document.querySelector("#tail-summary");
-    if (summaryNode) summaryNode.textContent = "这次全池刷新没有读成。页面留着上一份结果，没有下单。";
-  } finally {
-    button.disabled = false;
-    button.textContent = previous;
-  }
-}
-
 async function start() {
-  const button = document.querySelector("#tail-refresh");
-  let current = null;
   try {
-    current = await loadSnapshot();
-    renderBoard(current);
+    renderBoard(await loadSnapshot());
   } catch {
     renderBoard({
       state: "BLOCKED_DATA",
       tail_state: "NORMAL",
       generated_at_ms: 0,
-      probe: { summary: "筛选结果还没有读到。没有下单。" },
-      budget: { annual_budget_usdt: 300, spent_usdt: 0, per_order_cap_usdt: 5 },
-      spots: {},
-      funnel: {},
-      radar: { note: "期权链没有读成。" },
       board: [],
-      method: "",
-      equity_proxy: { reason: "" },
-      inverse_rwa: { reason: "" }
-    });
-  }
-  if (button) {
-    button.addEventListener("click", () => {
-      current = window.__TAIL_BOARD__ || current;
-      refreshLive(button, current);
+      replacement_report: []
     });
   }
 }

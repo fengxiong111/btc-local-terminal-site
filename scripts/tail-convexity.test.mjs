@@ -17,7 +17,12 @@ import {
   formatMultiple,
   localSmile,
   formatUsdt,
+  annotateBoard,
+  assessFragility,
   nextProbeNotional,
+  replayRoute,
+  routeThesis,
+  simulatePerpShort,
   summarizeProbe
 } from "../tail-convexity-lib.js";
 
@@ -197,44 +202,34 @@ test("budget cannot be raised from the ledger and the scale ladder stays manual"
   assert.equal(budgetView({ annual_budget_usdt: 5000, spent_usdt: 12 }).remaining_usdt, 288);
   assert.equal(budgetView({ annual_budget_usdt: 500, reauthorized: true }).annual_budget_usdt, 500);
   assert.equal(budgetView({ annual_budget_usdt: 800, reauthorized: true }).annual_budget_usdt, 300);
-  assert.equal(nextProbeNotional({
-    tailState: "NORMAL",
+  const ready = {
     mispricing: "PASS",
     eventStillValid: true,
     spreadOk: true,
     depthOk: true,
     budgetOk: true,
-    lastNotional: 0,
-    remainingBudget: 300
-  }), null);
-  assert.equal(nextProbeNotional({
-    tailState: "CRITICAL",
-    mispricing: "PASS",
-    eventStillValid: true,
-    spreadOk: true,
-    depthOk: true,
-    budgetOk: true,
-    lastNotional: 0,
-    remainingBudget: 300
-  }), 10);
-  assert.equal(nextProbeNotional({
-    tailState: "CRITICAL",
-    mispricing: "FAIL",
-    eventStillValid: true,
-    spreadOk: true,
-    depthOk: true,
-    budgetOk: true,
-    lastNotional: 0,
-    remainingBudget: 300
-  }), null);
+    remainingBudget: 300,
+    newInformation: true
+  };
+  assert.equal(nextProbeNotional({ ...ready, tailState: "NORMAL", lastNotional: 0 }), 5);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "NORMAL", lastNotional: 5 }), null);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "NORMAL", lastNotional: 0, newInformation: false }), null);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "CRITICAL", lastNotional: 0 }), 5);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "CRITICAL", lastNotional: 5 }), 10);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "CRITICAL", lastNotional: 5, mispricing: "FAIL" }), null);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "CRITICAL", lastNotional: 0, unknown: true }), null);
+  assert.equal(nextProbeNotional({ ...ready, tailState: "WATCH", lastNotional: 0 }), null);
 });
 
 test("final state and the watched put are explicit", () => {
   assert.equal(finalState({ dataOk: false, edgeCount: 3 }), "BLOCKED_DATA");
-  assert.equal(finalState({ dataOk: true, orderSent: true, edgeCount: 1 }), "PROBE_OPEN");
+  assert.equal(finalState({ dataOk: true, orderSent: true, edgeCount: 1 }), "BLOCKED_EXECUTION");
   assert.equal(finalState({ dataOk: true, tailState: "WATCH", edgeCount: 2 }), "WATCH");
-  assert.equal(finalState({ dataOk: true, tailState: "CRITICAL", edgeCount: 2 }), "CRITICAL");
-  assert.equal(finalState({ dataOk: true, tailState: "NORMAL", edgeCount: 2 }), "BLOCKED_EXECUTION");
+  assert.equal(finalState({ dataOk: true, tailState: "CRITICAL", bestInstrument: "LONG_PUT" }), "CRITICAL_PUT");
+  assert.equal(finalState({ dataOk: true, tailState: "CRITICAL", bestInstrument: "PERP_SHORT" }), "CRITICAL_SHORT");
+  assert.equal(finalState({ dataOk: true, tailState: "CRITICAL", bestInstrument: "PERP_SHORT", alsoPut: true }), "CRITICAL_COMBO");
+  assert.equal(finalState({ dataOk: true, riskUnknown: true }), "BLOCKED_RISK");
+  assert.equal(finalState({ dataOk: true, tailState: "NORMAL", edgeCount: 2 }), "PUT_PROBE");
   assert.equal(finalState({ dataOk: true, tailState: "NORMAL", edgeCount: 0 }), "NO_EDGE");
 
   const ranked = [{ symbol: "ETH-1-P", rank: 1, mispricing: "PASS" }, { symbol: WATCHED_SYMBOL, rank: 4, mispricing: "FLAT" }];
@@ -258,11 +253,11 @@ test("final state and the watched put are explicit", () => {
     funnel: { qualified: 2, pareto: 2, edge: 1 },
     spots: {}
   }, { credentialsPresent: false, venueReachable: false });
-  assert.equal(snapshot.state, "BLOCKED_EXECUTION");
+  assert.equal(snapshot.state, "PUT_PROBE");
   assert.equal(snapshot.probe.order_sent, false);
-  assert.equal(snapshot.probe.intent.submitted, false);
-  assert.equal(snapshot.probe.intent.side, "BUY");
-  assert.equal(snapshot.probe.intent.symbol, "ETH-1-P");
+  assert.equal(snapshot.probe.intent, null);
+  assert.equal(snapshot.display_only, true);
+  assert.equal(snapshot.add_allowed, false);
   assert.equal(snapshot.board.length, 2);
 });
 
@@ -297,8 +292,99 @@ test("tail board is part of the static page and does not pretend an order filled
   const board = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "tail-board.js"), "utf8");
   assert.match(html, /id="tail"/);
   assert.match(html, /src="tail-board\.js"/);
-  assert.match(html, /尾部凸性/);
+  assert.match(html, /前五名按错价/);
+  assert.match(html, /这一页只展示这些比较结果/);
+  assert.equal(html.includes("TAIL_CONVEXITY_V1"), false);
+  assert.equal(html.includes("尾部凸性"), false);
+  assert.equal(html.includes("刷新全池"), false);
+  assert.equal(html.includes("没有边"), false);
+  assert.equal(board.includes("eapi.binance.com"), false);
+  assert.equal(board.includes("scanTailConvexity"), false);
   assert.equal(html.includes("order_sent: true"), false);
   assert.equal(html.includes("PROBE_OPEN"), false);
   assert.equal(board.includes('["SOLUSDT", "SOL"]'), false);
+});
+
+test("router keeps puts first and fails closed without a verified short", () => {
+  const put = {
+    pass: true,
+    mispricing: "FLAT",
+    ask_iv: 0.66,
+    all_in_max_loss: 1.65,
+    burn_ratio: 0.03,
+    payoff_blend: 12,
+    payoff_50: 15,
+    liquidity: 0.6
+  };
+  const normal = routeThesis({ tailState: "NORMAL", put });
+  assert.equal(normal.best_instrument, "LONG_PUT");
+  assert.equal(normal.perp_state, "OFF");
+  assert.equal(normal.execution_state, "DISPLAY_ONLY");
+
+  const critical = routeThesis({
+    tailState: "CRITICAL",
+    put: { ...put, mispricing: "FAIL", ask_iv: 1.8 },
+    perp: { mark: 100, depth: 10, spread: 0.0002, funding: 0.0001, leverage: 1 }
+  });
+  assert.equal(critical.best_instrument, "LONG_PUT");
+  assert.equal(critical.perp_state, "FAIL_CLOSED");
+  assert.equal(simulatePerpShort({}).eligible, false);
+
+  const board = annotateBoard([
+    { ...put, symbol: "BTC-1-P", underlying: "BTCUSDT", rank: 1 },
+    { ...put, symbol: "ETH-1-P", underlying: "ETHUSDT", rank: 2 },
+    { ...put, symbol: "BTC-2-P", underlying: "BTCUSDT", rank: 3 },
+    { ...put, symbol: "ETH-2-P", underlying: "ETHUSDT", rank: 4 },
+    { ...put, symbol: "BTC-3-P", underlying: "BTCUSDT", rank: 5 },
+    { ...put, symbol: "BNB-1-P", underlying: "BNBUSDT", rank: 6 }
+  ], { tailState: "NORMAL" });
+  assert.equal(board.length, 5);
+  assert.equal(board[4].cluster_full, true);
+  assert.equal(board.some((item) => item.symbol === "BNB-1-P"), false);
+});
+
+test("fragility needs two authoritative mechanisms and replay blocks illegal adds", () => {
+  const calm = assessFragility({
+    pegs: [{ symbol: "USDT", price: 1 }, { symbol: "USDC", price: 0.999 }],
+    pendle: { connected: true, rows: [{ address: "a", ptDiscount: 0.02, liquidityUsd: 2_000_000, active: true }] },
+    aave: { connected: true, rows: [{ symbol: "USDT", price: 1, utilization: 0.9, availableUsd: 50_000_000, frozen: false, paused: false }] },
+    morpho: { connected: true, rows: [] }
+  });
+  assert.equal(calm.tail_state, "NORMAL");
+
+  const thirdParty = assessFragility({
+    pegs: [{ symbol: "USDT", price: 0.9 }, { symbol: "USDC", price: 0.9 }]
+  });
+  assert.equal(thirdParty.tail_state, "WATCH");
+
+  const critical = assessFragility({
+    aave: { connected: true, rows: [{ symbol: "USDT", price: 0.98, frozen: true, paused: false, utilization: 0.5, availableUsd: 1 }] },
+    morpho: { connected: true, rows: [{ id: "m1", loan: "USDC", supplyUsd: 20_000_000, liquidityUsd: 1000, utilization: 0.99, badDebtUsd: 500_000 }] }
+  });
+  assert.equal(critical.tail_state, "CRITICAL");
+
+  const absurd = assessFragility({
+    morpho: { connected: true, rows: [{ id: "dust", loan: "USDC", supplyUsd: 12_000_000_000, liquidityUsd: 0, utilization: 1, badDebtUsd: 11_000_000_000 }] }
+  });
+  assert.equal(absurd.tail_state, "NORMAL");
+
+  assert.equal(replayRoute([
+    { tailState: "NORMAL", instrument: "LONG_PUT", total: 5, newInformation: true, leverage: 1 }
+  ]).pass, true);
+  assert.equal(replayRoute([
+    { tailState: "NORMAL", instrument: "PERP_SHORT", total: 5, newInformation: true }
+  ]).pass, false);
+  assert.equal(replayRoute([
+    { tailState: "CRITICAL", instrument: "PERP_SHORT", total: 5, newInformation: true, leverage: 1 },
+    { tailState: "CRITICAL", instrument: "PERP_SHORT", total: 25, newInformation: true, leverage: 1 }
+  ]).pass, false);
+  assert.equal(replayRoute([
+    { tailState: "CRITICAL", instrument: "LONG_PUT", total: 5, newInformation: true, leverage: 1 },
+    { tailState: "CRITICAL", instrument: "PERP_SHORT", total: 5, newInformation: false, leverage: 1, marginMode: "CROSS" }
+  ]).pass, false);
+  const climbed = replayRoute([
+    { tailState: "CRITICAL", instrument: "LONG_PUT", total: 5, newInformation: true, leverage: 1 },
+    { tailState: "CRITICAL", instrument: "PERP_SHORT", total: 10, newInformation: true, leverage: 1, marginMode: "ISOLATED" }
+  ]);
+  assert.equal(climbed.pass, true);
 });

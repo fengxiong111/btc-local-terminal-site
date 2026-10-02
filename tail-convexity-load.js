@@ -8,7 +8,7 @@ import {
   buildBoard,
   countReasons,
   evaluateCandidate,
-  fragilityFromPegs,
+  assessFragility,
   localSmile,
   num
 } from "./tail-convexity-lib.js";
@@ -67,16 +67,101 @@ function tickerSpread(bid, ask) {
   return (ask - bid) / ((ask + bid) / 2);
 }
 
-async function loadPegs(fetchImpl) {
+async function loadPegRows(fetchImpl) {
   try {
     const response = await fetchImpl(PEG_URL, { headers: HEADERS });
-    if (!response.ok) return fragilityFromPegs([]);
+    if (!response.ok) return null;
     const body = await response.json();
     const coins = body.coins || {};
-    return fragilityFromPegs(PEGS.map(([key, symbol]) => ({ symbol, price: num(coins[key]?.price) })));
+    return PEGS.map(([key, symbol]) => ({ symbol, price: num(coins[key]?.price) })).filter((row) => row.price > 0);
   } catch {
-    return fragilityFromPegs([]);
+    return null;
   }
+}
+
+async function loadPendle(fetchImpl) {
+  try {
+    const response = await fetchImpl("https://api-v2.pendle.finance/core/v1/1/markets?limit=20&skip=0", { headers: HEADERS });
+    if (!response.ok) return { connected: false, rows: [] };
+    const body = await response.json();
+    const rows = (body.results || []).map((row) => ({
+      address: row.address,
+      symbol: row.symbol,
+      ptDiscount: num(row.ptDiscount),
+      liquidityUsd: num(row.liquidity?.usd),
+      active: row.isActive !== false
+    }));
+    return { connected: true, rows };
+  } catch {
+    return { connected: false, rows: [] };
+  }
+}
+
+async function loadAave(fetchImpl) {
+  const query = "query { markets(request:{chainIds:[1]}) { reserves { underlyingToken { symbol } usdExchangeRate isFrozen isPaused borrowInfo { utilizationRate { value } availableLiquidity { usd } } } } }";
+  try {
+    const response = await fetchImpl("https://api.v3.aave.com/graphql", {
+      method: "POST",
+      headers: { ...HEADERS, "content-type": "application/json" },
+      body: JSON.stringify({ query })
+    });
+    if (!response.ok) return { connected: false, rows: [] };
+    const body = await response.json();
+    const reserves = body.data?.markets?.[0]?.reserves || [];
+    const wanted = new Set(["USDT", "USDC", "DAI", "USDE", "FDUSD", "GHO", "WETH"]);
+    return {
+      connected: true,
+      rows: reserves.filter((row) => wanted.has(row.underlyingToken?.symbol)).map((row) => ({
+        symbol: row.underlyingToken.symbol,
+        price: num(row.usdExchangeRate),
+        frozen: row.isFrozen === true,
+        paused: row.isPaused === true,
+        utilization: num(row.borrowInfo?.utilizationRate?.value),
+        availableUsd: num(row.borrowInfo?.availableLiquidity?.usd)
+      }))
+    };
+  } catch {
+    return { connected: false, rows: [] };
+  }
+}
+
+async function loadMorpho(fetchImpl) {
+  const query = "query { markets(first:20, orderBy: SupplyAssetsUsd, orderDirection: Desc) { items { marketId lltv loanAsset { symbol } collateralAsset { symbol } state { utilization supplyAssetsUsd liquidityAssetsUsd } badDebt { usd } } } }";
+  try {
+    const response = await fetchImpl("https://api.morpho.org/graphql", {
+      method: "POST",
+      headers: { ...HEADERS, "content-type": "application/json" },
+      body: JSON.stringify({ query })
+    });
+    if (!response.ok) return { connected: false, rows: [] };
+    const body = await response.json();
+    const items = body.data?.markets?.items || [];
+    return {
+      connected: true,
+      rows: items.map((row) => ({
+        id: row.marketId,
+        loan: row.loanAsset?.symbol || "",
+        collateral: row.collateralAsset?.symbol || "",
+        lltv: num(row.lltv),
+        utilization: num(row.state?.utilization),
+        supplyUsd: num(row.state?.supplyAssetsUsd),
+        liquidityUsd: num(row.state?.liquidityAssetsUsd),
+        badDebtUsd: num(row.badDebt?.usd) ?? 0
+      }))
+    };
+  } catch {
+    return { connected: false, rows: [] };
+  }
+}
+
+async function loadFragility(fetchImpl) {
+  const [pegs, pendle, aave, morpho] = await Promise.all([
+    loadPegRows(fetchImpl),
+    loadPendle(fetchImpl),
+    loadAave(fetchImpl),
+    loadMorpho(fetchImpl)
+  ]);
+  return assessFragility({ pegs, pendle, aave, morpho });
 }
 
 async function loadBook(fetchImpl, symbol) {
@@ -97,7 +182,7 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
     getJson(fetchImpl, `${BASE}/exchange/symbols`),
     getJson(fetchImpl, `${BASE}/market/ticker`),
     getJson(fetchImpl, `${BASE}/market/index`),
-    loadPegs(fetchImpl)
+    loadFragility(fetchImpl)
   ]);
   const serverTimeMs = num(info?.serverTime);
   if (serverTimeMs === null) throw new Error("期权服务器时间未知");
