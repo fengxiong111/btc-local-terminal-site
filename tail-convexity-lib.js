@@ -10,6 +10,11 @@ export const ALL_IN_CAP = 5;
 export const ANNUAL_BUDGET_CAP = 300;
 export const REAUTH_BUDGET_CAP = 500;
 export const MISPRICING_EDGE = 0.01;
+export const DISPLAY_LIMIT = 5;
+export const CLUSTER_CAP = 2;
+export const THESIS_LADDER = [5, 10, 25, 50];
+export const MAX_AUTO_LEVERAGE = 2;
+export const PUT_REPRICED_IV = 1.5;
 
 export const TAKER_FEE_RATE = 0.00024;
 export const FEE_CAP_RATIO = 0.1;
@@ -377,23 +382,303 @@ export function budgetView(ledger) {
   };
 }
 
+export function absoluteGate(checks) {
+  const unknown = Object.entries(checks || {})
+    .filter(([, value]) => value === "UNKNOWN" || value === null || value === undefined)
+    .map(([key]) => key);
+  return { pass: unknown.length === 0, unknown };
+}
+
+export function premiumBurnGate(burnRatio) {
+  if (!Number.isFinite(burnRatio) || burnRatio < 0) return { pass: false, status: "UNKNOWN" };
+  return { pass: true, status: "KNOWN", burn: burnRatio };
+}
+
 export function nextProbeNotional(ctx) {
-  if (!ctx || ctx.tailState !== "CRITICAL" || ctx.mispricing !== "PASS") return null;
+  if (!ctx?.newInformation || ctx.unknown) return null;
   if (!ctx.eventStillValid || !ctx.spreadOk || !ctx.depthOk || !ctx.budgetOk) return null;
-  const ladder = [10, 25, 50];
+  if (ctx.tailState !== "NORMAL" && ctx.tailState !== "CRITICAL") return null;
   const last = num(ctx.lastNotional) ?? 0;
-  const next = ladder.find((step) => step > last);
-  if (!next || next > (num(ctx.remainingBudget) ?? 0)) return null;
+  const next = THESIS_LADDER.find((step) => step > last + 1e-9);
+  if (!next || next > (num(ctx.remainingBudget) ?? 0) || next > 50) return null;
+  if (ctx.tailState === "NORMAL") return next === 5 ? 5 : null;
+  if (next > 5 && ctx.mispricing !== "PASS") return null;
   return next;
 }
 
 export function finalState(ctx) {
   if (!ctx?.dataOk) return "BLOCKED_DATA";
-  if (ctx.orderSent) return "PROBE_OPEN";
-  if (ctx.tailState === "CRITICAL") return "CRITICAL";
+  if (ctx.riskUnknown) return "BLOCKED_RISK";
+  if (ctx.orderSent) return "BLOCKED_EXECUTION";
+  if (ctx.tailState === "CRITICAL") {
+    if (ctx.bestInstrument === "PERP_SHORT" && ctx.alsoPut) return "CRITICAL_COMBO";
+    if (ctx.bestInstrument === "PERP_SHORT") return "CRITICAL_SHORT";
+    return "CRITICAL_PUT";
+  }
   if (ctx.tailState === "WATCH") return "WATCH";
-  if ((ctx.edgeCount ?? 0) > 0) return "BLOCKED_EXECUTION";
+  if ((ctx.edgeCount ?? 0) > 0) return "PUT_PROBE";
   return "NO_EDGE";
+}
+
+function instrumentScore(row) {
+  const loss = row.maxLoss > 0 ? 1 / row.maxLoss : 0;
+  return row.convexity * 3 + loss + (1 - row.path) * 2 + row.liquidity + row.repricing;
+}
+
+export function simulatePerpShort(quote) {
+  const input = quote || {};
+  const unknown = [];
+  if (!(input.mark > 0)) unknown.push("PRICE");
+  if (!(input.depth > 0)) unknown.push("DEPTH");
+  if (!(input.spread >= 0)) unknown.push("SPREAD");
+  else if (input.spread > 0.0015) unknown.push("SPREAD");
+  if (!Number.isFinite(input.funding)) unknown.push("FUNDING");
+  if (!(input.liquidationDistance > 0)) unknown.push("LIQUIDATION_DISTANCE");
+  if (!(input.maxLoss > 0)) unknown.push("MAX_LOSS");
+  if (input.isolated !== true) unknown.push("ISOLATED_MARGIN");
+  if (input.cross !== false) unknown.push("CROSS_MARGIN");
+  const leverage = num(input.leverage);
+  if (leverage === null || leverage < 1 || leverage > MAX_AUTO_LEVERAGE) unknown.push("LEVERAGE");
+  return {
+    eligible: unknown.length === 0,
+    unknown,
+    maxLoss: num(input.maxLoss),
+    funding: num(input.funding),
+    depthScore: input.depth > 0 ? Math.min(1, Math.log10(1 + input.depth) / 6) : 0
+  };
+}
+
+export function routeThesis({
+  tailState = "NORMAL",
+  put = null,
+  perp = null,
+  spotHeld = false,
+  rwa = null
+} = {}) {
+  const putRepriced = Boolean(put && (put.mispricing === "FAIL" || (put.ask_iv >= PUT_REPRICED_IV)));
+  const burn = premiumBurnGate(put?.burn_ratio);
+  const putOk = Boolean(put && put.pass !== false && put.all_in_max_loss > 0 && put.all_in_max_loss <= ALL_IN_CAP && burn.pass);
+  const perpSim = simulatePerpShort(perp || {});
+  let perpState = "OFF";
+  if (tailState === "WATCH") perpState = "SIMULATION";
+  if (tailState === "CRITICAL") perpState = perpSim.eligible && putRepriced ? "ELIGIBLE" : "FAIL_CLOSED";
+
+  const rwaKnown = Boolean(rwa?.navKnown && rwa?.custodyKnown && rwa?.liquidityKnown && rwa?.decayKnown && rwa?.trackingKnown && rwa?.contractKnown && rwa?.maxLoss > 0);
+  const candidates = [];
+  if (putOk) {
+    candidates.push({
+      id: "LONG_PUT",
+      convexity: Number.isFinite(put.payoff_blend) ? put.payoff_blend : 0,
+      maxLoss: put.all_in_max_loss,
+      path: 0.15,
+      liquidity: Number.isFinite(put.liquidity) ? put.liquidity : 0,
+      repricing: put.mispricing === "PASS" ? 1 : put.mispricing === "FLAT" ? 0.45 : 0
+    });
+  }
+  if (perpState === "ELIGIBLE") {
+    candidates.push({
+      id: "PERP_SHORT",
+      convexity: 0.2,
+      maxLoss: perpSim.maxLoss,
+      path: 0.85,
+      liquidity: perpSim.depthScore,
+      repricing: 0.7
+    });
+  }
+  if (rwaKnown && !putOk) {
+    candidates.push({
+      id: "INVERSE_RWA",
+      convexity: 0.1,
+      maxLoss: rwa.maxLoss,
+      path: 0.7,
+      liquidity: Number.isFinite(rwa.liquidity) ? rwa.liquidity : 0,
+      repricing: 0.2
+    });
+  }
+  candidates.sort((left, right) => instrumentScore(right) - instrumentScore(left) || left.id.localeCompare(right.id));
+  return {
+    best_instrument: candidates[0]?.id || "NONE",
+    second_instrument: candidates[1]?.id || null,
+    perp_state: perpState,
+    put_repriced: putRepriced,
+    spot_proposal: spotHeld ? "HEDGE_OR_EXIT_PROPOSAL" : null,
+    rwa_state: rwaKnown ? "VERIFIED" : "FAIL_CLOSED",
+    max_loss: putOk ? put.all_in_max_loss : null,
+    crash_payoff: put?.payoff_50 ?? null,
+    path_dependency: candidates[0]?.id === "PERP_SHORT" ? "高" : "低",
+    liquidation_risk: candidates[0]?.id === "PERP_SHORT" ? "有" : "无",
+    funding: Number.isFinite(perp?.funding) ? perp.funding : null,
+    execution_state: "DISPLAY_ONLY"
+  };
+}
+
+export function annotateBoard(ranked, context = {}) {
+  const counts = {};
+  return (ranked || []).slice(0, DISPLAY_LIMIT).map((item) => {
+    const underlying = item.underlying || String(item.symbol || "").split("-")[0];
+    counts[underlying] = (counts[underlying] || 0) + 1;
+    const route = routeThesis({
+      tailState: context.tailState,
+      put: item,
+      perp: context.perp,
+      spotHeld: context.spotHeld === true,
+      rwa: context.rwa
+    });
+    return {
+      ...item,
+      route,
+      cluster_full: counts[underlying] > CLUSTER_CAP
+    };
+  });
+}
+
+export function replacementReport(previous, next) {
+  const prior = Array.isArray(previous) ? previous : [];
+  const current = Array.isArray(next) ? next : [];
+  if (!prior.length) return [];
+  const kept = new Set(current);
+  const removed = prior.filter((symbol) => !kept.has(symbol));
+  const added = current.filter((symbol) => !prior.includes(symbol));
+  if (!removed.length && !added.length) return [];
+  const width = Math.max(added.length, removed.length, 1);
+  const rows = [];
+  for (let index = 0; index < width; index += 1) {
+    rows.push({
+      added: added[index] || null,
+      removed: removed[index] || null,
+      reason: "排序变化"
+    });
+  }
+  return rows;
+}
+
+export function informationFingerprint({ tailState, board, evidenceIds }) {
+  const names = (board || []).map((item) => `${item.symbol}:${item.mispricing}`).join("|");
+  const evidence = (evidenceIds || []).join("|");
+  return `${tailState || "NORMAL"}|${names}|${evidence}`;
+}
+
+export function replayRoute(steps) {
+  const reasons = [];
+  let last = 0;
+  for (const step of steps || []) {
+    if (step.marginMode === "CROSS" || step.cross === true) reasons.push("全仓");
+    if (step.instrument === "SHORT_OPTION") reasons.push("裸卖");
+    if (step.tailState === "NORMAL" && step.instrument === "PERP_SHORT") reasons.push("普通状态做空");
+    if (step.tailState === "WATCH" && step.instrument === "PERP_SHORT" && step.execute) reasons.push("观察状态执行永续");
+    if ((step.leverage ?? 1) > MAX_AUTO_LEVERAGE) reasons.push("杠杆超过 2");
+    if ((step.total ?? 0) > 50) reasons.push("超过 50");
+    if (!step.newInformation && (step.total ?? 0) > last + 1e-9) reasons.push("没有新信息却加仓");
+    if (step.unknown && (step.total ?? 0) > last + 1e-9) reasons.push("未知却升级");
+    if ((step.total ?? 0) > last + 1e-9) {
+      const allowed = THESIS_LADDER.find((rung) => rung > last + 1e-9);
+      if (step.total !== allowed) reasons.push("跳级");
+    }
+    last = step.total ?? last;
+  }
+  return { pass: reasons.length === 0, reasons };
+}
+
+export function assessFragility({ pegs, pendle, aave, morpho } = {}) {
+  const items = [];
+  const push = (item) => items.push(item);
+  for (const row of pegs || []) {
+    if (!(row.price > 0)) continue;
+    const gap = Math.abs(row.price - 1);
+    if (gap < 0.005) continue;
+    push({
+      id: `llama:${row.symbol}`,
+      group: `llama_peg:${row.symbol}`,
+      authoritative: false,
+      mechanism: false,
+      stress: true
+    });
+  }
+  const pendleRows = pendle?.rows || [];
+  for (const row of pendleRows) {
+    if (!(row.liquidityUsd >= 1_000_000) || row.active === false) continue;
+    if (!(row.ptDiscount >= 0.15)) continue;
+    push({
+      id: `pendle:${row.address || row.symbol}`,
+      group: `pendle_pt:${row.address || row.symbol}`,
+      authoritative: true,
+      mechanism: row.ptDiscount >= 0.3,
+      stress: true
+    });
+  }
+  for (const row of aave?.rows || []) {
+    if (row.paused || row.frozen) {
+      push({
+        id: `aave:halt:${row.symbol}`,
+        group: `aave_halt:${row.symbol}`,
+        authoritative: true,
+        mechanism: true,
+        stress: true
+      });
+    }
+    if (row.price > 0 && ["USDT", "USDC", "DAI", "USDE", "FDUSD", "GHO"].includes(row.symbol)) {
+      const gap = Math.abs(row.price - 1);
+      if (gap >= 0.005) {
+        push({
+          id: `aave:peg:${row.symbol}`,
+          group: `aave_peg:${row.symbol}`,
+          authoritative: true,
+          mechanism: gap >= 0.01,
+          stress: true
+        });
+      }
+    }
+    if (row.utilization >= 0.97 && row.availableUsd !== null && row.availableUsd < 10_000_000) {
+      push({
+        id: `aave:util:${row.symbol}`,
+        group: `aave_util:${row.symbol}`,
+        authoritative: true,
+        mechanism: false,
+        stress: true
+      });
+    }
+  }
+  for (const row of morpho?.rows || []) {
+    const sane = row.supplyUsd >= 5_000_000 && row.supplyUsd <= 500_000_000;
+    if (!sane || !["USDC", "USDT", "DAI", "WETH"].includes(row.loan)) continue;
+    if (row.badDebtUsd >= 100_000 && row.badDebtUsd / row.supplyUsd <= 1) {
+      push({
+        id: `morpho:debt:${row.id}`,
+        group: `morpho_debt:${row.id}`,
+        authoritative: true,
+        mechanism: true,
+        stress: true
+      });
+    } else if (row.utilization >= 0.995 && row.liquidityUsd !== null && row.liquidityUsd < 100_000) {
+      push({
+        id: `morpho:util:${row.id}`,
+        group: `morpho_util:${row.id}`,
+        authoritative: true,
+        mechanism: false,
+        stress: true
+      });
+    }
+  }
+  const stressGroups = new Set(items.filter((item) => item.stress).map((item) => item.group));
+  const mechanismGroups = new Set(items.filter((item) => item.authoritative && item.mechanism).map((item) => item.group));
+  const tailState = mechanismGroups.size >= 2 ? "CRITICAL" : stressGroups.size >= 2 ? "WATCH" : "NORMAL";
+  const sources = {
+    peg: pegs ? "connected" : "missing",
+    pendle: pendle?.connected ? "connected" : "missing",
+    aave: aave?.connected ? "connected" : "missing",
+    morpho: morpho?.connected ? "connected" : "missing"
+  };
+  return {
+    score: stressGroups.size * 10 + mechanismGroups.size * 25,
+    tail_state: tailState,
+    known: true,
+    evidence_ids: items.map((item) => item.id),
+    authoritative_mechanisms: mechanismGroups.size,
+    independent_stress: stressGroups.size,
+    sources,
+    categories: [...stressGroups],
+    evidence: `权威机制 ${mechanismGroups.size} 组，独立压力 ${stressGroups.size} 组。`
+  };
 }
 
 export function countReasons(evaluated) {
@@ -432,23 +717,38 @@ export function summarizeProbe({ watchedSymbol, watched, ranked, executionReason
 export function composeSnapshot(scan, extras = {}) {
   const budget = budgetView(extras.ledger);
   const ranked = scan.board?.ranked ?? [];
-  const top = ranked[0] ?? null;
-  const executionReasons = [];
-  if (!extras.credentialsPresent) executionReasons.push("没有币安交易密钥");
-  if (!extras.venueReachable) executionReasons.push("币安签名接口从当前环境进不去");
-  executionReasons.push("扫描器只读盘口，不会自行提交委托");
-  const would = top && top.mispricing === "PASS" ? top : null;
+  const tailState = scan.fragility?.tail_state ?? "NORMAL";
+  const board = annotateBoard(ranked, {
+    tailState,
+    perp: scan.perp ?? null,
+    rwa: null,
+    spotHeld: false
+  });
+  const fingerprint = informationFingerprint({
+    tailState,
+    board,
+    evidenceIds: scan.fragility?.evidence_ids
+  });
+  const best = board[0]?.route?.best_instrument || "NONE";
   return {
     schema: "tail-convexity-v1",
+    router: "INSTRUMENT_ROUTER_V1",
     generated_at_ms: scan.generated_at_ms ?? Date.now(),
     server_time_ms: scan.server_time_ms ?? null,
     state: finalState({
       dataOk: true,
       orderSent: false,
-      tailState: scan.fragility?.tail_state ?? "NORMAL",
-      edgeCount: scan.board?.edge_count ?? 0
+      tailState,
+      edgeCount: scan.board?.edge_count ?? 0,
+      bestInstrument: best,
+      alsoPut: board.some((item) => item.route?.best_instrument === "LONG_PUT")
     }),
-    tail_state: scan.fragility?.tail_state ?? "NORMAL",
+    tail_state: tailState,
+    display_only: true,
+    order_sent: false,
+    add_allowed: false,
+    new_information: extras.previousFingerprint ? extras.previousFingerprint !== fingerprint : false,
+    fingerprint,
     budget,
     spots: scan.spots ?? {},
     funnel: scan.funnel ?? {},
@@ -456,42 +756,23 @@ export function composeSnapshot(scan, extras = {}) {
       fragility_score: scan.fragility?.score ?? null,
       evidence: scan.fragility?.evidence ?? "",
       categories: scan.fragility?.categories ?? [],
-      note: radarNote(scan.fragility)
+      sources: scan.fragility?.sources ?? {},
+      note: ""
     },
-    equity_proxy: {
-      state: "FAIL_CLOSED",
-      reason: "美股代理 Put 没有可核对的双边盘口、费用和 Delta，本轮不进排名，也不留资金。"
-    },
-    inverse_rwa: {
-      state: "STANDBY",
-      reason: "币安 Put 仍可筛选，链上反向 RWA 不作为本轮工具。"
-    },
+    replacement_report: replacementReport(extras.previousSymbols, board.map((item) => item.symbol)),
+    equity_proxy: { state: "FAIL_CLOSED" },
+    inverse_rwa: { state: "FAIL_CLOSED" },
     probe: {
       watched_symbol: WATCHED_SYMBOL,
       order_sent: false,
-      intent: would ? {
-        side: "BUY",
-        option_side: "PUT",
-        type: "LIMIT",
-        symbol: would.symbol,
-        qty: would.min_qty,
-        limit_price: would.ask,
-        all_in_max_loss: would.all_in_max_loss,
-        chase: false,
-        submitted: false
-      } : null,
-      reasons: executionReasons,
-      summary: summarizeProbe({
-        watchedSymbol: WATCHED_SYMBOL,
-        watched: scan.watched,
-        ranked,
-        executionReasons
-      })
+      intent: null,
+      reasons: [],
+      summary: ""
     },
     watched: scan.watched ?? null,
-    board: ranked.slice(0, 10),
+    board,
     reject_counts: scan.reject_counts ?? {},
-    method: methodNote(),
+    method: "",
     fee_policy: {
       taker_rate: TAKER_FEE_RATE,
       cap_ratio: FEE_CAP_RATIO,
@@ -510,20 +791,24 @@ export function blockedSnapshot(message, ledger) {
     budget: budgetView(ledger),
     spots: {},
     funnel: {},
-    radar: { fragility_score: null, evidence: "", categories: [], note: message },
-    equity_proxy: { state: "FAIL_CLOSED", reason: "数据停着，美股代理不单列。" },
-    inverse_rwa: { state: "STANDBY", reason: "数据停着，次级工具不启用。" },
+    display_only: true,
+    order_sent: false,
+    add_allowed: false,
+    radar: { fragility_score: null, evidence: "", categories: [], sources: {}, note: "" },
+    replacement_report: [],
+    equity_proxy: { state: "FAIL_CLOSED" },
+    inverse_rwa: { state: "FAIL_CLOSED" },
     probe: {
       watched_symbol: WATCHED_SYMBOL,
       order_sent: false,
       intent: null,
-      reasons: [message],
-      summary: `全池没有读成。${message} 没有下单。`
+      reasons: [],
+      summary: ""
     },
     watched: null,
     board: [],
     reject_counts: {},
-    method: methodNote(),
+    method: "",
     fee_policy: {
       taker_rate: TAKER_FEE_RATE,
       cap_ratio: FEE_CAP_RATIO,
