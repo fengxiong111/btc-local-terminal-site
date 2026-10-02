@@ -212,9 +212,7 @@
       .tail-metrics dd.is-edge { color: var(--strong); }
       .tail-metrics dd.is-rich { color: var(--muted); }
       .tail-evidence { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
-      .tail-replacement { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
-      .tail-rules { display: grid; gap: 8px; max-width: 92ch; margin: 18px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
-      .tail-rules p { margin: 0; }
+      .tail-replacement:not(:empty) { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 
       @media (min-width: 1400px) {
         .tail-board { max-width: 1520px; }
@@ -241,21 +239,10 @@
       <section id="market" class="market-section" aria-label="市场行情">
         <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
       </section>
-      <section id="tail" class="tail-section" aria-label="前五名期权">
+      <section id="tail" class="tail-section" aria-label="前三名期权">
         <div class="tail-board">
           <ol id="tail-list" class="tail-list"></ol>
           <p id="tail-replacement" class="tail-replacement"></p>
-          <div class="tail-rules">
-            <p>前五名按错价、灾难兑现比上全部成本、剩余期限、流动性、脆弱性和权利金消耗排列。同一标的最多占两张。没有新信息就不提高额度。权利金消耗未知就不过硬门。换进或换出合约时只记一行替换。</p>
-            <p>每个失败判断同时比较买 Put、逐仓永续做空、现货对冲或退出、反向 RWA，以及其他能算清最大损失的结构。要比的是更高凸性、更低的全部最大损失、更低的路径依赖、更好的流动性和更小的重定价。</p>
-            <p>平常只把买 Put 当作可选工具，一张的全部最大损失不超过 5 USDT。这个时候永续做空关闭，不因为某个项目看起来脆弱就提前做空。</p>
-            <p>出现至少两条互相独立的脆弱性证据、但失败机制还没确认时，仍以买 Put 为主。永续只留下报价、深度、资金费和清算距离的模拟。</p>
-            <p>至少两条独立的权威证据说明失败机制已经开始，才会把永续做空放进比较。Pendle、Aave、Morpho 和稳定币的官方或链上数据优先。第三方聚合价格不能单独把状态升到这一档。Put 还没有被充分重定价时，买 Put 优先。Put 的隐含波动率或权利金已经极端抬高、失败仍在继续、而且永续的深度、价差、资金费、清算距离和最大损失都核对得上，模拟里才可能选中逐仓永续做空。</p>
-            <p>永续只能逐仓，不能全仓。杠杆默认不超过 1 倍，这里不会自动超过 2 倍。同一个判断里，Put 权利金、逐仓保证金和其他拿不回来的成本合在一起算，累计上限按 5、10、25、50 USDT 逐级升高，不是每一级另外再加。年度尾部风险上限 300 USDT。</p>
-            <p>有一项未知，这一档就关掉。不做裸卖期权，不做全仓，不做马丁，不因为跌了更便宜就自动加杠杆，也不因为模型很有把握就升级，不把 50 USDT 的上限再抬高。</p>
-            <p>买 Put 用来在未知事件发生前持有凸性。逐仓永续做空只在失败机制已经开始之后才进入比较。现货如果和这个判断直接相关，只给出对冲或退出的说明，不自动卖掉长期仓位。反向 RWA 可以参与比较，但净值、发行和托管、流动性、再平衡损耗、跟踪误差和合约都要核对；没有合适的 Put 时才优先看它。</p>
-            <p>这一页只展示这些比较结果。</p>
-          </div>
         </div>
       </section>
     </main>

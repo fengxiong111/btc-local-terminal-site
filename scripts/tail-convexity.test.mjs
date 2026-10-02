@@ -292,8 +292,9 @@ test("tail board is part of the static page and does not pretend an order filled
   const board = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "tail-board.js"), "utf8");
   assert.match(html, /id="tail"/);
   assert.match(html, /src="tail-board\.js"/);
-  assert.match(html, /前五名按错价/);
-  assert.match(html, /这一页只展示这些比较结果/);
+  assert.equal(html.includes("前五名按错价"), false);
+  assert.equal(html.includes("这一页只展示这些比较结果"), false);
+  assert.equal(html.includes("tail-rules"), false);
   assert.equal(html.includes("TAIL_CONVEXITY_V1"), false);
   assert.equal(html.includes("尾部凸性"), false);
   assert.equal(html.includes("刷新全池"), false);
@@ -332,15 +333,13 @@ test("router keeps puts first and fails closed without a verified short", () => 
 
   const board = annotateBoard([
     { ...put, symbol: "BTC-1-P", underlying: "BTCUSDT", rank: 1 },
-    { ...put, symbol: "ETH-1-P", underlying: "ETHUSDT", rank: 2 },
-    { ...put, symbol: "BTC-2-P", underlying: "BTCUSDT", rank: 3 },
-    { ...put, symbol: "ETH-2-P", underlying: "ETHUSDT", rank: 4 },
-    { ...put, symbol: "BTC-3-P", underlying: "BTCUSDT", rank: 5 },
-    { ...put, symbol: "BNB-1-P", underlying: "BNBUSDT", rank: 6 }
+    { ...put, symbol: "BTC-2-P", underlying: "BTCUSDT", rank: 2 },
+    { ...put, symbol: "BTC-3-P", underlying: "BTCUSDT", rank: 3 },
+    { ...put, symbol: "ETH-1-P", underlying: "ETHUSDT", rank: 4 }
   ], { tailState: "NORMAL" });
-  assert.equal(board.length, 5);
-  assert.equal(board[4].cluster_full, true);
-  assert.equal(board.some((item) => item.symbol === "BNB-1-P"), false);
+  assert.equal(board.length, 3);
+  assert.equal(board[2].cluster_full, true);
+  assert.equal(board.some((item) => item.symbol === "ETH-1-P"), false);
 });
 
 test("fragility needs two authoritative mechanisms and replay blocks illegal adds", () => {

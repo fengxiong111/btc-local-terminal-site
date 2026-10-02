@@ -19,7 +19,7 @@
 
 数据生成脚本：`scripts/update-uniswap-fee.mjs`。GitHub Actions：`.github/workflows/update-uniswap-fee.yml`。
 
-静态页展示 token 行情，并在同一页下方展示前五名币安 USDT 加密期权 Put。筛选会比较买 Put、逐仓永续、现货对冲和反向 RWA，但页面只展示比较结果，不连接交易接口，也不提交委托。单笔全部最大损失不超过 5 USDT，年度尾部风险上限 300 USDT。
+静态页展示 token 行情，并在同一页下方展示前三名币安 USDT 加密期权 Put。筛选仍比较买 Put、逐仓永续、现货对冲和反向 RWA，页面只显示这三张卡片，不展示规则说明，也不提交委托。
 
 数据生成脚本：`scripts/update-tail-convexity.mjs`。结果：`tail-convexity.json`。账本：`tail-ledger.json`。GitHub Actions：`.github/workflows/update-tail-convexity.yml`，每 30 分钟用公开数据刷新一次快照。
 
