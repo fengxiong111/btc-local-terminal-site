@@ -3,7 +3,6 @@ import {
   annotateBoard,
   formatDte,
   formatMultiple,
-  formatPremium,
   formatUsdt
 } from "./tail-convexity-lib.js";
 
@@ -51,8 +50,7 @@ function renderBoard(snapshot) {
     row.append(
       cell("tail-symbol", "标的名", item.symbol),
       cell("tail-days", "剩余天数", formatDte(item.dte)),
-      cell("tail-cost", "最小成本", `${formatUsdt(item.all_in_max_loss)} USDT`),
-      cell("tail-price", "卖一价格", formatPremium(item.ask)),
+      cell("tail-cost", "最小下单成本", `${formatUsdt(item.all_in_max_loss)} USDT`),
       cell("tail-multiple", "50% 跌幅倍数", formatMultiple(route.crash_payoff ?? item.payoff_50))
     );
     listNode.append(row);

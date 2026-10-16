@@ -193,36 +193,26 @@
       }
 
       .tail-section { width: 100%; margin-top: clamp(10px, 0.8vw, 16px); }
-      .tail-board { width: 100%; max-width: 1680px; margin: 0 auto; padding: clamp(14px, 1.1vw, 20px); border-radius: var(--radius-card); background: rgba(248, 250, 247, 0.88); box-shadow: var(--shadow-card); }
-      .tail-heading { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 11px; }
-      .tail-title { margin: 0; color: var(--strong); font-size: clamp(14px, 1vw, 17px); font-weight: 650; line-height: 1.25; letter-spacing: -0.02em; }
-      .tail-caption { color: var(--muted); font-size: clamp(9px, 0.68vw, 11px); font-weight: 500; line-height: 1.3; text-align: right; white-space: nowrap; }
-      .tail-list { display: grid; margin: 0; padding: 0; list-style: none; }
-      .tail-grid-head,
-      .tail-card { display: grid; grid-template-columns: minmax(250px, 2fr) minmax(76px, 0.58fr) minmax(126px, 0.9fr) minmax(104px, 0.72fr) minmax(86px, 0.58fr); column-gap: clamp(12px, 1.4vw, 24px); align-items: center; }
-      .tail-grid-head { padding: 0 12px 7px; color: var(--muted); font-size: 9px; font-weight: 650; line-height: 1.2; letter-spacing: 0.08em; }
-      .tail-grid-head span:not(:first-child) { text-align: right; }
-      .tail-card { min-height: 45px; padding: 8px 12px; border-top: 1px solid rgba(120, 132, 125, 0.16); }
-      .tail-card:first-child { border-top-color: rgba(120, 132, 125, 0.24); }
+      .tail-board { width: 100%; max-width: 1680px; margin: 0 auto; padding: clamp(10px, 0.8vw, 14px) clamp(14px, 1.1vw, 18px); border-radius: var(--radius-card); background: rgba(248, 250, 247, 0.88); box-shadow: var(--shadow-card); }
+      .tail-list { display: grid; width: min(100%, 940px); margin: 0; padding: 0; list-style: none; }
+      .tail-card { display: grid; grid-template-columns: minmax(250px, 1.55fr) minmax(92px, 0.55fr) minmax(164px, 0.98fr) minmax(100px, 0.55fr); column-gap: clamp(14px, 1.35vw, 22px); align-items: baseline; min-height: 64px; padding: 14px 4px; border-top: 1px solid rgba(120, 132, 125, 0.18); }
+      .tail-card:first-child { border-top: 0; }
       .tail-card[data-market-state="stale"] { opacity: 0.84; }
-      .tail-cell { min-width: 0; color: var(--muted); font-size: clamp(11px, 0.76vw, 13px); line-height: 1.25; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
-      .tail-symbol { overflow: hidden; color: var(--strong); font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace; font-weight: 650; text-align: left; text-overflow: ellipsis; }
+      .tail-cell { min-width: 0; color: var(--muted); font-size: clamp(20px, 1.6vw, 28px); font-weight: 560; line-height: 1.1; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
+      .tail-symbol { overflow: hidden; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 650; text-align: left; text-overflow: ellipsis; }
       .tail-cost { color: var(--text); font-weight: 650; }
-      .tail-empty { margin: 0; padding: 12px; color: var(--muted); font-size: 12px; line-height: 1.45; text-align: center; }
+      .tail-empty { margin: 0; padding: 16px 4px; color: var(--muted); font-size: 16px; line-height: 1.45; }
 
       @media (min-width: 1400px) {
         .tail-board { max-width: 1520px; }
       }
 
       @media (max-width: 560px) {
-        .tail-board { padding: 13px 12px 8px; }
-        .tail-heading { align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-        .tail-caption { font-size: 9px; }
-        .tail-grid-head { display: none; }
-        .tail-card { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 8px; min-height: 76px; padding: 10px 4px; }
-        .tail-symbol { grid-column: 1 / -1; margin-bottom: 8px; font-size: 12px; }
-        .tail-cell:not(.tail-symbol) { display: flex; min-width: 0; flex-direction: column; gap: 3px; text-align: left; }
-        .tail-cell:not(.tail-symbol)::before { content: attr(data-label); overflow: hidden; color: var(--muted); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif; font-size: 8px; font-weight: 600; line-height: 1; letter-spacing: 0.06em; text-overflow: ellipsis; white-space: nowrap; }
+        .tail-board { padding: 6px 12px; }
+        .tail-list { width: 100%; }
+        .tail-card { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) minmax(0, 0.7fr); gap: 8px 12px; min-height: 92px; padding: 14px 4px; }
+        .tail-cell { font-size: clamp(18px, 5vw, 20px); text-align: left; }
+        .tail-symbol { grid-column: 1 / -1; font-size: clamp(16px, 4.4vw, 18px); }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -236,19 +226,8 @@
       <section id="market" class="market-section" aria-label="市场行情">
         <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
       </section>
-      <section id="tail" class="tail-section" aria-labelledby="tail-title">
-        <div class="tail-board" role="table" aria-label="前三名币安 USDT 看跌期权">
-          <header class="tail-heading">
-            <h2 id="tail-title" class="tail-title">PUT 期权标</h2>
-            <span class="tail-caption">前三名 · 每 30 分钟更新</span>
-          </header>
-          <div class="tail-grid-head" role="row">
-            <span role="columnheader">标的名</span>
-            <span role="columnheader">剩余天数</span>
-            <span role="columnheader">最小下单成本</span>
-            <span role="columnheader">卖一价格</span>
-            <span role="columnheader">50% 跌幅倍数</span>
-          </div>
+      <section id="tail" class="tail-section" aria-label="前三名币安 USDT 看跌期权">
+        <div class="tail-board" role="table" aria-label="标的名、剩余天数、最小下单成本和 50% 跌幅倍数">
           <ol id="tail-list" class="tail-list" role="rowgroup"></ol>
         </div>
       </section>

@@ -292,15 +292,17 @@ test("tail board is compact, aligned, and does not pretend an order filled", () 
   const board = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "tail-board.js"), "utf8");
   assert.match(html, /id="tail"/);
   assert.match(html, /src="tail-board\.js"/);
-  ["标的名", "剩余天数", "最小下单成本", "卖一价格", "50% 跌幅倍数"].forEach((label) => {
-    assert.match(html, new RegExp(label));
+  ["PUT 期权标", "前三名 · 每 30 分钟更新", "role=\"columnheader\"", ">标的名<", ">剩余天数<", ">最小下单成本<", ">卖一价格<", ">50% 跌幅倍数<"].forEach((text) => {
+    assert.equal(html.includes(text), false);
   });
-  assert.match(html, /\.tail-grid-head,\s*\.tail-card \{ display: grid; grid-template-columns:/);
-  assert.match(html, /\.tail-cell \{[^}]*font-variant-numeric: tabular-nums/);
-  assert.match(html, /@media \(max-width: 560px\)[\s\S]*\.tail-card \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(html, /\.tail-card \{ display: grid; grid-template-columns: minmax\(250px, 1\.55fr\)/);
+  assert.match(html, /\.tail-cell \{[^}]*font-size: clamp\(20px, 1\.6vw, 28px\)/);
+  assert.match(html, /@media \(max-width: 560px\)[\s\S]*\.tail-card \{ grid-template-columns: minmax\(0, 0\.75fr\) minmax\(0, 1\.25fr\) minmax\(0, 0\.7fr\)/);
+  assert.match(html, /\.tail-symbol \{ grid-column: 1 \/ -1;/);
   assert.match(board, /item\.all_in_max_loss/);
-  assert.match(board, /formatPremium\(item\.ask\)/);
+  assert.doesNotMatch(board, /formatPremium|item\.ask/);
   assert.match(board, /route\.crash_payoff \?\? item\.payoff_50/);
+  assert.equal((board.match(/cell\("tail-/g) || []).length, 4);
   ["工具", "次选", "执行", "行权 / 现价", "Delta", "卖价 IV", "买 / 卖", "价差", "权利金", "费用", "最大损失", "错价", "状态", "路径依赖", "清算", "资金费", "盘口", "持有成本"].forEach((label) => {
     assert.equal(board.includes(`metric("${label}"`), false);
   });
