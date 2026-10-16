@@ -19,8 +19,8 @@
 
 数据生成脚本：`scripts/update-uniswap-fee.mjs`。GitHub Actions：`.github/workflows/update-uniswap-fee.yml`。
 
-静态页展示 token 行情，并在同一页下方展示前三名币安 USDT 加密期权 Put。筛选仍比较买 Put、逐仓永续、现货对冲和反向 RWA，页面只显示这三张卡片，不展示规则说明，也不提交委托。
+静态页展示 token 行情，并在同一页下方展示前三名币安 USDT 加密期权 Put。筛选仍比较买 Put、逐仓永续、现货对冲和反向 RWA；页面只显示标的名、剩余天数、最小下单成本、卖一价格和 50% 跌幅倍数，不展示规则说明，也不提交委托。
 
-数据生成脚本：`scripts/update-tail-convexity.mjs`。结果：`tail-convexity.json`。账本：`tail-ledger.json`。GitHub Actions：`.github/workflows/update-tail-convexity.yml`，每 30 分钟用公开数据刷新一次快照。
+数据生成脚本：`scripts/update-tail-convexity.mjs`。结果：`tail-convexity.json`。账本：`tail-ledger.json`。GitHub Actions：`.github/workflows/update-tail-convexity.yml`，每 30 分钟用公开数据刷新一次快照。最小下单成本为最小数量的权利金与费用之和；倍数为标的下跌 50% 时的估算回报倍数。
 
 静态页不加载或展示 Uniswap Fee 榜单与 HIP-3 股票资金费率榜。
