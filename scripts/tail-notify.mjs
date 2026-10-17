@@ -11,7 +11,13 @@ try {
   state = initialNotificationState();
 }
 const now = Date.now();
-const planned = assessNotifications(snapshot, state, { mode, now });
+const planned = mode === "test"
+  ? { state, status: "TEST_READY", outbox: [{
+      kind: "test", key: `test:${now}`, priority: 3,
+      title: "Tail push connectivity test",
+      message: "期权监控手机推送测试成功。此消息不是行情或交易信号。"
+    }] }
+  : assessNotifications(snapshot, state, { mode, now });
 const topic = process.env.NTFY_TOPIC || "";
 const configured = /^[a-zA-Z0-9_-]{24,120}$/.test(topic);
 let nextState = planned.state;
