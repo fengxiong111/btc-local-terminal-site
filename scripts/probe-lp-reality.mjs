@@ -31,7 +31,7 @@ const now=Date.now();const out=await Promise.all(probes.map(async ([key,url])=>{
          {symbol:c.rewardToken.symbol,verified:c.rewardToken.verified,price:c.rewardToken.price},
          status:c.campaignStatus,type:c.type,params:c.params&&
          {keys:Object.keys(c.params).slice(0,40),rewardStartTimestamp:c.params.rewardStartTimestamp,
-          whitelist:c.params.whitelist}}))}};
+          whitelist:c.params.whitelist}}))};
      }return result;
    }
    return {key,http:r.status,total:v?.total,items:arr?.length,
