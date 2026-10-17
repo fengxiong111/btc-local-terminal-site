@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "POSITION_NET_GATE_V2",
-  "generated_at_ms": 1792245561695,
+  "generated_at_ms": 1792246738616,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -57,7 +57,7 @@
   },
   "meteora": {
     "state": "NO_VERIFIED_NET_EDGE",
-    "sampled": 299,
+    "sampled": 298,
     "identity_check": "MATCHED",
     "pages": 4,
     "window_coverage": [
@@ -69,24 +69,24 @@
     "best": null,
     "research_leader": {
       "platform": "Meteora",
-      "name": "VEIL-SOL",
-      "address": "2LhZHygydAYPBoxxhW95mEvN1yndL1JpoScakULSxgWo",
+      "name": "DOPE-SOL",
+      "address": "J2XBZkpC7ygBQiPw2MWWCqiVJn9i44b8GwtTRoFV1ijj",
       "token_symbols": [
-        "VEIL",
+        "DOPE",
         "SOL"
       ],
-      "tvl_usd": 178798.1961720473,
-      "fee_30m_usd": 59.73481807029023,
-      "fee_1h_usd": 216.24836251347125,
-      "fee_4h_usd": 654.2098401106401,
-      "fee_24h_usd": 10092.881729629084,
-      "volume_24h_usd": 490588.8993115191,
-      "pool_age_days": 4.7,
-      "conservative_pool_fee_per_hour_usd": 119.47,
-      "gross_fee_to_tvl_24h_pct": 5.64,
-      "score": 0.0002386432,
+      "tvl_usd": 128323.2855893923,
+      "fee_30m_usd": 178.15518652611155,
+      "fee_1h_usd": 254.75809140690723,
+      "fee_4h_usd": 621.0690034722636,
+      "fee_24h_usd": 4517.896325285816,
+      "volume_24h_usd": 160839.17326718566,
+      "pool_age_days": 6,
+      "conservative_pool_fee_per_hour_usd": 155.27,
+      "gross_fee_to_tvl_24h_pct": 3.52,
+      "score": 0.0004137068,
       "status": "WATCH_NET_UNVERIFIED",
-      "pool_base_fee_pct": 1.5,
+      "pool_base_fee_pct": 3,
       "token_metadata_verified_only": true,
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
