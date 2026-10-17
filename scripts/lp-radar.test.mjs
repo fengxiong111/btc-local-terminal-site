@@ -37,6 +37,11 @@ test("Meteora rejects blacklisted, no-depth and newly opened candidates",()=>{
  assert.equal(chooseMeteora([pool({tvl:1000})],now),null);
  assert.equal(chooseMeteora([pool({created_at:now-3600000})],now),null);
 });
+test("Meteora cannot promote unknown/unverified Meme despite enormous pool fees",()=>{
+ const m=pool({address:"Unknown",name:"simulator-SOL",token_x:{symbol:"simulator",is_verified:false},
+  fees:{"30m":9000,"1h":18000,"4h":72000,"24h":400000}});
+ assert.equal(chooseMeteora([m,pool()],now).address,"Pool111");
+});
 test("No candidate is called a verified positive-net-return opportunity",()=>{
  assert.equal(chooseMerkl([market()],now).status,"WATCH_NET_UNVERIFIED");
  assert.ok(chooseMeteora([pool()],now).missing.includes("exit_quote"));
