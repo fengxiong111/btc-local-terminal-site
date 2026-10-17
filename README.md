@@ -96,3 +96,11 @@ node scripts/check-tail-health.mjs
 - Meteora：同名资产对可存在多个 Bin Step / Fee Tier 的真实池。以 **池地址 + 两个 Token Mint 地址**作为身份，不用 `DOPE-SOL` 这类字符串合并或代替实际 Pool ID。排行样本的研究首位须二次 GET 官方 `/pools/{address}` 核对；异常或网络失效 => 不输出研究首位。
 - Merkl：只读列表的 Opportunity ID、Chain ID、Type、Pool Identifier 必须与 `/v4/opportunities/:id` 详情一致，且仍为 LIVE；详情不可读时不把旧名单冒充当前。
 - 数据可读和池身份匹配只说明 **行情事实已核对**，不代表区间、仓位收费份额、激励资格与退出成本已核实。任何缺失皆保留 `best:null`，只记录 `research_leader` 用于后续审计。Kindle 不把研究首位称为正净收益最优。
+
+### 2026-10-17 Kindle 倍数对应价格与可比较净收益
+
+- 每张期权第二行统一采用 `剩余天数 · 买入总成本 U · 到期总回款倍数× · 跌幅情景目标价`，例如 `69天 · 3.15 U · 45.30× · 40,730`。只在原倍数**后面追加一个数字**，不增加「跌50%」「目标价」等标签。多保留一位倍数小数，以两位显示。
+- 目标价严格等于**同一行期权快照的 `row.spot / 2`**。不能改用稍晚单独更新的 BTC/ETH 页眉价格；否则无法与 `row.payoff_50` 的倍数一致。缺少该行原始标的价格或倍数则不猜目标价。
+- 倍数定义沿用 `crashMultiple`：`max(strike - spot*0.5, 0)*unit*min_qty / all_in_max_loss`。该口径假定**到期结算价**为目标价，只扣买入全成本（权利金与入场手续费），**尚未扣结算行权手续费**；是到期总回款比，不是净利润比，更不是提前平仓可实现倍数。需要另算净利润倍数时应减去本金，并进一步扣适用结算费用。
+- LP 选标最优的数学核心从池级 APR / 手续费热度提升到同一资本、同一未来窗口的**仓位级**净收益比较：`swap_fees + flash_fees + claimable_rewards - inventory_loss - gas - swap/slippage - rebalance - out_of_range - exit_cost`，再比较新增迁移成本。纯函数 `compareSameHorizonLP` 要求成本字段齐全、真实池 ID 匹配、独立仓位级模拟、有效资格、能完整退池及换回稳定币、快照≤120秒、比较窗口同为 1h/24h/7d，缺一则阻断。仅当新池优势 **超过 2× 增量迁移总成本** 才标记 `SWITCH_REVIEW`；任何结果均为 `SHADOW_ONLY`、`order_permission=ABSENT`。
+- GitHub 公共 API 获取不到用户特定 Bin/Tick 的真实收费份额、退出模拟报价和可领取激励时，`best=null` 是正确结果。允许保留各平台一个 `research_leader` 供继续核验，但绝不称为已验证正净收益的最优仓位，也不推动任何资金动作。
