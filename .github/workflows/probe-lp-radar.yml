@@ -16,8 +16,8 @@ on:
       - ".github/workflows/probe-lp-radar.yml"
   workflow_dispatch:
   schedule:
-    # 08:17, 12:17, 20:17 Asia/Taipei; GitHub schedule is best-effort.
-    - cron: "17 0,4,12 * * *"
+    # 08:17, 12:17, 16:17, 20:17 Asia/Taipei (UTC+8); GitHub schedule is best-effort.
+    - cron: "17 0,4,8,12 * * *"
 permissions:
   contents: write
 concurrency:
