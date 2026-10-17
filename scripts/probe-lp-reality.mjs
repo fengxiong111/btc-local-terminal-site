@@ -5,7 +5,7 @@ const probes=[
   ["meteora-fees-sort","https://dlmm.datapi.meteora.ag/pools?page=1&page_size=30&sort_by=fees_24h%3Adesc"],
   ["meteora-filter","https://dlmm.datapi.meteora.ag/pools?page=1&page_size=30&filter_by=is_blacklisted%3Dfalse%20%26%26%20tvl%3E100000&sort_by=tvl%3Adesc"],
   ["meteora-dope-detail","https://dlmm.datapi.meteora.ag/pools/J2XBZkpC7ygBQiPw2MWWCqiVJn9i44b8GwtTRoFV1ijj"],
-  ["merkl-v4","https://api.merkl.xyz/v4/opportunities?status=LIVE&type=UNISWAP_V4&page=0&items=120&campaigns=true"]
+  ["merkl-v4","https://api.merkl.xyz/v4/opportunities?status=LIVE&type=UNISWAP_V4&page=0&items=100&campaigns=true"]
 ];
 const now=Date.now();const out=await Promise.all(probes.map(async ([key,url])=>{
  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),15000);
