@@ -306,6 +306,13 @@ test("source independence prevents many Morpho markets from manufacturing CRITIC
   assert.equal(correlated.independent_stress, 1);
   assert.deepEqual(correlated.mechanism_families, ["morpho"]);
   assert.equal(correlated.independent_protocol_coverage, 2);
+  const severePeg = assessFragility({
+    pegs: [{ symbol: "USDT", price: 0.96 }],
+    aave: { connected: true, rows: [] },
+    morpho: { connected: true, rows: [] }
+  });
+  assert.equal(severePeg.tail_state, "WATCH");
+  assert.equal(severePeg.authoritative_mechanisms, 0);
   const missing = assessFragility({ morpho: { connected: true, rows: [] } });
   assert.equal(missing.tail_state, "UNKNOWN");
   assert.equal(missing.known, false);
