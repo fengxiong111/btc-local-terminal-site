@@ -9,6 +9,7 @@ on:
       - "scripts/tail-alert.test.mjs"
       - "scripts/build-kindle-tail.mjs"
       - ".github/workflows/tail-notify.yml"
+      - "scripts/update-btc-metrics.mjs"
       - "tail-convexity-load.js"
       - "scripts/update-tail-convexity.mjs"
       - "scripts/tail-convexity.test.mjs"
@@ -45,6 +46,10 @@ jobs:
         id: scan
         run: node scripts/update-tail-convexity.mjs
 
+      - name: Refresh Binance BTC, EMA200 and MA120 for Kindle
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        run: node scripts/update-btc-metrics.mjs
+
       - name: Build minimal Kindle-only static snapshot
         if: ${{ always() && steps.scan.outcome != 'skipped' }}
         run: node scripts/build-kindle-tail.mjs
@@ -54,7 +59,7 @@ jobs:
       - name: Publish verified snapshot or blocked receipt
         if: ${{ always() && steps.scan.outcome != 'skipped' }}
         run: |
-          git add -- tail-convexity.json kindle.html
+          git add -- tail-convexity.json btc-metrics.json kindle.html
           if git diff --cached --quiet; then
             echo "tail board unchanged"
             exit 0

@@ -126,12 +126,26 @@ test("Kindle output is no-JavaScript grayscale HTML with escaped public data", (
   assert.match(unavailable, /数据异常/);
 });
 
-test("workflow uses only an optional encrypted secret and does not check in a recipient", () => {
-  const wf = readFileSync(join(root, ".github/workflows/tail-notify.yml"), "utf8");
-  const publisher = readFileSync(join(root, "scripts/tail-notify.mjs"), "utf8");
-  assert.ok(wf.includes("secrets.NTFY_TOPIC"));
-  assert.ok(wf.includes('cron: "0 12 * * *"'));
-  assert.ok(wf.includes('cron: "29,59 * * * *"'));
-  assert.ok(publisher.includes('push_state = "ACCEPTED_BY_PROVIDER"'));
-  assert.ok(!publisher.includes("API_SECRET"));
+test("Kindle view contains the three requested BTC indicators with explicit freshness guard", () => {
+  const market = {
+    schema: "btc-metrics-v1", status: "LIVE", observed_at_ms: Date.now(),
+    btc_price_usdt: 81602, btc_change_24h_pct: -1.22, ema200: 75849, ma120: 77500
+  };
+  const html = makeKindlePage(mk(t0, { board: [qualified()] }), market);
+  assert.match(html, /BTC\s+81,602 USDT/);
+  assert.match(html, /-1\.22%/);
+  assert.match(html, /EMA200：75,849 USDT/);
+  assert.match(html, /MA120：77,500 USDT/);
+  const stale = makeKindlePage(mk(t0), { ...market, observed_at_ms: Date.now()-100*60000 });
+  assert.match(stale, /EMA200：未知/);
+  assert.match(stale, /MA120：未知/);
 });
+
+test("iPhone notification workflow is disabled and no timetable remains", () => {
+  const wf=readFileSync(join(root,".github/workflows/tail-notify.yml"),"utf8");
+  assert.ok(wf.includes("iPhone notifications disabled"));
+  assert.ok(!wf.includes("schedule:"));
+  assert.ok(!wf.includes("workflow_dispatch:"));
+  assert.ok(wf.includes('if: ${{ false }}'));
+});
+

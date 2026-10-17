@@ -49,35 +49,13 @@ node scripts/check-tail-health.mjs
 部署检查：`Actions → Test tail research` 通过后审阅 PR；合并后核对 `Refresh tail convexity board`、`Check tail snapshot freshness` 和 `pages build and deployment` 的状态，以及线上 `tail-convexity.json` 时间戳。注意健康检查有意拒绝旧快照和证据缺失。
 
 
-## iPhone 条件推送 + Kindle Oasis 3 纯文本视图
+## Kindle Oasis 3：按变化阅读，重要事件邮件送达
 
-云端通知与看板完全分离，仍然只读。GitHub Actions 工作流：`.github/workflows/tail-notify.yml`；事件判定：`tail-alert-lib.js`；HTTP 发送：`scripts/tail-notify.mjs`；公开、无敏感内容的去重状态：`tail-notify-state.json`（首次运行自动生成）。
-
-**通知规则**
-- 计划每小时第 29/59 分钟检查快照，和第 23/53 分钟的原期权扫描错开。GitHub 定时执行不保证准点。
-- 两轮**不同**有效扫描都发现 `RELATIVE_DISCOUNT_REVIEW`（IV 折价 ≥1 个百分点、盘口质量及非外推参照通过）才推送；同一期权重复事件不推送，若折价再改善至少 2 个 IV 百分点则提醒一次。它仍然只是研究，不是买入指令。
-- 新增的独立协议风险证据使 `WATCH` 升级时推送；`CRITICAL` 需至少两类独立协议机制证据。单协议多个市场异常不构成独立证据。
-- 有效数据连续缺失超过 2 小时后推送一次故障；无变化不推送；例行日报每日台北时间 **20:00**。
-- 只从可信新鲜快照产生机会/风险推送；`BLOCKED_DATA`、`BLOCKED_EVIDENCE`、超过 90 分钟旧数据均不会产生所谓“新机会”。
-- 单轮最多发一条消息；仅在 ntfy HTTP 成功接受消息后保存“已发送”收据。若下游未送达 iOS，HTTP 成功不代表设备已收到。
-
-**启用 iPhone 接收（需要账户本人完成，仅一次）**
-1. iPhone App Store 安装官方 `ntfy`，服务器选择 `https://ntfy.sh`，添加并订阅 **至少 24 位的随机 topic**（建议 32 位及以上）；允许 iOS 通知。
-2. GitHub → `fengxiong111/btc-local-terminal-site` → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`。名称 **`NTFY_TOPIC`**，值填刚才 iPhone 订阅的同一串 topic。
-3. GitHub → `Actions` → `Tail research iPhone notifications` → `Run workflow`，选择 `test`。测试成功时应收到“期权监控手机推送测试成功”。工作流日志会写 `ACCEPTED_BY_PROVIDER`，这仍不是设备到达证明。
-4. 如果缺少 Secret，工作流只会显示 `NOT_CONFIGURED`，**不会发送通知**；绝不将 topic 或手机凭据写进公开仓库、Issue 或日志。
-
-**安全提示：** `ntfy.sh` 默认 topic 不是严格的私密空间，知道 topic 的人可能订阅或发布消息。请用随机难猜的 topic，只发送仓库已有的公开市场研究信息，绝不发送真实持仓、额度、密钥或私人身份资料。若需要严格私密性，之后迁移到鉴权 ntfy 服务或其他私有推送平台。
-
-**Kindle Oasis 3**
-- 页面路径：`https://fengxiong111.github.io/btc-local-terminal-site/kindle.html`
-- `scripts/build-kindle-tail.mjs` 在云端期权扫描后生成简洁黑白静态 HTML（不依赖 JavaScript、持续连接或 Mac mini）。
-- Kindle **建议每天晚上 20:00 左右主动打开一次**，或每次醒来需要研究时手动刷新；网页随扫描更新，但 Kindle 休眠时不会自动送达、震动或弹窗。
-- 重要异常使用 iPhone 推送；不要把 Kindle 的试验性浏览器当作可靠的即时告警设备。如需离线阅读，可通过 Amazon 官方 Send to Kindle 手动导入 HTML 文档；该功能不是此处已启用的自动递送服务。
-
-验收：
-```bash
-node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs
-node scripts/build-kindle-tail.mjs
-node scripts/tail-notify.mjs watch
-```
+- iPhone 手机推送已经由用户取消：`.github/workflows/tail-notify.yml` 无定时触发、无工作分支发送权限；不得重新启用。
+- GitHub Actions 每次期权云端扫描后同步生成 `btc-metrics.json` 与 `kindle.html`。BTC 指标来自 Binance 公开现货 BTCUSDT 价格、24h 涨跌和 365 根 UTC 日线：EMA200 的种子为首 200 日简单平均，随后用 2/(200+1) 递推；MA120 为最后 120 日收盘价均值。计算包括当前未收盘日线，与现有网页计算口径一致。行情错误或 >90 分钟没有刷新则显示「未知」，不使用猜测或旧指标伪装实时行情。
+- Kindle 黑白静态页：https://fengxiong111.github.io/btc-local-terminal-site/kindle.html 。无需 JS、无需 Mac mini。用户可不定时高频联网打开；**每次打开/刷新取云端最新页面**，并非主动到设备。
+- Kindle 邮箱推送由用户的已授权 Gmail 通道发送 **EPUB 附件**，而不是由公开 GitHub 仓库持有 Gmail 凭据。GitHub 本身不具备用户 Gmail 授权，因此不能独立寄信；不可把 OAuth token、SMTP 应用密码、收件邮箱写入公开 repo。
+- 发送策略：普通 BTC tick、EMA/MA 数值变化及前三名普通换位，只更新静态页，**不发邮件**；新的跨扫描持续确认的相对便宜期权、独立危机升级、显著数据失效才生成专门的 Kindle 事件邮件。消息发送端负责事件去重与送达回执；GitHub 侧只提供事实快照。
+- 每日情报原本的早 8:00、中午 12:00、晚 20:00 生产与 Send-to-Kindle 发送链路独立保留，不要由排行榜再次发送相同三版邮件；先对比收件邮箱 Gmail 已发送记录，避免重复。
+- Kindle 的 Send-to-Kindle 认可发件人要包含实际发件 Gmail。Gmail 显示已接受邮件不等于 Kindle 已下载文件，最终以设备资料库显示为验收。
+- 策略始终是只读研究，不下单、不签名、不读取真实持仓；用户要求的是 Kindle 邮件，不是重新打开手机通知。
