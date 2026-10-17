@@ -1,8 +1,8 @@
 import { writeFile } from "node:fs/promises";
-import { chooseMerkl, chooseMeteora, assessDailyPoolPriceChange, sameMeteoraPoolIdentity, sameMerklOpportunityIdentity } from "../lp-radar-lib.js";
+import { chooseMerkl, chooseMeteora, sameMeteoraPoolIdentity, sameMerklOpportunityIdentity } from "../lp-radar-lib.js";
 
 const now=Date.now();
-const report={schema:"lp-radar-v1",policy_version:"POSITION_NET_GATE_V2",generated_at_ms:now,read_only:true,
+const report={schema:"lp-radar-v1",policy_version:"FEE_24H_TVL100K_MCAP500K_DISCOVERY",generated_at_ms:now,read_only:true,
   merkl:{state:"BLOCKED_DATA",best:null},meteora:{state:"BLOCKED_DATA",best:null},
   comparability:"NET_EDGE_UNKNOWN"};
 
@@ -52,50 +52,59 @@ try{
  // A public APR is never evidence of position-level net edge.
 }catch(e){report.merkl={state:"BLOCKED_DATA",best:null,error:String(e.message).slice(0,200)}}
 
-try{
- // Explore materially different parts of the pool universe, not merely the
- // default top-volume + top-TVL page. Official field is fee_24h (not fees_24h).
- const paths=["/pools?page=1&page_size=150",
-              "/pools?page=1&page_size=150&sort_by=tvl%3Adesc",
-              "/pools?page=1&page_size=150&sort_by=fee_1h%3Adesc",
-              "/pools?page=1&page_size=150&sort_by=fee_24h%3Adesc"];
- const found=[];
- for(const path of paths){
-  const r=await get("https://dlmm.datapi.meteora.ag",path);
-  if(!Array.isArray(r?.data))throw new Error("METEORA_SCHEMA_INVALID");
-  found.push(...r.data);
- }
- const distinct=[...new Map(found.map(x=>[String(x.address),x])).values()];
- let leader=chooseMeteora(distinct,now),identity_check="NOT_APPLICABLE";
- if(leader){
-  const listed=distinct.find(x=>String(x.address)===leader.address);
-  try{
-   const exact=await get("https://dlmm.datapi.meteora.ag","/pools/"+encodeURIComponent(leader.address));
-   identity_check=sameMeteoraPoolIdentity(listed,exact)?"MATCHED":"MISMATCH";
-  }catch(e){identity_check="BLOCKED_RECHECK"; }
-  if(identity_check!=="MATCHED")leader=null;
- }
- if(leader){
-  try{
-    const candles=await get("https://dlmm.datapi.meteora.ag",
-      "/pools/"+encodeURIComponent(leader.address)+"/ohlcv");
-    const priceMove=assessDailyPoolPriceChange(candles);
-    leader.observed_1d_pool_price_change_pct=priceMove;
-    leader.price_shock_vs_gross_pool_fees=priceMove===null?"UNKNOWN":
-      Math.abs(priceMove)>leader.gross_fee_to_tvl_24h_pct?
-        "PRICE_MOVE_LARGER_THAN_POOL_LEVEL_GROSS_FEES":"NO_POOL_LEVEL_SHOCK_FLAG";
-  }catch(e){
-    leader.observed_1d_pool_price_change_pct=null;
-    leader.price_shock_vs_gross_pool_fees="PRICE_HISTORY_UNAVAILABLE";
+
+try {
+ // Scan actual highest USD 24h fee pools FIRST. Official API supports TVL
+ // filter + fee_24h:desc; pagination is 1-based. No composite scores.
+ const pageSize=200,maxPages=12,filter="tvl>=100000 && is_blacklisted=false";
+ let leader=null,verifiedPool=null,inspected=0,sampled=0,apiTotal=null;
+ let identity_check="NOT_APPLICABLE",lastPageSize=null;
+ for(let page=1;page<=maxPages;page++){
+  const q=new URLSearchParams({
+   page:String(page),page_size:String(pageSize),sort_by:"fee_24h:desc",
+   filter_by:filter
+  });
+  const batch=await get("https://dlmm.datapi.meteora.ag","/pools?"+q.toString());
+  if(!Array.isArray(batch?.data))throw Error("METEORA_LIST_SCHEMA_INVALID");
+  inspected++;sampled+=batch.data.length;
+  apiTotal=Number.isInteger(batch.total)?batch.total:apiTotal;
+  lastPageSize=batch.data.length;
+  let remaining=batch.data;
+  for(let attempt=0;attempt<5;attempt++){
+   const pick=chooseMeteora(remaining,now);
+   if(!pick)break;
+   const detail=await get("https://dlmm.datapi.meteora.ag",
+     "/pools/"+encodeURIComponent(pick.address));
+   if(!sameMeteoraPoolIdentity(remaining.find(p=>p.address===pick.address),detail))
+     throw Error("METEORA_EXACT_POOL_IDENTITY_MISMATCH");
+   const exact=chooseMeteora([detail],now);
+   if(exact){
+    leader=exact;verifiedPool=detail;identity_check="MATCHED";
+    break;
+   }
+   remaining=remaining.filter(p=>p.address!==pick.address);
+   identity_check="STALE_POOL_FILTERED_OUT";
   }
+  if(leader||batch.data.length<pageSize)break;
  }
- report.meteora={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,identity_check,
-   pages:paths.length,window_coverage:["30m","1h","4h","24h"],
-   best:null,research_leader:leader,
-   reason:leader?"MISSING_5M_TRADERS_ACTIVE_BIN_POSITION_FEES_EXIT_AND_IL":"NO_USABLE_POOL"};
- // We cannot infer active Bin fee share or inventory loss from pool-level gross
- // fees and TVL. Do not call a research ranking "best".
-}catch(e){report.meteora={state:"BLOCKED_DATA",best:null,error:String(e.message).slice(0,200)}}
+ report.meteora={
+  state:"NO_VERIFIED_NET_EDGE",best:null,
+  fee_leader:leader,research_leader:leader,
+  rank_by:"fee_24h_usd_desc",min_tvl_usd:100000,
+  min_token_market_cap_usd:500000,token_market_cap_rule:"BOTH_TOKENS",
+  sampled,api_total_after_tvl_filter:apiTotal,pages:inspected,
+  page_size:pageSize,max_pages:maxPages,
+  coverage:leader?"MAX_FEE_WITHIN_SORTED_LIVE_FILTERED_API":
+    lastPageSize===pageSize?"CAPPED_SCAN_NO_ELIGIBLE_POOL":"NO_ELIGIBLE_POOL",
+  identity_check,read_only:true,
+  reason:leader?"POSITION_NET_RETURN_NOT_VERIFIED":
+    "NO_POOL_MEETING_TVL_AND_BOTH_TOKEN_MARKET_CAP_FILTERS"
+ };
+ // Do not relabel pool gross fees as a wallet's realized earnings.
+}catch(e){
+ report.meteora={state:"BLOCKED_DATA",best:null,fee_leader:null,
+  research_leader:null,error:String(e.message).slice(0,200)};
+}
 
 await writeFile("lp-opportunities.json",JSON.stringify(report,null,2)+"\n","utf8");
 console.log("LP_RADAR "+JSON.stringify({
@@ -105,8 +114,9 @@ console.log("LP_RADAR "+JSON.stringify({
    reason:report.merkl.reason,error:report.merkl.error},
  meteora:{state:report.meteora.state,sampled:report.meteora.sampled,best:report.meteora.best?.name,
    research_leader:report.meteora.research_leader?.name,
-   price_change_1d:report.meteora.research_leader?.observed_1d_pool_price_change_pct,
-   price_shock:report.meteora.research_leader?.price_shock_vs_gross_pool_fees,
+   fee_24h_usd:report.meteora.fee_leader?.fee_24h_usd,
+   tvl_usd:report.meteora.fee_leader?.tvl_usd,
+   min_token_market_cap_usd:report.meteora.fee_leader?.min_token_market_cap_usd,
    reason:report.meteora.reason,error:report.meteora.error}
 }));
 if(report.merkl.state==="BLOCKED_DATA"&&report.meteora.state==="BLOCKED_DATA")process.exitCode=1;
