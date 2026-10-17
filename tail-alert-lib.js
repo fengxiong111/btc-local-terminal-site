@@ -97,6 +97,8 @@ export function assessNotifications(snapshot, existing = {}, opts = {}) {
     const stress = Array.isArray(snapshot?.radar?.stress_families) ? snapshot.radar.stress_families : [];
     const signature = [snapshot.tail_state, ...[...family].sort(), "|", ...[...stress].sort()].join("/");
     const changed = signature !== state.risk_signature;
+    const newIndependentFamily = family.some((source) => !(state.risk_mechanism_families || []).includes(source))
+      || stress.some((source) => !(state.risk_stress_families || []).includes(source));
     const coverage = number(snapshot?.radar?.independent_protocol_coverage) ?? 0;
     const risk = snapshot.tail_state;
     if (changed && coverage >= 2 && risk === "CRITICAL" && family.length >= 2) {
@@ -107,7 +109,7 @@ export function assessNotifications(snapshot, existing = {}, opts = {}) {
       });
     } else if (changed && state.initialized && coverage >= 2 && risk === "WATCH"
       && (family.length > 0 || stress.length > 1)
-      && state.risk_signature !== "" && !state.risk_signature.startsWith("WATCH/")) {
+      && state.risk_signature !== "" && (!state.risk_signature.startsWith("WATCH/") || newIndependentFamily)) {
       const key = `watch:${signature}`;
       if (!state.sent[key]) outbox.push({
         kind: "watch", key, priority: 4, title: "Tail risk WATCH",
@@ -115,6 +117,8 @@ export function assessNotifications(snapshot, existing = {}, opts = {}) {
       });
     }
     state.risk_signature = signature;
+    state.risk_mechanism_families = [...family];
+    state.risk_stress_families = [...stress];
     state.observed_snapshot_ms = snapshot.generated_at_ms;
     state.initialized = true;
   }
