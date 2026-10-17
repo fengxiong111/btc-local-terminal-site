@@ -98,6 +98,14 @@ test("market caps stay compact, quiet, and custom ordered", () => {
   assert.match(html, /id: "hype"[\s\S]*id: "spcx"[\s\S]*id: "mu"[\s\S]*id: "sndk"[\s\S]*id: "nvda"[\s\S]*id: "uni"/);
 });
 
+test("IREN quote uses existing HIP-3 and Binance fallback without changing the layout", () => {
+  assert.match(html, /id: "iren", label: "IREN", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "IRENUSDT"/);
+  assert.match(html, /fetchHyperliquidMacro\(stockDefinitions, HIP3_STOCK_DEX\)/);
+  assert.match(html, /return fetchBinanceMacro\(missingStocks\)/);
+  assert.match(html, /fapi\.binance\.com\/fapi\/v1\/ticker\/24hr\?symbol=/);
+  assert.match(html, /id: "nvda"[\s\S]*id: "iren"[\s\S]*id: "uni"/);
+});
+
 test("compact market-cap examples use no currency prefix", () => {
   function compact(value) {
     const suffixes = [[1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]];
