@@ -9,8 +9,9 @@ const market=(overrides={})=>({id:"42",status:"LIVE",type:"UNISWAP_V3",
  name:"Provide liquidity to Uniswap USDC-WETH 0.3%",
  tvl:850000,apr:12,campaigns:[goodCampaign],...overrides});
 const pool=(overrides={})=>({address:"Pool111",name:"SOL-USDC",tvl:900000,
- created_at:now-15*86400000,token_x:{symbol:"SOL",is_verified:true},
- token_y:{symbol:"USDC",is_verified:true},fees:{"30m":40,"1h":80,"4h":320,"24h":1600},
+ created_at:now-15*86400000,token_x:{address:"mintSOL",symbol:"SOL",is_verified:true,market_cap:90000000},
+ token_y:{address:"mintUSDC",symbol:"USDC",is_verified:true,market_cap:900000000},
+ fees:{"30m":40,"1h":80,"4h":320,"24h":1600},
  volume:{"24h":1000000},...overrides});
 test("Merkl excludes loan/looping products even when APR is enormous",()=>{
  const m=chooseMerkl([market({id:"0",type:"AAVE_SUPPLY",apr:900,name:"Lend USDC (looping required)"}),market()],now);
@@ -26,21 +27,29 @@ test("Merkl score penalizes tempting thin high-APR pools",()=>{
  const a=market(),b=market({id:"999",tvl:40000,apr:249});
  assert.equal(chooseMerkl([b,a],now).opportunity_id,"42");
 });
-test("Meteora relies on repeat fees across windows rather than a 24h spike",()=>{
- const spiky=pool({address:"Spike",fees:{"30m":0,"1h":0,"4h":0,"24h":100000}});
- const m=chooseMeteora([spiky,pool()],now);
- assert.equal(m.address,"Pool111");
- assert.equal(m.conservative_pool_fee_per_hour_usd,66.67);
+test("Meteora selects the highest absolute 24h pool fee even when short windows are quiet",()=>{
+ const large=pool({address:"HighFee",fees:{"30m":0,"1h":0,"4h":0,"24h":100000}});
+ const pick=chooseMeteora([pool(),large],now);
+ assert.equal(pick.address,"HighFee");
+ assert.equal(pick.fee_24h_usd,100000);
+ assert.equal(pick.ranking_metric,"ABSOLUTE_POOL_FEES_24H_USD");
 });
-test("Meteora rejects blacklisted, no-depth and newly opened candidates",()=>{
+test("Meteora enforces TVL >=100k, both token market caps >=500k and blacklist",()=>{
  assert.equal(chooseMeteora([pool({is_blacklisted:true})],now),null);
- assert.equal(chooseMeteora([pool({tvl:1000})],now),null);
- assert.equal(chooseMeteora([pool({created_at:now-3600000})],now),null);
+ assert.equal(chooseMeteora([pool({tvl:99999})],now),null);
+ assert.equal(chooseMeteora([pool({tvl:100000})],now)?.address,"Pool111");
+ assert.equal(chooseMeteora([pool({token_x:{address:"mintSOL",symbol:"SOL",market_cap:499999}})],now),null);
+ assert.equal(chooseMeteora([pool({token_y:{address:"mintUSDC",symbol:"USDC",market_cap:undefined}})],now),null);
+ assert.equal(chooseMeteora([pool({token_x:{address:"mintSOL",symbol:"SOL",market_cap:500000}})],now)?.address,"Pool111");
 });
-test("Meteora cannot promote unknown/unverified Meme despite enormous pool fees",()=>{
- const m=pool({address:"Unknown",name:"simulator-SOL",token_x:{symbol:"simulator",is_verified:false},
-  fees:{"30m":9000,"1h":18000,"4h":72000,"24h":400000}});
- assert.equal(chooseMeteora([m,pool()],now).address,"Pool111");
+test("Meteora does not conflate token verified badge with required numeric market cap",()=>{
+ const high=pool({address:"Meme",name:"MEME-SOL",
+  token_x:{address:"mintMEME",symbol:"MEME",is_verified:false,market_cap:600000},
+  fees:{"30m":0,"1h":0,"4h":0,"24h":400000}});
+ assert.equal(chooseMeteora([high,pool()],now).address,"Meme");
+ assert.equal(chooseMeteora([{
+  ...high,token_x:{...high.token_x,market_cap:0,is_verified:true}
+ }],now),null);
 });
 test("No candidate is called a verified positive-net-return opportunity",()=>{
  assert.equal(chooseMerkl([market()],now).status,"WATCH_NET_UNVERIFIED");
@@ -148,4 +157,17 @@ test("LP optimizer demands improvement exceeding twice incremental migration cos
    incumbent:{id:"old",evidence:{...base,exit_route_verified:false,pool_or_position_id:"old"}},
    candidates:[improved]});
  assert.equal(blocked.status,"BLOCKED_EVIDENCE");
+});
+
+test("Meteora tie-break is deterministic and not influenced by liquidity ratio",()=>{
+ const a=pool({address:"A",tvl:110000,fees:{"24h":5000}});
+ const b=pool({address:"B",tvl:950000,fees:{"24h":5000}});
+ assert.equal(chooseMeteora([a,b],now).address,"B");
+ const c=pool({address:"C",tvl:100000,fees:{"24h":5001}});
+ assert.equal(chooseMeteora([a,b,c],now).address,"C");
+});
+test("No valid market cap -> no winner even if liquidity and 24h fees are huge",()=>{
+ const unknown=pool({tvl:10000000,fees:{"24h":500000},
+  token_x:{address:"mintU",symbol:"U",is_verified:true}});
+ assert.equal(chooseMeteora([unknown],now),null);
 });
