@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - "tail-convexity-lib.js"
+      - "tail-alert-lib.js"
+      - "scripts/tail-alert.test.mjs"
+      - "scripts/build-kindle-tail.mjs"
+      - ".github/workflows/tail-notify.yml"
       - "tail-convexity-load.js"
       - "scripts/update-tail-convexity.mjs"
       - "scripts/tail-convexity.test.mjs"
@@ -35,7 +39,7 @@ jobs:
           node-version: 22
 
       - name: Verify pure strategy and market-page tests
-        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs
 
       - name: Refresh Binance put board
         id: scan
