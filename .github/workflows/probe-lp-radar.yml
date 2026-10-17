@@ -6,6 +6,7 @@ on:
       - "scripts/lp-radar.test.mjs"
       - "scripts/scan-lp-opportunities.mjs"
       - "scripts/probe-lp-radar.mjs"
+      - "scripts/audit-lp-candidates.mjs"
       - ".github/workflows/probe-lp-radar.yml"
   push:
     branches: [main]
@@ -39,6 +40,9 @@ jobs:
           node --check lp-radar-lib.js
           node --check scripts/scan-lp-opportunities.mjs
           node --test scripts/lp-radar.test.mjs
+      - name: Audit old candidates and correct fee-window sort
+        if: github.event_name == 'pull_request'
+        run: node scripts/audit-lp-candidates.mjs
       - name: Refresh public Merkl and Meteora research snapshot
         run: node scripts/scan-lp-opportunities.mjs
       - name: Publish CI snapshot as a review artifact
