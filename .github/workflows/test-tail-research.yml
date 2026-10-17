@@ -60,7 +60,9 @@ jobs:
         run: node scripts/build-kindle-tail.mjs
       - name: Verify generated no-JavaScript Kindle view
         run: |
-          grep -q "市场速览" kindle.html
+          grep -q "EMA200" kindle.html
+          grep -q "BTC" kindle.html
+          if grep -Eq '市场速览|尾部 Put|无新错价|跌50%' kindle.html; then exit 1; fi
           if grep -q '<script' kindle.html; then exit 1; fi
       - name: Upload read-only shadow snapshot
         if: always()
