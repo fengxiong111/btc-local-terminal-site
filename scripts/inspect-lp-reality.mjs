@@ -6,7 +6,8 @@ const urls=[
  ["meteora-fee-sort","https://dlmm.datapi.meteora.ag/pools?page=1&page_size=5&sort_by=fee_24h:desc"],
  ["meteora-1h-sort","https://dlmm.datapi.meteora.ag/pools?page=1&page_size=5&sort_by=fee_1h:desc"],
  ["meteora-fee-ratio-sort","https://dlmm.datapi.meteora.ag/pools?page=1&page_size=5&sort_by=fee_tvl_ratio_24h:desc"],
- ["meteora-dope-ohlcv","https://dlmm.datapi.meteora.ag/pools/J2XBZkpC7ygBQiPw2MWWCqiVJn9i44b8GwtTRoFV1ijj/ohlcv"]
+ ["meteora-dope-ohlcv","https://dlmm.datapi.meteora.ag/pools/J2XBZkpC7ygBQiPw2MWWCqiVJn9i44b8GwtTRoFV1ijj/ohlcv"],
+ ["meteora-sol-usdc","https://dlmm.datapi.meteora.ag/pools?query=SOL-USDC&page=1&page_size=4&sort_by=fee_1h:desc"]
 ];
 for(const [name,url] of urls){
  const ac=new AbortController(), timer=setTimeout(()=>ac.abort(),14000);
@@ -29,7 +30,12 @@ for(const [name,url] of urls){
     id:c.id,apr:c.apr,startTimestamp:c.startTimestamp,endTimestamp:c.endTimestamp,
     rewardToken:c.rewardToken?.symbol,paramsKeys:Object.keys(c.params||{}).slice(0,50),campaignStatus:c.campaignStatus
    })):null,
-   items:xs?.map(extract),error:r.ok?null:str.slice(0,200)}));
+   items:xs?.map((x)=>name.includes("ohlcv")?x:extract(x)),
+   merklDetails:name==="merkl-list"?xs?.[0]?.campaigns?.map(c=>({id:c.id,apr:c.apr,end:c.endTimestamp,
+     rewardToken:c.rewardToken?.symbol,params:c.params,distributionType:c.distributionType})):null,
+   poolConfig:name==="meteora-dope"?one?.pool_config:null,
+   cumMetrics:name==="meteora-dope"?one?.cumulative_metrics:null,
+   error:r.ok?null:str.slice(0,200)}));
  }catch(e){console.log("INSPECT "+JSON.stringify({name,error:String(e?.message||e)}))}
  finally{clearTimeout(timer)}
 }
