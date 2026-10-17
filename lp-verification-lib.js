@@ -1,7 +1,12 @@
 // Pure public-data gate. Campaign APR and pool-wide fees are never wallet net returns.
 const finite=x=>typeof x==="number"&&Number.isFinite(x);
-const amount=x=>typeof x==="string"&&/^\d+$/.test(x)?BigInt(x):
-  typeof x==="number"&&Number.isSafeInteger(x)&&x>=0?BigInt(x):null;
+const amount=x=>{
+ if(typeof x==="bigint")return x>=0n?x:null;
+ if(typeof x==="number")return Number.isSafeInteger(x)&&x>=0?BigInt(x):null;
+ const raw=(typeof x==="string"||x&&typeof x==="object"&&typeof x.toString==="function")
+   ?String(x):"";
+ return /^\d+$/.test(raw)?BigInt(raw):null;
+};
 
 export function assessMerklCampaignRules(opportunity,nowMs=Date.now()){
  const now=nowMs/1000, campaigns=Array.isArray(opportunity?.campaigns)?opportunity.campaigns:[];
@@ -110,6 +115,7 @@ export function assessMeteoraSwapQuote(quote,inputRaw,{stableOutput=false,slippa
     ||minimum===null||fee===null||!Number.isInteger(slippageBps)
     ||slippageBps<0||slippageBps>50)
    return {state:"BLOCKED_QUOTE_SCHEMA"};
+ if(minimum>output)return {state:"BLOCKED_QUOTE_SCHEMA"};
  if(consumed!==input)return {state:"BLOCKED_PARTIAL_FILL",input_raw:input.toString(),
    consumed_raw:consumed.toString()};
  return {state:stableOutput?"SINGLE_HOP_STABLE_SWAP_QUOTED":"BLOCKED_NONSTABLE_OUTPUT",
