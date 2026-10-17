@@ -152,7 +152,7 @@ test("Kindle 50% spot target is derived from the same option snapshot, not live 
   const spot = 81460;
   const cost = 3.15;
   const result = crashMultiple({strike:55000,spot,unit:1,qty:0.01,allIn:cost,drop:0.5});
-  assert.equal(result.usdt,142.7);
+  assert.ok(Math.abs(result.usdt-142.7)<1e-9);
   assert.ok(Math.abs(result.multiple - 45.301587301587304) < 1e-10);
   assert.equal(result.multiple.toFixed(2), "45.30");
   const row = { ...qualified("BTC-261225-55000-P"),spot,strike:55000,
@@ -162,7 +162,7 @@ test("Kindle 50% spot target is derived from the same option snapshot, not live 
     schema:"btc-metrics-v1",status:"LIVE",observed_at_ms:Date.now(),
     btc_price_usdt:82000,btc_change_24h_pct:0.2,ema200:76000,ma120:73000
   });
-  assert.match(html,/45\\.30× · 40,730<\\/span>/);
+  assert.ok(html.includes("45.30× · 40,730</span>"));
   assert.doesNotMatch(html,/跌50%|目标价|情景价/);
   assert.equal(formatHalfSpotTarget({payoff_50:45.3}),null);
   assert.equal(formatHalfSpotTarget({spot:81460,payoff_50:null}),null);
