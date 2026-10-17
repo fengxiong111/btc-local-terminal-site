@@ -811,9 +811,12 @@ export function assessFragility({ pegs, pendle, aave, morpho } = {}) {
   };
   const independentProtocolCoverage = ["pendle", "aave", "morpho"].filter((key) => sources[key] === "connected").length;
   const known = independentProtocolCoverage >= 2;
+  // A single oracle's severe depeg is enough for WATCH, never CRITICAL; it still requires independent confirmation.
+  const severePeg = Array.isArray(pegs) && pegs.some((row) =>
+    row.price > 0 && Math.abs(row.price - 1) >= 0.01);
   const tailState = !known ? "UNKNOWN"
     : mechanismFamilies.size >= 2 ? "CRITICAL"
-    : mechanismFamilies.size >= 1 || stressFamilies.size >= 2 ? "WATCH"
+    : mechanismFamilies.size >= 1 || stressFamilies.size >= 2 || severePeg ? "WATCH"
     : "NORMAL";
   return {
     score: Math.min(100, stressFamilies.size * 10 + mechanismFamilies.size * 25),
