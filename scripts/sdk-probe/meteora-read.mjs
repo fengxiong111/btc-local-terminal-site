@@ -99,8 +99,8 @@ if(!poolId){
    const privateFile="lp-position-private.json";
    await writeFile(privateFile,JSON.stringify({
     schema:"private-position-evidence-v1",generated_at_ms:Date.now(),
-    position:posAddress,pool:address,public_sdk_state:report.state,
-    position:positionSummary,exit_state:report.exit_state,
+    position_address:posAddress,pool:address,public_sdk_state:report.state,
+    position_data:positionSummary,exit_state:report.exit_state,
     estimated_single_hop_min_output_raw:report.exit_stable_min_raw??null,
     full_lp_withdrawal_verified:false
    },null,2)+"\n",{mode:0o600});
