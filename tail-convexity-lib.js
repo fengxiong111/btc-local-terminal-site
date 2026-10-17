@@ -12,6 +12,9 @@ export const REAUTH_BUDGET_CAP = 500;
 export const MISPRICING_EDGE = 0.01;
 export const DISPLAY_LIMIT = 3;
 export const CLUSTER_CAP = 2;
+export const DEPTH_MIN_ORDERS = 5;
+export const EXIT_BID_VALUE_MIN = 20;
+export const SCENARIO_DAYS = [7, 30, 60];
 export const THESIS_LADDER = [5, 10, 25, 50];
 export const MAX_AUTO_LEVERAGE = 2;
 export const PUT_REPRICED_IV = 1.5;
@@ -32,6 +35,77 @@ export const RANK_WEIGHTS = [
 export const PARETO_KEYS = RANK_WEIGHTS.map(([key]) => key);
 
 export const PAYOFF_WEIGHTS = { m30: 0.2, m50: 0.4, m70: 0.3, m90: 0.1 };
+
+export function quoteQuality(row) {
+  const qty = num(row?.min_qty);
+  const bid = num(row?.bid);
+  const bidSize = num(row?.bid_size);
+  const askSize = num(row?.ask_size);
+  const spread = num(row?.spread);
+  const reasons = [];
+  if (!(qty > 0) || !(bidSize >= qty * DEPTH_MIN_ORDERS) || !(askSize >= qty * DEPTH_MIN_ORDERS)) {
+    reasons.push("INSUFFICIENT_TOP_DEPTH");
+  }
+  if (!(bid > 0) || !(bidSize * bid >= EXIT_BID_VALUE_MIN)) reasons.push("INSUFFICIENT_EXIT_BID_VALUE");
+  if (!(spread >= 0) || spread > SPREAD_MAX) reasons.push("WIDE_SPREAD");
+  if (row?.smile_extrapolated === true) reasons.push("EXTRAPOLATED_IV_REFERENCE");
+  return { state: reasons.length ? "RESEARCH_ONLY" : "DEPTH_CHECKED", reasons };
+}
+
+// Non-executable, zero-carry Black-Scholes sensitivity. NOT an estimated executable market bid.
+function normalCdf(x) {
+  const a = Math.abs(x);
+  const t = 1 / (1 + 0.2316419 * a);
+  const density = 0.3989422804014327 * Math.exp(-a * a / 2);
+  const q = density * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return x >= 0 ? 1 - q : q;
+}
+
+export function theoreticalPut({ spot, strike, volatility, days }) {
+  if (!(spot > 0) || !(strike > 0) || !(volatility > 0) || !(days >= 0)) return null;
+  if (days === 0) return Math.max(strike - spot, 0);
+  const sigmaRoot = volatility * Math.sqrt(days / 365);
+  const d1 = (Math.log(spot / strike) + 0.5 * sigmaRoot * sigmaRoot) / sigmaRoot;
+  return Math.max(0, strike * normalCdf(-d1 + sigmaRoot) - spot * normalCdf(-d1));
+}
+
+export function crashScenarios(row) {
+  if (!(row?.spot > 0) || !(row?.strike > 0) || !(row?.ask_iv > 0)
+    || !(row?.dte > 0) || !(row?.unit > 0) || !(row?.min_qty > 0) || !(row?.all_in_max_loss > 0)) {
+    return { status: "BLOCKED_DATA", model_only: true, scenarios: [] };
+  }
+  const spread = num(row.spread);
+  // Apply a punitive exit haircut for illustrative stress marks, not a depth-backed quote.
+  const exitHaircut = Math.min(0.50, Math.max(0.15, (spread ?? 0.10) * 2));
+  const scenarios = [];
+  for (const day of SCENARIO_DAYS) {
+    if (day >= row.dte) continue;
+    for (const volShock of [0, 0.2, 0.5]) {
+      const model = theoreticalPut({
+        spot: row.spot * 0.5, strike: row.strike,
+        volatility: Math.min(3, row.ask_iv + volShock),
+        days: row.dte - day
+      });
+      if (model === null) continue;
+      const stressedValue = model * row.unit * row.min_qty * (1 - exitHaircut);
+      scenarios.push({
+        crash_after_days: day,
+        price_drop: 0.5,
+        iv_shock_points: Math.round(volShock * 100),
+        model_exit_value: stressedValue,
+        model_gross_multiple: stressedValue / row.all_in_max_loss
+      });
+    }
+  }
+  return {
+    status: scenarios.length ? "MODEL_ONLY" : "NO_VALID_HORIZON",
+    model_only: true,
+    pricing_assumptions: "European Black-Scholes, zero carry, unchanged contract, exit haircut only; no market depth/exit fee guarantee",
+    exit_haircut: exitHaircut,
+    scenarios
+  };
+}
+
 
 export function num(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
@@ -306,6 +380,7 @@ export function evaluateCandidate(input, context = {}) {
     mispricing_vol_points: mispricing.gap,
     smile_iv: smileUsable ? smileIv : null,
     smile_count: smileCount,
+    smile_extrapolated: Boolean(context.smile?.extrapolated),
     mispricing_evidence: mispricingEvidence({
       askIv,
       fittedIv: smileUsable ? smileIv : null,
@@ -342,15 +417,44 @@ export function paretoFront(items) {
 
 const MISPRICING_ORDER = { PASS: 0, FLAT: 1, FAIL: 2, UNKNOWN: 3 };
 
+function relativeDiscountTier(item) {
+  const depth = quoteQuality(item);
+  return item?.mispricing === "PASS" && depth.state === "DEPTH_CHECKED"
+    ? "RELATIVE_DISCOUNT_REVIEW"
+    : "RESEARCH_ONLY";
+}
+
+// Compare each Pareto survivor against the same cohort; never compare raw IV and payoff units.
 export function rankFront(items) {
-  return items.slice().sort((left, right) => {
-    const status = (MISPRICING_ORDER[left.mispricing] ?? 9) - (MISPRICING_ORDER[right.mispricing] ?? 9);
-    if (status) return status;
-    for (const [key, , direction] of RANK_WEIGHTS) {
-      const diff = direction === "asc" ? left[key] - right[key] : right[key] - left[key];
-      if (Math.abs(diff) > 1e-12) return diff;
+  const ranked = (items || []).map((item) => {
+    const quality = quoteQuality(item);
+    let score = 0;
+    let total = 0;
+    for (const [key, weight, direction] of RANK_WEIGHTS) {
+      const value = num(item[key]);
+      if (value === null) continue;
+      const peers = items.map((peer) => num(peer[key])).filter((number) => number !== null);
+      const better = peers.filter((other) => direction === "asc" ? other > value : other < value).length;
+      const equal = peers.filter((other) => other === value).length;
+      const percentile = peers.length > 1 ? (better + Math.max(0, equal - 1) / 2) / (peers.length - 1) : 1;
+      score += weight * percentile;
+      total += weight;
     }
-    return left.all_in_max_loss - right.all_in_max_loss || left.symbol.localeCompare(right.symbol);
+    return {
+      ...item,
+      quality,
+      opportunity_tier: relativeDiscountTier(item),
+      ranking_score: total ? score / total : 0
+    };
+  });
+  return ranked.sort((left, right) => {
+    if (left.opportunity_tier !== right.opportunity_tier) {
+      return left.opportunity_tier === "RELATIVE_DISCOUNT_REVIEW" ? -1 : 1;
+    }
+    if (Math.abs(left.ranking_score - right.ranking_score) > 1e-12) return right.ranking_score - left.ranking_score;
+    return (right.payoff_blend ?? 0) - (left.payoff_blend ?? 0)
+      || left.all_in_max_loss - right.all_in_max_loss
+      || left.symbol.localeCompare(right.symbol);
   });
 }
 
@@ -358,11 +462,11 @@ export function buildBoard(evaluated) {
   const qualified = evaluated.filter((item) => item.pass);
   const front = paretoFront(qualified);
   const ranked = rankFront(front).map((item, index) => ({ ...item, rank: index + 1 }));
-  const edge = ranked.filter((item) => item.mispricing === "PASS");
   return {
     qualified_count: qualified.length,
     pareto_count: front.length,
-    edge_count: edge.length,
+    edge_count: ranked.filter((item) => item.mispricing === "PASS").length,
+    review_count: ranked.filter((item) => item.opportunity_tier === "RELATIVE_DISCOUNT_REVIEW").length,
     ranked
   };
 }
@@ -409,6 +513,7 @@ export function nextProbeNotional(ctx) {
 export function finalState(ctx) {
   if (!ctx?.dataOk) return "BLOCKED_DATA";
   if (ctx.riskUnknown) return "BLOCKED_RISK";
+  if (ctx.evidenceUnknown) return "BLOCKED_EVIDENCE";
   if (ctx.orderSent) return "BLOCKED_EXECUTION";
   if (ctx.tailState === "CRITICAL") {
     if (ctx.bestInstrument === "PERP_SHORT" && ctx.alsoPut) return "CRITICAL_COMBO";
@@ -659,25 +764,35 @@ export function assessFragility({ pegs, pendle, aave, morpho } = {}) {
       });
     }
   }
-  const stressGroups = new Set(items.filter((item) => item.stress).map((item) => item.group));
-  const mechanismGroups = new Set(items.filter((item) => item.authoritative && item.mechanism).map((item) => item.group));
-  const tailState = mechanismGroups.size >= 2 ? "CRITICAL" : stressGroups.size >= 2 ? "WATCH" : "NORMAL";
+  // Distinct markets within one protocol are correlated and must never masquerade as independent sources.
+  const family = (item) => item.id.split(":")[0];
+  const stressFamilies = new Set(items.filter((item) => item.stress).map(family));
+  const mechanismFamilies = new Set(items.filter((item) => item.authoritative && item.mechanism).map(family));
   const sources = {
-    peg: pegs ? "connected" : "missing",
+    peg: Array.isArray(pegs) ? "connected" : "missing",
     pendle: pendle?.connected ? "connected" : "missing",
     aave: aave?.connected ? "connected" : "missing",
     morpho: morpho?.connected ? "connected" : "missing"
   };
+  const independentProtocolCoverage = ["pendle", "aave", "morpho"].filter((key) => sources[key] === "connected").length;
+  const known = independentProtocolCoverage >= 2;
+  const tailState = !known ? "UNKNOWN"
+    : mechanismFamilies.size >= 2 ? "CRITICAL"
+    : mechanismFamilies.size >= 1 || stressFamilies.size >= 2 ? "WATCH"
+    : "NORMAL";
   return {
-    score: stressGroups.size * 10 + mechanismGroups.size * 25,
+    score: Math.min(100, stressFamilies.size * 10 + mechanismFamilies.size * 25),
     tail_state: tailState,
-    known: true,
+    known,
     evidence_ids: items.map((item) => item.id),
-    authoritative_mechanisms: mechanismGroups.size,
-    independent_stress: stressGroups.size,
+    authoritative_mechanisms: mechanismFamilies.size,
+    independent_stress: stressFamilies.size,
+    mechanism_families: [...mechanismFamilies],
+    stress_families: [...stressFamilies],
+    independent_protocol_coverage: independentProtocolCoverage,
     sources,
-    categories: [...stressGroups],
-    evidence: `权威机制 ${mechanismGroups.size} 组，独立压力 ${stressGroups.size} 组。`
+    categories: [...new Set(items.map((item) => item.group))],
+    evidence: `机制协议 ${mechanismFamilies.size} 类，压力来源 ${stressFamilies.size} 类，可读权威协议 ${independentProtocolCoverage}/3。`
   };
 }
 
@@ -723,7 +838,7 @@ export function composeSnapshot(scan, extras = {}) {
     perp: scan.perp ?? null,
     rwa: null,
     spotHeld: false
-  });
+  }).map((item) => ({ ...item, crash_scenarios: crashScenarios(item) }));
   const fingerprint = informationFingerprint({
     tailState,
     board,
@@ -732,11 +847,14 @@ export function composeSnapshot(scan, extras = {}) {
   const best = board[0]?.route?.best_instrument || "NONE";
   return {
     schema: "tail-convexity-v1",
+    strategy_version: "TAIL_CONVEXITY_V2_RESEARCH",
+    ranking_method: "PARETO_COHORT_WEIGHTED_V2",
     router: "INSTRUMENT_ROUTER_V1",
     generated_at_ms: scan.generated_at_ms ?? Date.now(),
     server_time_ms: scan.server_time_ms ?? null,
     state: finalState({
       dataOk: true,
+      evidenceUnknown: scan.fragility?.known === false,
       orderSent: false,
       tailState,
       edgeCount: scan.board?.edge_count ?? 0,
@@ -747,6 +865,8 @@ export function composeSnapshot(scan, extras = {}) {
     display_only: true,
     order_sent: false,
     add_allowed: false,
+    opportunity_state: scan.fragility?.known === false ? "BLOCKED_EVIDENCE" : (scan.board?.review_count > 0 ? "RELATIVE_DISCOUNT_REVIEW_ONLY" : "NO_RELATIVE_DISCOUNT"),
+    holdings: { state: "UNKNOWN", comparison_state: "BLOCKED_LEDGER", source: "PUBLIC_LEDGER_NOT_AUTHORITY" },
     new_information: extras.previousFingerprint ? extras.previousFingerprint !== fingerprint : false,
     fingerprint,
     budget,
@@ -757,6 +877,10 @@ export function composeSnapshot(scan, extras = {}) {
       evidence: scan.fragility?.evidence ?? "",
       categories: scan.fragility?.categories ?? [],
       sources: scan.fragility?.sources ?? {},
+      evidence_state: scan.fragility?.known === false ? "BLOCKED_EVIDENCE" : "VERIFIED_COVERAGE",
+      independent_protocol_coverage: scan.fragility?.independent_protocol_coverage ?? null,
+      mechanism_families: scan.fragility?.mechanism_families ?? [],
+      stress_families: scan.fragility?.stress_families ?? [],
       note: ""
     },
     replacement_report: replacementReport(extras.previousSymbols, board.map((item) => item.symbol)),
@@ -769,6 +893,7 @@ export function composeSnapshot(scan, extras = {}) {
       reasons: [],
       summary: ""
     },
+    research_counts: { relative_discount_review: scan.board?.review_count ?? 0, relative_iv_discounts: scan.board?.edge_count ?? 0 },
     watched: scan.watched ?? null,
     board,
     reject_counts: scan.reject_counts ?? {},
@@ -787,7 +912,11 @@ export function blockedSnapshot(message, ledger) {
     generated_at_ms: Date.now(),
     server_time_ms: null,
     state: "BLOCKED_DATA",
-    tail_state: "NORMAL",
+    tail_state: "UNKNOWN",
+    strategy_version: "TAIL_CONVEXITY_V2_RESEARCH",
+    ranking_method: "PARETO_COHORT_WEIGHTED_V2",
+    opportunity_state: "BLOCKED_DATA",
+    holdings: { state: "UNKNOWN", comparison_state: "BLOCKED_LEDGER", source: "PUBLIC_LEDGER_NOT_AUTHORITY" },
     budget: budgetView(ledger),
     spots: {},
     funnel: {},
@@ -819,7 +948,7 @@ export function blockedSnapshot(message, ledger) {
 }
 
 export function methodNote() {
-  return "先做帕累托淘汰，再按错价、灾难兑现比上全部成本、剩余期限、价差和深度、脆弱性、权利金消耗来排。不按单一暴跌倍数取第一。错价通过是指卖价隐含波动率比左右相邻的同到期 Put 插值至少低 1 个点。普通状态单笔最大损失不超过 5 USDT。临界档的 10、25、50 不自动加仓。";
+  return "先做硬门与帕累托淘汰，再以真实盘口深度和同期限 IV 相对折价区分研究候选与待审核候选；各维度用当期候选分位数合成可比较的研究分数。模拟暴跌收益仅为模型估计，不是可执行卖价。无独立协议证据和权威持仓时禁止升级为交易。";
 }
 
 export function stateCopy(state) {
