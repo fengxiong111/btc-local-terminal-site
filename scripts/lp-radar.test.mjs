@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {chooseMerkl,chooseMeteora} from "../lp-radar-lib.js";
+import {chooseMerkl,chooseMeteora,requirePositionNetEvidence,assessDailyPoolPriceChange} from "../lp-radar-lib.js";
 const now=Date.parse("2026-10-17T13:30:00Z");
 const goodCampaign={startTimestamp:now/1000-86400,endTimestamp:now/1000+7*86400,
  rewardToken:{verified:true,price:1,symbol:"UNI"},campaignStatus:{status:"SUCCESS"},
@@ -45,4 +45,34 @@ test("Meteora cannot promote unknown/unverified Meme despite enormous pool fees"
 test("No candidate is called a verified positive-net-return opportunity",()=>{
  assert.equal(chooseMerkl([market()],now).status,"WATCH_NET_UNVERIFIED");
  assert.ok(chooseMeteora([pool()],now).missing.includes("exit_quote"));
+});
+
+test("Merkl exposes fee-weight and out-of-range eligibility rather than claiming the shown APR is a position return",()=>{
+ const weighted={...goodCampaign,params:{...goodCampaign.params,weightFees:8000,
+  isOutOfRangeIncentivized:false}};
+ const c=chooseMerkl([market({campaigns:[weighted]})],now);
+ assert.equal(c.reward_policy.fee_weight_min,8000);
+ assert.equal(c.reward_policy.out_of_range_incentivized,false);
+ assert.equal(c.net_edge_state,"UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE");
+});
+test("No APR or pool fees can become verified net edge without independent fresh eligible exit quote",()=>{
+ const c=chooseMeteora([pool()],now);
+ assert.equal(requirePositionNetEvidence(c,null),null);
+ const e={source:"POSITION_LEVEL_INDEPENDENT_SIMULATION",expected_position_fee_usd:20,
+  claimable_rewards_usd:5,inventory_loss_usd:3,gas_usd:1,swap_slippage_usd:1,
+  rebalance_usd:1,out_of_range_usd:2,exit_cost_usd:1,
+  eligibility_verified:true,exit_route_verified:true,fresh_quote_age_ms:35000};
+ assert.equal(requirePositionNetEvidence(c,{...e,exit_route_verified:false}),null);
+ assert.equal(requirePositionNetEvidence(c,{...e,fresh_quote_age_ms:150000}),null);
+ assert.equal(requirePositionNetEvidence(c,{...e,inventory_loss_usd:100}),null);
+ assert.equal(requirePositionNetEvidence(c,e).simulated_net_usd,16);
+});
+test("Observed 1-day pair-price move is independent from fee pool gross ROI",()=>{
+ const bars=[
+   {timestamp:100000,close:50},
+   {timestamp:100000+86400,close:35}
+ ];
+ assert.equal(assessDailyPoolPriceChange(bars),-30);
+ assert.equal(assessDailyPoolPriceChange([{timestamp:1,close:50}]),null);
+ assert.equal(assessDailyPoolPriceChange([{timestamp:1,close:50},{timestamp:61,close:35}]),null);
 });
