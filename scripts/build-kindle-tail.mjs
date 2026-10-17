@@ -12,48 +12,50 @@ export function makeKindlePage(snapshot, metrics = null) {
   const change = metricsGood && Number.isFinite(metrics?.btc_change_24h_pct)
     ? `${metrics.btc_change_24h_pct >= 0 ? "+" : ""}${metrics.btc_change_24h_pct.toFixed(2)}%` : "未知";
   const stamp = Number.isFinite(snapshot?.generated_at_ms)
-    ? new Date(snapshot.generated_at_ms + 8 * 3600_000).toISOString().replace("T", " ").slice(0, 16)
-    : "未知";
+    ? new Date(snapshot.generated_at_ms + 8 * 3600_000).toISOString().slice(5, 16)
+      .replace("-", "月").replace("T", "日 ")
+    : "时间未知";
   const healthy = snapshot?.schema === "tail-convexity-v1" && Array.isArray(snapshot.board)
     && !["BLOCKED_DATA", "BLOCKED_EVIDENCE"].includes(snapshot.state)
     && snapshot?.radar?.evidence_state !== "BLOCKED_EVIDENCE";
   const rows = healthy ? snapshot.board.slice(0, 3) : [];
-  const main = rows.map((row, i) => `<section>
-<h2>${i + 1}. ${esc(row.symbol)}</h2>
-<p>剩余 ${esc(Number.isFinite(row.dte) ? Math.ceil(row.dte) : "?")} 天；
-最小成本 ${esc(Number.isFinite(row.all_in_max_loss) ? row.all_in_max_loss.toFixed(2) : "?")} U</p>
-<p>跌 50% 到期兑现估值：
-<strong>${esc(Number.isFinite(row.payoff_50) ? row.payoff_50.toFixed(1) : "?")}x</strong></p>
-<p>状态：${row.opportunity_tier === "RELATIVE_DISCOUNT_REVIEW" ? "相对折价待核验" : "研究观察"}</p>
-</section>`).join("\n");
-  const status = healthy ? (snapshot.tail_state || "UNKNOWN") : "BLOCKED_DATA";
+  const status = !healthy ? "数据不可用" : snapshot.tail_state === "CRITICAL" ? "CRITICAL"
+    : snapshot.tail_state === "WATCH" ? "WATCH" : snapshot.tail_state || "UNKNOWN";
+  const edge = healthy && snapshot.opportunity_state === "RELATIVE_DISCOUNT_REVIEW_ONLY"
+    ? "有待复核机会" : "无新错价";
+  const list = rows.map((row) => `<li>
+<strong>${esc(row.symbol)}</strong>
+<span>${esc(Number.isFinite(row.dte) ? Math.ceil(row.dte) : "?")}天
+ · ${esc(Number.isFinite(row.all_in_max_loss) ? row.all_in_max_loss.toFixed(2) : "?")} U
+ · 跌50% ${esc(Number.isFinite(row.payoff_50) ? row.payoff_50.toFixed(1) : "?")}×</span>
+</li>`).join("\n");
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>期权日报 · Kindle</title>
+<title>市场速览 · ${esc(stamp)}</title>
 <style>
 html{background:#fff;color:#000}
-body{font:18px/1.5 serif;max-width:640px;margin:0 auto;padding:15px}
-h1{font-size:25px;margin:0 0 10px}
-h2{font-size:21px;margin:0 0 5px}
-p{margin:6px 0}
-section{border-top:1px solid #555;margin:15px 0;padding-top:10px}
-small{display:block;font-size:15px;margin:10px 0}
-a{color:#000;text-decoration:underline}
+body{font:20px/1.5 serif;max-width:640px;margin:0 auto;padding:12px}
+h1{font-size:25px;line-height:1.25;margin:0 0 2px}
+h2{font-size:21px;margin:16px 0 7px}
+p{margin:5px 0}
+time{display:block;font-size:15px;margin:0 0 12px}
+.btc{font-size:24px;line-height:1.35;margin:3px 0}
+.metric{font-size:18px}
+.state{font-size:16px}
+ol{padding:0;margin:0;list-style:none}
+li{padding:11px 0;border-top:1px solid #888;page-break-inside:avoid}
+li strong,li span{display:block}
+li strong{font-size:19px}
+li span{font-size:17px;margin-top:3px}
 </style></head><body>
-<h1>市场与尾部 Put</h1>
-<section aria-label="BTC核心指标">
-<h2>BTC  ${price(metrics?.btc_price_usdt)} USDT  ${esc(change)}</h2>
-<p>EMA200：${price(metrics?.ema200)} USDT</p>
-<p>MA120：${price(metrics?.ma120)} USDT</p>
-<small>BTC 现货价格／24h涨跌／币安 UTC 日线 EMA200、MA120；指标失效显示未知，不复用旧值。</small>
-</section>
-<p>最新云端扫描：${esc(stamp)}（台北时间）</p>
-<p>系统状态：<strong>${esc(status)}</strong></p>
-${healthy ? (main || "<p>本轮没有合格期权。</p>") : "<p>数据异常或风险证据缺失，禁止依赖旧排名。</p>"}
-<small>只读研究，无交易信号。内在价值倍数假设到期时暴跌 50%，不代表实际卖价。</small>
-<small>这是静态页面。Kindle 睡眠时不会自动通知；重新打开或刷新才能看到更新。</small>
-<p><a href="https://fengxiong111.github.io/btc-local-terminal-site/">桌面/手机版行情</a></p>
+<h1>市场速览</h1>
+<time>${esc(stamp)} · 台北</time>
+<p class="btc">BTC <strong>${price(metrics?.btc_price_usdt)}</strong> <span>${esc(change)}</span></p>
+<p class="metric">EMA200 ${price(metrics?.ema200)}　MA120 ${price(metrics?.ma120)}</p>
+<h2>尾部 Put</h2>
+<p class="state">${esc(status)} · ${esc(edge)}</p>
+${healthy ? (list ? `<ol>${list}</ol>` : "<p>暂无候选</p>") : "<p>行情或证据暂不可用</p>"}
 </body></html>\n`;
 }
 
@@ -61,5 +63,5 @@ if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).
   const data = JSON.parse(await readFile("tail-convexity.json", "utf8"));
   const metrics = await readFile("btc-metrics.json", "utf8").then(JSON.parse).catch(() => null);
   await writeFile("kindle.html", makeKindlePage(data, metrics), "utf8");
-  console.log("Kindle static page refreshed");
+  console.log("Kindle compact page refreshed");
 }
