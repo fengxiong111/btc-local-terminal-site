@@ -19,9 +19,9 @@ let result={
 };
 try {
   const [price,change,candles]=await Promise.all([
-    getJson("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"),
-    getJson("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT"),
-    getJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365")
+    getJson("https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT"),
+    getJson("https://data-api.binance.vision/api/v3/ticker/24hr?symbol=BTCUSDT"),
+    getJson("https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365")
   ]);
   if (!Array.isArray(candles) || candles.length<200) throw new Error("INSUFFICIENT_CANDLES");
   const closes=candles.map(row=>asNum(row?.[4]));
