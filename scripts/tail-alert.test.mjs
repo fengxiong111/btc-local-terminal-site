@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assessNotifications, acknowledgeNotification, initialNotificationState } from "../tail-alert-lib.js";
-import { makeKindlePage } from "./build-kindle-tail.mjs";
+import { makeKindlePage, formatHalfSpotTarget } from "./build-kindle-tail.mjs";
+import { crashMultiple } from "../tail-convexity-lib.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const t0 = Date.parse("2026-10-17T10:00:00Z");
@@ -122,7 +123,7 @@ test("Kindle output is no-JavaScript grayscale HTML with escaped public data", (
   assert.match(html, /border-top:1px solid #888/);
   assert.match(html, /<time>10月17日 18:00<\/time>/);
   assert.doesNotMatch(html, /市场速览|尾部 Put|WATCH|无新错价|跌50%/);
-  assert.ok(html.includes("40.0×"), "retains numeric scenario multiple");
+  assert.ok(html.includes("40.00×"), "retains two-decimal scenario multiple");
   assert.ok(!html.includes("<a "), "no footer hyperlinks");
   assert.ok(!html.includes("https://"), "no external URLs");
   assert.doesNotMatch(html, /只读研究|交易信号|实际卖价|睡眠|自动通知|数据源说明/);
@@ -144,6 +145,27 @@ test("Kindle view contains the three requested BTC indicators with explicit fres
   const stale = makeKindlePage(mk(t0), { ...market, observed_at_ms: Date.now()-100*60000 });
   assert.match(stale, /EMA200 未知/);
   assert.match(stale, /MA120 未知/);
+});
+
+
+test("Kindle 50% spot target is derived from the same option snapshot, not live header", () => {
+  const spot = 81460;
+  const cost = 3.15;
+  const result = crashMultiple({strike:55000,spot,unit:1,qty:0.01,allIn:cost,drop:0.5});
+  assert.equal(result.usdt,142.7);
+  assert.ok(Math.abs(result.multiple - 45.301587301587304) < 1e-10);
+  assert.equal(result.multiple.toFixed(2), "45.30");
+  const row = { ...qualified("BTC-261225-55000-P"),spot,strike:55000,
+    min_qty:0.01,unit:1,all_in_max_loss:cost,payoff_50:result.multiple };
+  assert.equal(formatHalfSpotTarget(row),"40,730");
+  const html = makeKindlePage(mk(t0,{board:[row]}),{
+    schema:"btc-metrics-v1",status:"LIVE",observed_at_ms:Date.now(),
+    btc_price_usdt:82000,btc_change_24h_pct:0.2,ema200:76000,ma120:73000
+  });
+  assert.match(html,/45\\.30× · 40,730<\\/span>/);
+  assert.doesNotMatch(html,/跌50%|目标价|情景价/);
+  assert.equal(formatHalfSpotTarget({payoff_50:45.3}),null);
+  assert.equal(formatHalfSpotTarget({spot:81460,payoff_50:null}),null);
 });
 
 test("iPhone notification workflow is disabled and no timetable remains", () => {
