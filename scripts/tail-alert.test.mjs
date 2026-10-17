@@ -120,8 +120,9 @@ test("Kindle output is no-JavaScript grayscale HTML with escaped public data", (
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.match(html, /border-top:1px solid #888/);
-  assert.match(html, /<h1>市场速览<\/h1>/);
-  assert.match(html, /<h2>尾部 Put<\/h2>/);
+  assert.match(html, /<time>10月17日 18:00<\/time>/);
+  assert.doesNotMatch(html, /市场速览|尾部 Put|WATCH|无新错价|跌50%/);
+  assert.ok(html.includes("40.0×"), "retains numeric scenario multiple");
   assert.ok(!html.includes("<a "), "no footer hyperlinks");
   assert.ok(!html.includes("https://"), "no external URLs");
   assert.doesNotMatch(html, /只读研究|交易信号|实际卖价|睡眠|自动通知|数据源说明/);
