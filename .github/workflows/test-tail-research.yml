@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - "tail-convexity-lib.js"
+      - "tail-alert-lib.js"
+      - ".github/workflows/tail-notify.yml"
       - "tail-convexity-load.js"
       - "tail-board.js"
       - "scripts/**"
@@ -23,10 +25,13 @@ jobs:
         with:
           node-version: 22
       - name: Pure strategy and market board tests
-        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs
       - name: Parse all runtime modules
         run: |
           node --check tail-convexity-lib.js
+          node --check tail-alert-lib.js
+          node --check scripts/tail-notify.mjs
+          node --check scripts/build-kindle-tail.mjs
           node --check tail-convexity-load.js
           node --check tail-board.js
           node --check scripts/update-tail-convexity.mjs
