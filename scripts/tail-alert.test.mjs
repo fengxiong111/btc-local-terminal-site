@@ -122,7 +122,9 @@ test("Kindle output is no-JavaScript grayscale HTML with escaped public data", (
   assert.match(html, /border-top:1px solid #888/);
   assert.match(html, /<h1>市场速览<\/h1>/);
   assert.match(html, /<h2>尾部 Put<\/h2>/);
-  assert.doesNotMatch(html, /<a\\s|https?:\\/\\/|只读研究|交易信号|实际卖价|睡眠|自动通知|数据源说明/);
+  assert.ok(!html.includes("<a "), "no footer hyperlinks");
+  assert.ok(!html.includes("https://"), "no external URLs");
+  assert.doesNotMatch(html, /只读研究|交易信号|实际卖价|睡眠|自动通知|数据源说明/);
   assert.doesNotMatch(html, /风险提示|免责声明/);
   const unavailable = makeKindlePage(mk(t0, { state: "BLOCKED_EVIDENCE" }));
   assert.match(unavailable, /行情或证据暂不可用/);
@@ -134,7 +136,7 @@ test("Kindle view contains the three requested BTC indicators with explicit fres
     btc_price_usdt: 81602, btc_change_24h_pct: -1.22, ema200: 75849, ma120: 77500
   };
   const html = makeKindlePage(mk(t0, { board: [qualified()] }), market);
-  assert.match(html, /BTC\s+81,602 USDT/);
+  assert.match(html, /BTC <strong>81,602<\/strong>/);
   assert.match(html, /-1\.22%/);
   assert.match(html, /EMA200 75,849/);
   assert.match(html, /MA120 77,500/);
