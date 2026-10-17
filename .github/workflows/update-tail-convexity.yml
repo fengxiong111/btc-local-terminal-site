@@ -1,6 +1,14 @@
 name: Refresh tail convexity board
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "tail-convexity-lib.js"
+      - "tail-convexity-load.js"
+      - "scripts/update-tail-convexity.mjs"
+      - "scripts/tail-convexity.test.mjs"
+      - ".github/workflows/update-tail-convexity.yml"
   workflow_dispatch:
   schedule:
     - cron: "23,53 * * * *"
