@@ -32,6 +32,8 @@ export function chooseMeteora(pools,nowMs=Date.now()){
   const tvl=f(p.tvl,0),ageDays=(nowMs-f(p.created_at,nowMs))/86400000;
   const fees=p.fees||{},vol=p.volume||{};
   const hourly=[f(fees["30m"],0)*2,f(fees["1h"],0),f(fees["4h"],0)/4,f(fees["24h"],0)/24];
+  // Only recommend independently recognized token pairs; unverified Meme pools stay in raw research.
+  if(p.token_x?.is_verified!==true||p.token_y?.is_verified!==true)return [];
   if(p.is_blacklisted||!p.address||!p.token_x?.symbol||!p.token_y?.symbol||
     tvl<30000||ageDays<1||f(fees["24h"],0)<50||Math.min(...hourly)<=0||f(vol["24h"],0)<10000)return [];
   const rate=Math.min(...hourly),tokens=[p.token_x.symbol,p.token_y.symbol];
