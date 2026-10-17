@@ -124,7 +124,7 @@ export function compareSameHorizonLP({ incumbent = null, candidates = [], capita
     return reject("INVALID_CAPITAL_OR_HORIZON");
 
   function project(entry) {
-    if(!entry) return null;
+    if(!entry || typeof entry.id!=="string" || !entry.id.trim()) return null;
     const e=entry.evidence;
     if(!e || e.source!=="POSITION_LEVEL_INDEPENDENT_SIMULATION"
       || !Number.isFinite(e.observed_at_ms) || nowMs-e.observed_at_ms<0
