@@ -110,3 +110,63 @@ export function sameMerklOpportunityIdentity(listed,detail){
   && listed.chainId===detail.chainId && listed.type===detail.type
   && listed.status==="LIVE" && detail.status==="LIVE");
 }
+
+
+/**
+ * Comparative *shadow* economics for one capital amount / one future horizon.
+ * All values must be independent position-level estimates, not fee/TVL or headline APR.
+ * This models decisions only: it cannot turn scanner public leads into an order.
+ */
+export function compareSameHorizonLP({ incumbent = null, candidates = [], capitalUsd, horizonHours, nowMs = Date.now() } = {}) {
+  const reject = (reason) => ({status:"BLOCKED_EVIDENCE",reason,action:"NO_ACTION",
+    order_permission:"ABSENT",incumbent:null,leader:null,delta_usd:null});
+  if(!(capitalUsd>0) || !Number.isFinite(capitalUsd) || ![1,24,168].includes(horizonHours))
+    return reject("INVALID_CAPITAL_OR_HORIZON");
+
+  function project(entry) {
+    if(!entry) return null;
+    const e=entry.evidence;
+    if(!e || e.source!=="POSITION_LEVEL_INDEPENDENT_SIMULATION"
+      || !Number.isFinite(e.observed_at_ms) || nowMs-e.observed_at_ms<0
+      || nowMs-e.observed_at_ms>120000 || e.horizon_hours!==horizonHours
+      || e.capital_usd!==capitalUsd || e.exit_route_verified!==true
+      || e.eligibility_verified!==true || e.swap_back_to_stable_verified!==true
+      || !e.pool_or_position_id || e.pool_or_position_id!==entry.id) return null;
+
+    // Collect *different* fee channels separately, no double-counting.
+    const positive=["swap_fees_usd","flash_fees_usd","claimable_rewards_usd"];
+    const costs=["inventory_loss_usd","gas_usd","swap_slippage_usd",
+      "rebalance_usd","out_of_range_usd","exit_cost_usd"];
+    if([...positive,...costs,"migration_cost_usd"].some(k=>
+      !Number.isFinite(e[k]) || e[k]<0))return null;
+    const proceeds=positive.reduce((a,k)=>a+e[k],0);
+    const expenses=costs.reduce((a,k)=>a+e[k],0);
+    return {id:entry.id,net_usd:Math.round((proceeds-expenses)*100)/100,
+      incremental_migration_cost_usd:e.migration_cost_usd,
+      horizon_hours:horizonHours,capital_usd:capitalUsd};
+  }
+
+  const holding=incumbent?project(incumbent):null;
+  if(incumbent&&!holding)return reject("INCUMBENT_NOT_COMPARABLE");
+  const valid=(Array.isArray(candidates)?candidates:[]).map(project).filter(Boolean)
+    .sort((a,b)=>b.net_usd-a.net_usd || a.id.localeCompare(b.id));
+  const leader=valid[0]||null;
+  if(!leader){
+    return {status:"SHADOW_ONLY",action:holding?.net_usd>=0?"HOLD_REVIEW":
+      holding?"EXIT_REVIEW":"CASH",order_permission:"ABSENT",
+      incumbent:holding,leader:null,delta_usd:null,comparable:valid.length};
+  }
+  if(!holding){
+    return {status:"SHADOW_ONLY",action:leader.net_usd>0?"CANARY_REVIEW":"CASH",
+      order_permission:"ABSENT",incumbent:null,leader,
+      delta_usd:null,comparable:valid.length};
+  }
+  const delta=Math.round((leader.net_usd-holding.net_usd)*100)/100;
+  // User LP V3: incremental expected gain must exceed ALL migration costs twice.
+  const hurdle=2*leader.incremental_migration_cost_usd;
+  return {status:"SHADOW_ONLY",action:leader.net_usd>0&&delta>hurdle?
+    "SWITCH_REVIEW":holding.net_usd>=0?"HOLD_REVIEW":"EXIT_REVIEW",
+    order_permission:"ABSENT",incumbent:holding,leader,
+    delta_usd:delta,hurdle_usd:Math.round(hurdle*100)/100,
+    comparable:valid.length};
+}
