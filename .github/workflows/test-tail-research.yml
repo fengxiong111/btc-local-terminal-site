@@ -1,0 +1,32 @@
+name: Test tail research
+on:
+  pull_request:
+    paths:
+      - "tail-convexity-lib.js"
+      - "tail-convexity-load.js"
+      - "tail-board.js"
+      - "scripts/**"
+      - ".github/workflows/update-tail-convexity.yml"
+      - ".github/workflows/test-tail-research.yml"
+      - "index.html"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pure strategy and market board tests
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs
+      - name: Parse all runtime modules
+        run: |
+          node --check tail-convexity-lib.js
+          node --check tail-convexity-load.js
+          node --check tail-board.js
+          node --check scripts/update-tail-convexity.mjs
