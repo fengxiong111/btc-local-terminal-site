@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { chooseMerkl, chooseMeteora, assessDailyPoolPriceChange } from "../lp-radar-lib.js";
+import { chooseMerkl, chooseMeteora, assessDailyPoolPriceChange, sameMeteoraPoolIdentity, sameMerklOpportunityIdentity } from "../lp-radar-lib.js";
 
 const now=Date.now();
 const report={schema:"lp-radar-v1",policy_version:"POSITION_NET_GATE_V2",generated_at_ms:now,read_only:true,
@@ -36,8 +36,16 @@ try{
   }
  }
  const distinct=[...new Map(found.map(x=>[String(x.id),x])).values()];
- const leader=chooseMerkl(distinct,now);
- report.merkl={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,
+ let leader=chooseMerkl(distinct,now),identity_check="NOT_APPLICABLE";
+ if(leader){
+  const listed=distinct.find(x=>String(x.id)===leader.opportunity_id);
+  try{
+   const exact=(await merklGet("/v4/opportunities/"+encodeURIComponent(leader.opportunity_id)+"?campaigns=true")).data;
+   identity_check=sameMerklOpportunityIdentity(listed,exact)?"MATCHED":"MISMATCH";
+  }catch(e){identity_check="BLOCKED_RECHECK"; }
+  if(identity_check!=="MATCHED")leader=null;
+ }
+ report.merkl={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,identity_check,
    types:["UNISWAP_V3","UNISWAP_V4"],pages,used_backup:backup,
    best:null,research_leader:leader,
    reason:leader?"MISSING_POSITION_ELIGIBILITY_REALIZED_FEES_EXIT_AND_IL":"NO_LIVE_ELIGIBLE_POOL"};
@@ -58,7 +66,15 @@ try{
   found.push(...r.data);
  }
  const distinct=[...new Map(found.map(x=>[String(x.address),x])).values()];
- const leader=chooseMeteora(distinct,now);
+ let leader=chooseMeteora(distinct,now),identity_check="NOT_APPLICABLE";
+ if(leader){
+  const listed=distinct.find(x=>String(x.address)===leader.address);
+  try{
+   const exact=await get("https://dlmm.datapi.meteora.ag","/pools/"+encodeURIComponent(leader.address));
+   identity_check=sameMeteoraPoolIdentity(listed,exact)?"MATCHED":"MISMATCH";
+  }catch(e){identity_check="BLOCKED_RECHECK"; }
+  if(identity_check!=="MATCHED")leader=null;
+ }
  if(leader){
   try{
     const candles=await get("https://dlmm.datapi.meteora.ag",
@@ -73,7 +89,7 @@ try{
     leader.price_shock_vs_gross_pool_fees="PRICE_HISTORY_UNAVAILABLE";
   }
  }
- report.meteora={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,
+ report.meteora={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,identity_check,
    pages:paths.length,window_coverage:["30m","1h","4h","24h"],
    best:null,research_leader:leader,
    reason:leader?"MISSING_5M_TRADERS_ACTIVE_BIN_POSITION_FEES_EXIT_AND_IL":"NO_USABLE_POOL"};

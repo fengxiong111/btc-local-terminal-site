@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {chooseMerkl,chooseMeteora,requirePositionNetEvidence,assessDailyPoolPriceChange} from "../lp-radar-lib.js";
+import {chooseMerkl,chooseMeteora,requirePositionNetEvidence,assessDailyPoolPriceChange,sameMeteoraPoolIdentity,sameMerklOpportunityIdentity} from "../lp-radar-lib.js";
 const now=Date.parse("2026-10-17T13:30:00Z");
 const goodCampaign={startTimestamp:now/1000-86400,endTimestamp:now/1000+7*86400,
  rewardToken:{verified:true,price:1,symbol:"UNI"},campaignStatus:{status:"SUCCESS"},
@@ -75,4 +75,20 @@ test("Observed 1-day pair-price move is independent from fee pool gross ROI",()=
  assert.equal(assessDailyPoolPriceChange(bars),-30);
  assert.equal(assessDailyPoolPriceChange([{timestamp:1,close:50}]),null);
  assert.equal(assessDailyPoolPriceChange([{timestamp:1,close:50},{timestamp:61,close:35}]),null);
+});
+
+test("Meteora pools with identical display symbols must match address AND token mints",()=>{
+ const a=pool({address:"poolA",name:"DOPE-SOL",token_x:{address:"mintA",symbol:"DOPE",is_verified:true},
+   token_y:{address:"mintSOL",symbol:"SOL",is_verified:true}});
+ assert.equal(sameMeteoraPoolIdentity(a,{...a}),true);
+ assert.equal(sameMeteoraPoolIdentity(a,{...a,address:"poolB"}),false);
+ assert.equal(sameMeteoraPoolIdentity(a,{...a,token_x:{...a.token_x,address:"otherMint"}}),false);
+ assert.equal(sameMeteoraPoolIdentity(a,{...a,is_blacklisted:true}),false);
+});
+test("Merkl list and exact detail must match ID, chain, pool key and LIVE status",()=>{
+ const a=market({identifier:"0xpool",chainId:1});
+ assert.equal(sameMerklOpportunityIdentity(a,{...a}),true);
+ assert.equal(sameMerklOpportunityIdentity(a,{...a,identifier:"0xother"}),false);
+ assert.equal(sameMerklOpportunityIdentity(a,{...a,chainId:42161}),false);
+ assert.equal(sameMerklOpportunityIdentity(a,{...a,status:"PAST"}),false);
 });

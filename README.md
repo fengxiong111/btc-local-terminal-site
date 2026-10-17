@@ -90,3 +90,9 @@ node scripts/check-tail-health.mjs
 - Radar now widens sampling to independent top TVL, top 24h volume, top 1h fees and top 24h fees (Meteora documented `fee_1h` / `fee_24h` sort fields), and attaches daily OHLCV price movement when available. This is an expanded SAMPLE, not proof of global optimum.
 - Two-stage interface: `research_leader` retains one candidate for private research, with policy/failure metadata; `best=null` by default. A distinct independent full-position simulation must compare future realizable swap + flash fee revenue, actual claimable rewards, IL/inventory, gas, swap/slippage, rebalance/out-of-range, fees and exit quote on the same horizon, and only positive modeled net can graduate. No trading is enabled.
 - If those facts are missing, Kindle can omit a platform rather than invent a winner. Local historical average gross pool fees, TVL and reward APR should not be promoted to a realized position-level profitability claim.
+
+### LP 真实池身份复核（2026-10-17）
+
+- Meteora：同名资产对可存在多个 Bin Step / Fee Tier 的真实池。以 **池地址 + 两个 Token Mint 地址**作为身份，不用 `DOPE-SOL` 这类字符串合并或代替实际 Pool ID。排行样本的研究首位须二次 GET 官方 `/pools/{address}` 核对；异常或网络失效 => 不输出研究首位。
+- Merkl：只读列表的 Opportunity ID、Chain ID、Type、Pool Identifier 必须与 `/v4/opportunities/:id` 详情一致，且仍为 LIVE；详情不可读时不把旧名单冒充当前。
+- 数据可读和池身份匹配只说明 **行情事实已核对**，不代表区间、仓位收费份额、激励资格与退出成本已核实。任何缺失皆保留 `best:null`，只记录 `research_leader` 用于后续审计。Kindle 不把研究首位称为正净收益最优。
