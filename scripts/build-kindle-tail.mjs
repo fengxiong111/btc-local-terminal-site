@@ -3,7 +3,14 @@ import { readFile, writeFile } from "node:fs/promises";
 const esc = (text) => String(text ?? "").replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-export function makeKindlePage(snapshot) {
+export function makeKindlePage(snapshot, metrics = null) {
+  const metricsAge = Date.now() - (metrics?.observed_at_ms || 0);
+  const metricsGood = metrics?.schema === "btc-metrics-v1"
+    && metrics.status === "LIVE" && metricsAge >= -120000 && metricsAge < 90 * 60000;
+  const price = (v, digits = 0) => metricsGood && typeof v === "number" && Number.isFinite(v)
+    ? v.toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits }) : "未知";
+  const change = metricsGood && Number.isFinite(metrics?.btc_change_24h_pct)
+    ? `${metrics.btc_change_24h_pct >= 0 ? "+" : ""}${metrics.btc_change_24h_pct.toFixed(2)}%` : "未知";
   const stamp = Number.isFinite(snapshot?.generated_at_ms)
     ? new Date(snapshot.generated_at_ms + 8 * 3600_000).toISOString().replace("T", " ").slice(0, 16)
     : "未知";
@@ -34,7 +41,13 @@ section{border-top:1px solid #555;margin:15px 0;padding-top:10px}
 small{display:block;font-size:15px;margin:10px 0}
 a{color:#000;text-decoration:underline}
 </style></head><body>
-<h1>尾部 Put 研究简报</h1>
+<h1>市场与尾部 Put</h1>
+<section aria-label="BTC核心指标">
+<h2>BTC  ${price(metrics?.btc_price_usdt)} USDT  ${esc(change)}</h2>
+<p>EMA200：${price(metrics?.ema200)} USDT</p>
+<p>MA120：${price(metrics?.ma120)} USDT</p>
+<small>BTC 现货价格／24h涨跌／币安 UTC 日线 EMA200、MA120；指标失效显示未知，不复用旧值。</small>
+</section>
 <p>最新云端扫描：${esc(stamp)}（台北时间）</p>
 <p>系统状态：<strong>${esc(status)}</strong></p>
 ${healthy ? (main || "<p>本轮没有合格期权。</p>") : "<p>数据异常或风险证据缺失，禁止依赖旧排名。</p>"}
@@ -46,6 +59,7 @@ ${healthy ? (main || "<p>本轮没有合格期权。</p>") : "<p>数据异常或
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
   const data = JSON.parse(await readFile("tail-convexity.json", "utf8"));
-  await writeFile("kindle.html", makeKindlePage(data), "utf8");
+  const metrics = await readFile("btc-metrics.json", "utf8").then(JSON.parse).catch(() => null);
+  await writeFile("kindle.html", makeKindlePage(data, metrics), "utf8");
   console.log("Kindle static page refreshed");
 }
