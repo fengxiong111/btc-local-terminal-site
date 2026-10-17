@@ -1,8 +1,8 @@
 import { writeFile } from "node:fs/promises";
-import { chooseMerkl, chooseMeteora } from "../lp-radar-lib.js";
+import { chooseMerkl, chooseMeteora, assessDailyPoolPriceChange } from "../lp-radar-lib.js";
 
 const now=Date.now();
-const report={schema:"lp-radar-v1",generated_at_ms:now,read_only:true,
+const report={schema:"lp-radar-v1",policy_version:"POSITION_NET_GATE_V2",generated_at_ms:now,read_only:true,
   merkl:{state:"BLOCKED_DATA",best:null},meteora:{state:"BLOCKED_DATA",best:null},
   comparability:"NET_EDGE_UNKNOWN"};
 
@@ -36,14 +36,21 @@ try{
   }
  }
  const distinct=[...new Map(found.map(x=>[String(x.id),x])).values()];
- report.merkl={state:"PASS",sampled:distinct.length,types:["UNISWAP_V3","UNISWAP_V4"],
-   pages,used_backup:backup,best:chooseMerkl(distinct,now)};
- if(!report.merkl.best)report.merkl.state="NO_VERIFIED_CANDIDATE";
+ const leader=chooseMerkl(distinct,now);
+ report.merkl={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,
+   types:["UNISWAP_V3","UNISWAP_V4"],pages,used_backup:backup,
+   best:null,research_leader:leader,
+   reason:leader?"MISSING_POSITION_ELIGIBILITY_REALIZED_FEES_EXIT_AND_IL":"NO_LIVE_ELIGIBLE_POOL"};
+ // A public APR is never evidence of position-level net edge.
 }catch(e){report.merkl={state:"BLOCKED_DATA",best:null,error:String(e.message).slice(0,200)}}
 
 try{
+ // Explore materially different parts of the pool universe, not merely the
+ // default top-volume + top-TVL page. Official field is fee_24h (not fees_24h).
  const paths=["/pools?page=1&page_size=150",
-              "/pools?page=1&page_size=150&sort_by=tvl%3Adesc"];
+              "/pools?page=1&page_size=150&sort_by=tvl%3Adesc",
+              "/pools?page=1&page_size=150&sort_by=fee_1h%3Adesc",
+              "/pools?page=1&page_size=150&sort_by=fee_24h%3Adesc"];
  const found=[];
  for(const path of paths){
   const r=await get("https://dlmm.datapi.meteora.ag",path);
@@ -51,21 +58,39 @@ try{
   found.push(...r.data);
  }
  const distinct=[...new Map(found.map(x=>[String(x.address),x])).values()];
- report.meteora={state:"PASS",sampled:distinct.length,pages:paths.length,
-   window_coverage:["30m","1h","4h","24h"],best:chooseMeteora(distinct,now)};
- if(!report.meteora.best)report.meteora.state="NO_VERIFIED_CANDIDATE";
+ const leader=chooseMeteora(distinct,now);
+ if(leader){
+  try{
+    const candles=await get("https://dlmm.datapi.meteora.ag",
+      "/pools/"+encodeURIComponent(leader.address)+"/ohlcv");
+    const priceMove=assessDailyPoolPriceChange(candles);
+    leader.observed_1d_pool_price_change_pct=priceMove;
+    leader.price_shock_vs_gross_pool_fees=priceMove===null?"UNKNOWN":
+      Math.abs(priceMove)>leader.gross_fee_to_tvl_24h_pct?
+        "PRICE_MOVE_LARGER_THAN_POOL_LEVEL_GROSS_FEES":"NO_POOL_LEVEL_SHOCK_FLAG";
+  }catch(e){
+    leader.observed_1d_pool_price_change_pct=null;
+    leader.price_shock_vs_gross_pool_fees="PRICE_HISTORY_UNAVAILABLE";
+  }
+ }
+ report.meteora={state:"NO_VERIFIED_NET_EDGE",sampled:distinct.length,
+   pages:paths.length,window_coverage:["30m","1h","4h","24h"],
+   best:null,research_leader:leader,
+   reason:leader?"MISSING_5M_TRADERS_ACTIVE_BIN_POSITION_FEES_EXIT_AND_IL":"NO_USABLE_POOL"};
+ // We cannot infer active Bin fee share or inventory loss from pool-level gross
+ // fees and TVL. Do not call a research ranking "best".
 }catch(e){report.meteora={state:"BLOCKED_DATA",best:null,error:String(e.message).slice(0,200)}}
 
 await writeFile("lp-opportunities.json",JSON.stringify(report,null,2)+"\n","utf8");
 console.log("LP_RADAR "+JSON.stringify({
  merkl:{state:report.merkl.state,sampled:report.merkl.sampled,best:report.merkl.best?.name,
-   id:report.merkl.best?.opportunity_id,apr:report.merkl.best?.incentive_apr_pct,
-   tvl:report.merkl.best?.tvl_usd,reward:report.merkl.best?.reward_tokens,
-   end:report.merkl.best?.nearest_end_unix_sec,chain:report.merkl.best?.chain_id,error:report.merkl.error},
+   research_leader:report.merkl.research_leader?.name,
+   reward_policy:report.merkl.research_leader?.reward_policy,
+   reason:report.merkl.reason,error:report.merkl.error},
  meteora:{state:report.meteora.state,sampled:report.meteora.sampled,best:report.meteora.best?.name,
-   address:report.meteora.best?.address,fees24h:report.meteora.best?.fee_24h_usd,
-   fees30m:report.meteora.best?.fee_30m_usd,fees4h:report.meteora.best?.fee_4h_usd,
-   tvl:report.meteora.best?.tvl_usd,age:report.meteora.best?.pool_age_days,
-   tokens:report.meteora.best?.token_symbols,error:report.meteora.error}
+   research_leader:report.meteora.research_leader?.name,
+   price_change_1d:report.meteora.research_leader?.observed_1d_pool_price_change_pct,
+   price_shock:report.meteora.research_leader?.price_shock_vs_gross_pool_fees,
+   reason:report.meteora.reason,error:report.meteora.error}
 }));
 if(report.merkl.state==="BLOCKED_DATA"&&report.meteora.state==="BLOCKED_DATA")process.exitCode=1;
