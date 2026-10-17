@@ -1,9 +1,12 @@
 // Meteora DLMM official SDK: read-only active bins, optional public position,
 // and swapQuote. NO transaction builders, no signing, no RPC writes.
 import {readFile,writeFile,chmod} from "node:fs/promises";
-import DLMM from "@meteora-ag/dlmm";
-import {Connection,PublicKey} from "@solana/web3.js";
-import BN from "bn.js";
+import {createRequire} from "node:module";
+const require=createRequire(import.meta.url);
+const dlmmModule=require("@meteora-ag/dlmm");
+const DLMM=dlmmModule.default||dlmmModule;
+const {Connection,PublicKey}=require("@solana/web3.js");
+const BN=require("bn.js");
 import {summarizeMeteoraBins,assessMeteoraSwapQuote} from "../../lp-verification-lib.js";
 
 const USD_MINTS=new Set([
