@@ -1,0 +1,5 @@
+# Private read-only position / wallet evidence must never enter the public repo.
+lp-position-private.json
+lp-merkl-private.json
+scripts/sdk-probe/node_modules/
+scripts/sdk-probe/package-lock.json
