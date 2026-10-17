@@ -1,20 +1,61 @@
-name: Probe public Merkl and Meteora read endpoints
+name: Public LP opportunities radar
 on:
   pull_request:
     paths:
+      - "lp-radar-lib.js"
+      - "scripts/lp-radar.test.mjs"
+      - "scripts/scan-lp-opportunities.mjs"
       - "scripts/probe-lp-radar.mjs"
       - ".github/workflows/probe-lp-radar.yml"
+  push:
+    branches: [main]
+    paths:
+      - "lp-radar-lib.js"
+      - "scripts/lp-radar.test.mjs"
+      - "scripts/scan-lp-opportunities.mjs"
+      - ".github/workflows/probe-lp-radar.yml"
   workflow_dispatch:
+  schedule:
+    # 08:17, 12:17, 20:17 Asia/Taipei; GitHub schedule is best-effort.
+    - cron: "17 0,4,12 * * *"
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: public-lp-radar-main
+  cancel-in-progress: false
 jobs:
-  probe:
+  scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Probe public REST endpoints with HTTP/status/schema diagnostics
-        run: node scripts/probe-lp-radar.mjs
+      - name: Verify pure LP screening and code syntax
+        run: |
+          node --check lp-radar-lib.js
+          node --check scripts/scan-lp-opportunities.mjs
+          node --test scripts/lp-radar.test.mjs
+      - name: Refresh public Merkl and Meteora research snapshot
+        run: node scripts/scan-lp-opportunities.mjs
+      - name: Publish CI snapshot as a review artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lp-opportunities-shadow
+          path: lp-opportunities.json
+          retention-days: 7
+      - name: Persist public research snapshot on main
+        if: github.event_name != 'pull_request'
+        run: |
+          git add -- lp-opportunities.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh read-only LP opportunity shortlist"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
