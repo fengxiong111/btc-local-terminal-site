@@ -52,10 +52,18 @@ jobs:
       - name: Summarize research-only shadow results
         run: |
           node -e 'const s = require("./tail-convexity.json"); console.log(JSON.stringify({state:s.state,tail_state:s.tail_state,opportunity_state:s.opportunity_state,holdings:s.holdings,rank:s.board.map(x=>({symbol:x.symbol,tier:x.opportunity_tier,score:x.ranking_score,quality:x.quality.state,crash_scenarios:x.crash_scenarios.status})),funnel:s.funnel,evidence:s.radar.evidence,independent_protocol_coverage:s.radar.independent_protocol_coverage}))'
+      - name: Generate Kindle static page from shadow scan
+        run: node scripts/build-kindle-tail.mjs
+      - name: Verify generated no-JavaScript Kindle view
+        run: |
+          grep -q "尾部 Put 研究简报" kindle.html
+          if grep -q '<script' kindle.html; then exit 1; fi
       - name: Upload read-only shadow snapshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tail-research-v2-shadow
-          path: tail-convexity.json
+          path: |
+            tail-convexity.json
+            kindle.html
           retention-days: 7
