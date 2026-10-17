@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
-  "policy_version": "POSITION_NET_GATE_V2",
-  "generated_at_ms": 1792273942952,
+  "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
+  "generated_at_ms": 1792274937398,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -57,51 +57,90 @@
   },
   "meteora": {
     "state": "NO_VERIFIED_NET_EDGE",
-    "sampled": 286,
-    "identity_check": "MATCHED",
-    "pages": 4,
-    "window_coverage": [
-      "30m",
-      "1h",
-      "4h",
-      "24h"
-    ],
     "best": null,
-    "research_leader": {
+    "fee_leader": {
       "platform": "Meteora",
-      "name": "DOPE-SOL",
-      "address": "FpRcdzEgiHLpo4LPTWDkhq86fCuwoejFXnmoH9cSZZ6Q",
+      "name": "Gato-SOL",
+      "address": "L1Ap44oYq8C1ickyQktabsH9XE3hz2X6owAPSh6cTsc",
+      "token_mints": [
+        "55A3VxMBfzw6uSe64zms5iMPw9k6kx9WzzusbCU6pump",
+        "So11111111111111111111111111111111111111112"
+      ],
       "token_symbols": [
-        "DOPE",
+        "Gato",
         "SOL"
       ],
-      "tvl_usd": 390842.3313520035,
-      "fee_30m_usd": 340.1053499415975,
-      "fee_1h_usd": 903.6423309168208,
-      "fee_4h_usd": 1485.4064735430145,
-      "fee_24h_usd": 10317.981275616805,
-      "volume_24h_usd": 926937.7380740844,
-      "pool_age_days": 6.2,
-      "conservative_pool_fee_per_hour_usd": 371.35,
-      "gross_fee_to_tvl_24h_pct": 2.64,
-      "score": 0.0004105476,
+      "token_x_market_cap_usd": 1450759.3657390422,
+      "token_y_market_cap_usd": 60435061563.181366,
+      "min_token_market_cap_usd": 1450759.3657390422,
+      "tvl_usd": 272771.72649449843,
+      "fee_24h_usd": 26510.729396233164,
+      "fee_30m_usd": 11128.20643599061,
+      "fee_1h_usd": 16454.74132641667,
+      "fee_4h_usd": 26510.729396233164,
+      "volume_24h_usd": 857553.7575868096,
+      "pool_age_days": 0.2,
+      "pool_base_fee_pct": 2,
+      "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
+      "ranking_value_usd": 26510.729396233164,
       "status": "WATCH_NET_UNVERIFIED",
-      "pool_base_fee_pct": 1,
-      "token_metadata_verified_only": true,
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
-        "5m_trades",
-        "independent_trader_count",
         "active_bin_and_tick_depth",
         "position_fee_share",
         "realized_position_fees",
         "exit_quote",
         "IL_and_inventory_cost"
-      ],
-      "observed_1d_pool_price_change_pct": null,
-      "price_shock_vs_gross_pool_fees": "UNKNOWN"
+      ]
     },
-    "reason": "MISSING_5M_TRADERS_ACTIVE_BIN_POSITION_FEES_EXIT_AND_IL"
+    "research_leader": {
+      "platform": "Meteora",
+      "name": "Gato-SOL",
+      "address": "L1Ap44oYq8C1ickyQktabsH9XE3hz2X6owAPSh6cTsc",
+      "token_mints": [
+        "55A3VxMBfzw6uSe64zms5iMPw9k6kx9WzzusbCU6pump",
+        "So11111111111111111111111111111111111111112"
+      ],
+      "token_symbols": [
+        "Gato",
+        "SOL"
+      ],
+      "token_x_market_cap_usd": 1450759.3657390422,
+      "token_y_market_cap_usd": 60435061563.181366,
+      "min_token_market_cap_usd": 1450759.3657390422,
+      "tvl_usd": 272771.72649449843,
+      "fee_24h_usd": 26510.729396233164,
+      "fee_30m_usd": 11128.20643599061,
+      "fee_1h_usd": 16454.74132641667,
+      "fee_4h_usd": 26510.729396233164,
+      "volume_24h_usd": 857553.7575868096,
+      "pool_age_days": 0.2,
+      "pool_base_fee_pct": 2,
+      "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
+      "ranking_value_usd": 26510.729396233164,
+      "status": "WATCH_NET_UNVERIFIED",
+      "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
+      "missing": [
+        "active_bin_and_tick_depth",
+        "position_fee_share",
+        "realized_position_fees",
+        "exit_quote",
+        "IL_and_inventory_cost"
+      ]
+    },
+    "rank_by": "fee_24h_usd_desc",
+    "min_tvl_usd": 100000,
+    "min_token_market_cap_usd": 500000,
+    "token_market_cap_rule": "BOTH_TOKENS",
+    "sampled": 171,
+    "api_total_after_tvl_filter": 171,
+    "pages": 1,
+    "page_size": 200,
+    "max_pages": 12,
+    "coverage": "MAX_FEE_WITHIN_SORTED_LIVE_FILTERED_API",
+    "identity_check": "MATCHED",
+    "read_only": true,
+    "reason": "POSITION_NET_RETURN_NOT_VERIFIED"
   },
   "comparability": "NET_EDGE_UNKNOWN"
 }
