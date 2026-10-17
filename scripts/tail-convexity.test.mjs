@@ -339,7 +339,7 @@ test("model-only crash paths are bounded, horizon-aware and never executable quo
   const scenarios = crashScenarios(row);
   assert.equal(scenarios.status, "MODEL_ONLY");
   assert.equal(scenarios.model_only, true);
-  assert.equal(scenarios.scenarios.length, 9);
+  assert.equal(scenarios.scenarios.length, 6); // Days 7,30 < 56d expiration; day 60 skipped.
   assert.ok(scenarios.scenarios.every((r) => r.model_gross_multiple > 0 && Number.isFinite(r.model_exit_value)));
   assert.ok(scenarios.scenarios.every((r) => r.crash_after_days < row.dte));
   assert.equal(theoreticalPut({ spot: 50, strike: 100, volatility: 0.5, days: 0 }), 50);
@@ -366,15 +366,15 @@ test("public ledger cannot authorize replacement or treat empty positions as ver
   assert.equal(readPublicBudget({ annual_budget_usdt: 9999, reauthorized: true }).annual_budget_usdt, 300);
 });
 
-test("browser handles polling and rejection of expired snapshots without changing four-column layout", () => {
+test("browser handles polling and rejects expired snapshots without changing four-column layout", () => {
   const board = readFileSync(join(root, "tail-board.js"), "utf8");
   const workflow = readFileSync(join(root, ".github/workflows/update-tail-convexity.yml"), "utf8");
-  assert.match(board, /window\\.setInterval\\(refresh, REFRESH_MS\\)/);
-  assert.match(board, /cache: "no-store"/);
-  assert.match(board, /snapshot\\.state === "BLOCKED_DATA"/);
-  assert.match(board, /age > STALE_MS/);
-  assert.doesNotMatch(workflow, /continue-on-error: true/);
-  assert.match(workflow, /if: \\$\\{\\{ always\\(\\) && steps\\.scan\\.outcome != 'skipped' \\}\\}/);
+  assert.ok(board.includes('window.setInterval(refresh, REFRESH_MS)'));
+  assert.ok(board.includes('cache: "no-store"'));
+  assert.ok(board.includes('snapshot.state === "BLOCKED_DATA"'));
+  assert.ok(board.includes('age > STALE_MS'));
+  assert.ok(!workflow.includes("continue-on-error: true"));
+  assert.ok(workflow.includes("if: ${{ always() && steps.scan.outcome != 'skipped' }}"));
 });
 
 test("display formatters stay compact", () => {
