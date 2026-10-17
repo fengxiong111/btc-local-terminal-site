@@ -59,8 +59,13 @@ try{
 await writeFile("lp-opportunities.json",JSON.stringify(report,null,2)+"\n","utf8");
 console.log("LP_RADAR "+JSON.stringify({
  merkl:{state:report.merkl.state,sampled:report.merkl.sampled,best:report.merkl.best?.name,
-   id:report.merkl.best?.opportunity_id,apr:report.merkl.best?.incentive_apr_pct,error:report.merkl.error},
+   id:report.merkl.best?.opportunity_id,apr:report.merkl.best?.incentive_apr_pct,
+   tvl:report.merkl.best?.tvl_usd,reward:report.merkl.best?.reward_tokens,
+   end:report.merkl.best?.nearest_end_unix_sec,chain:report.merkl.best?.chain_id,error:report.merkl.error},
  meteora:{state:report.meteora.state,sampled:report.meteora.sampled,best:report.meteora.best?.name,
-   address:report.meteora.best?.address,fees24h:report.meteora.best?.fee_24h_usd,error:report.meteora.error}
+   address:report.meteora.best?.address,fees24h:report.meteora.best?.fee_24h_usd,
+   fees30m:report.meteora.best?.fee_30m_usd,fees4h:report.meteora.best?.fee_4h_usd,
+   tvl:report.meteora.best?.tvl_usd,age:report.meteora.best?.pool_age_days,
+   tokens:report.meteora.best?.token_symbols,error:report.meteora.error}
 }));
 if(report.merkl.state==="BLOCKED_DATA"&&report.meteora.state==="BLOCKED_DATA")process.exitCode=1;
