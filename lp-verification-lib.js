@@ -8,8 +8,7 @@ export function assessMerklCampaignRules(opportunity,nowMs=Date.now()){
  const active=campaigns.filter(c=>Number(c.startTimestamp)<=now
    && Number(c.endTimestamp)>now
    && c.isPrivate!==true&&c.hidden!==true
-   && c.campaignStatus?.status!=="FAILED"
-   && c.campaignStatus?.status!=="CANCELLED");
+   && c.campaignStatus?.status==="SUCCESS");
  if(!active.length)return {state:"NO_ACTIVE_PUBLIC_CAMPAIGN",eligible_position:false,
    claimable_verified:false,active_campaigns:0};
  const ruleChecks=active.map(c=>{
