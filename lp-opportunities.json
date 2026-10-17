@@ -1,9 +1,10 @@
 {
   "schema": "lp-radar-v1",
-  "generated_at_ms": 1792244086902,
+  "policy_version": "POSITION_NET_GATE_V2",
+  "generated_at_ms": 1792245323540,
   "read_only": true,
   "merkl": {
-    "state": "PASS",
+    "state": "NO_VERIFIED_NET_EDGE",
     "sampled": 43,
     "types": [
       "UNISWAP_V3",
@@ -14,15 +15,16 @@
       "UNISWAP_V4": 1
     },
     "used_backup": false,
-    "best": {
+    "best": null,
+    "research_leader": {
       "platform": "Merkl",
       "name": "Provide liquidity to UniswapV4 ETH-USDC Dynamic fee",
       "opportunity_id": "14902452956286592010",
       "chain_id": 1,
       "pool_identifier": "0x98316e8405502774a5d0a0761276b5d26505a8195c1905169864008d5e7a3eea",
       "type": "UNISWAP_V4",
-      "tvl_usd": 1398514.9802225353,
-      "incentive_apr_pct": 37.173810285341034,
+      "tvl_usd": 1399295.8018213157,
+      "incentive_apr_pct": 37.15306691289471,
       "valid_campaign_count": 1,
       "reward_tokens": [
         "USDC"
@@ -32,7 +34,14 @@
         "ETH",
         "USDC"
       ],
-      "score": 42.749882,
+      "score": 42.726027,
+      "reward_policy": {
+        "out_of_range_incentivized": false,
+        "fee_weight_min": 8000,
+        "fee_weight_max": 8000,
+        "position_claimability": "UNKNOWN_NO_POSITION_OR_CAMPAIGN_PROOF"
+      },
+      "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "status": "WATCH_NET_UNVERIFIED",
       "missing": [
         "underlying_pool_realized_fee_velocity",
@@ -42,37 +51,42 @@
         "IL_and_inventory_cost",
         "net_reward_after_dilution"
       ]
-    }
+    },
+    "reason": "MISSING_POSITION_ELIGIBILITY_REALIZED_FEES_EXIT_AND_IL"
   },
   "meteora": {
-    "state": "PASS",
-    "sampled": 223,
-    "pages": 2,
+    "state": "NO_VERIFIED_NET_EDGE",
+    "sampled": 299,
+    "pages": 4,
     "window_coverage": [
       "30m",
       "1h",
       "4h",
       "24h"
     ],
-    "best": {
+    "best": null,
+    "research_leader": {
       "platform": "Meteora",
       "name": "DOPE-SOL",
-      "address": "J2XBZkpC7ygBQiPw2MWWCqiVJn9i44b8GwtTRoFV1ijj",
+      "address": "FpRcdzEgiHLpo4LPTWDkhq86fCuwoejFXnmoH9cSZZ6Q",
       "token_symbols": [
         "DOPE",
         "SOL"
       ],
-      "tvl_usd": 128519.91053164795,
-      "fee_30m_usd": 99.23798423407456,
-      "fee_1h_usd": 172.70532448495544,
-      "fee_4h_usd": 548.1050943939085,
-      "fee_24h_usd": 4392.016626158522,
-      "volume_24h_usd": 156278.113821519,
-      "pool_age_days": 6,
-      "conservative_pool_fee_per_hour_usd": 137.03,
-      "gross_fee_to_tvl_24h_pct": 3.42,
-      "score": 0.000363894,
+      "tvl_usd": 356693.9472465878,
+      "fee_30m_usd": 71.27657698469143,
+      "fee_1h_usd": 187.38621904372775,
+      "fee_4h_usd": 824.7975527171511,
+      "fee_24h_usd": 11894.309789046403,
+      "volume_24h_usd": 1100034.6619559214,
+      "pool_age_days": 5.8,
+      "conservative_pool_fee_per_hour_usd": 142.55,
+      "gross_fee_to_tvl_24h_pct": 3.33,
+      "score": 0.0001679897,
       "status": "WATCH_NET_UNVERIFIED",
+      "pool_base_fee_pct": 1,
+      "token_metadata_verified_only": true,
+      "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
         "5m_trades",
         "independent_trader_count",
@@ -81,8 +95,11 @@
         "realized_position_fees",
         "exit_quote",
         "IL_and_inventory_cost"
-      ]
-    }
+      ],
+      "observed_1d_pool_price_change_pct": null,
+      "price_shock_vs_gross_pool_fees": "UNKNOWN"
+    },
+    "reason": "MISSING_5M_TRADERS_ACTIVE_BIN_POSITION_FEES_EXIT_AND_IL"
   },
   "comparability": "NET_EDGE_UNKNOWN"
 }
