@@ -1,6 +1,6 @@
 {
   "schema": "lp-radar-v1",
-  "generated_at_ms": 1792243837723,
+  "generated_at_ms": 1792244086902,
   "read_only": true,
   "merkl": {
     "state": "PASS",
@@ -62,16 +62,16 @@
         "DOPE",
         "SOL"
       ],
-      "tvl_usd": 128894.89721601816,
-      "fee_30m_usd": 78.95097490110092,
-      "fee_1h_usd": 152.4183151519818,
-      "fee_4h_usd": 527.8180850609349,
-      "fee_24h_usd": 4371.729616825549,
-      "volume_24h_usd": 155557.86825998474,
+      "tvl_usd": 128519.91053164795,
+      "fee_30m_usd": 99.23798423407456,
+      "fee_1h_usd": 172.70532448495544,
+      "fee_4h_usd": 548.1050943939085,
+      "fee_24h_usd": 4392.016626158522,
+      "volume_24h_usd": 156278.113821519,
       "pool_age_days": 6,
-      "conservative_pool_fee_per_hour_usd": 131.95,
-      "gross_fee_to_tvl_24h_pct": 3.39,
-      "score": 0.0003498309,
+      "conservative_pool_fee_per_hour_usd": 137.03,
+      "gross_fee_to_tvl_24h_pct": 3.42,
+      "score": 0.000363894,
       "status": "WATCH_NET_UNVERIFIED",
       "missing": [
         "5m_trades",
