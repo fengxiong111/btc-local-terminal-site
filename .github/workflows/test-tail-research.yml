@@ -30,3 +30,22 @@ jobs:
           node --check tail-convexity-load.js
           node --check tail-board.js
           node --check scripts/update-tail-convexity.mjs
+
+  # Real public-data end-to-end scan on a PR branch. Never pushes to main/Pages.
+  shadow-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Simulate the complete public Binance/DeFi scan (no orders)
+        run: node scripts/update-tail-convexity.mjs
+      - name: Upload read-only shadow snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tail-research-v2-shadow
+          path: tail-convexity.json
+          retention-days: 7
