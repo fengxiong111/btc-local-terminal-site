@@ -41,12 +41,16 @@ jobs:
         id: scan
         run: node scripts/update-tail-convexity.mjs
 
+      - name: Build minimal Kindle-only static snapshot
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        run: node scripts/build-kindle-tail.mjs
+
       # A failed scan writes BLOCKED_DATA and exits nonzero. Publish this state,
       # but keep the GitHub Actions job failed rather than reporting false success.
       - name: Publish verified snapshot or blocked receipt
         if: ${{ always() && steps.scan.outcome != 'skipped' }}
         run: |
-          git add -- tail-convexity.json
+          git add -- tail-convexity.json kindle.html
           if git diff --cached --quiet; then
             echo "tail board unchanged"
             exit 0
