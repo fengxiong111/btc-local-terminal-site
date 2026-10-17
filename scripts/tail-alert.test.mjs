@@ -119,11 +119,13 @@ test("Kindle output is no-JavaScript grayscale HTML with escaped public data", (
   assert.match(html, /charset="utf-8"/);
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
-  assert.match(html, /border-top:1px solid #555/);
-  assert.match(html, /静态页面/);
-  assert.match(html, /期权日报/);
+  assert.match(html, /border-top:1px solid #888/);
+  assert.match(html, /<h1>市场速览<\/h1>/);
+  assert.match(html, /<h2>尾部 Put<\/h2>/);
+  assert.doesNotMatch(html, /<a\\s|https?:\\/\\/|只读研究|交易信号|实际卖价|睡眠|自动通知|数据源说明/);
+  assert.doesNotMatch(html, /风险提示|免责声明/);
   const unavailable = makeKindlePage(mk(t0, { state: "BLOCKED_EVIDENCE" }));
-  assert.match(unavailable, /数据异常/);
+  assert.match(unavailable, /行情或证据暂不可用/);
 });
 
 test("Kindle view contains the three requested BTC indicators with explicit freshness guard", () => {
@@ -134,11 +136,11 @@ test("Kindle view contains the three requested BTC indicators with explicit fres
   const html = makeKindlePage(mk(t0, { board: [qualified()] }), market);
   assert.match(html, /BTC\s+81,602 USDT/);
   assert.match(html, /-1\.22%/);
-  assert.match(html, /EMA200：75,849 USDT/);
-  assert.match(html, /MA120：77,500 USDT/);
+  assert.match(html, /EMA200 75,849/);
+  assert.match(html, /MA120 77,500/);
   const stale = makeKindlePage(mk(t0), { ...market, observed_at_ms: Date.now()-100*60000 });
-  assert.match(stale, /EMA200：未知/);
-  assert.match(stale, /MA120：未知/);
+  assert.match(stale, /EMA200 未知/);
+  assert.match(stale, /MA120 未知/);
 });
 
 test("iPhone notification workflow is disabled and no timetable remains", () => {
