@@ -38,7 +38,15 @@ if(!poolId){
   const xMint=asAddr(client.tokenX?.mint?.address||client.tokenX?.publicKey);
   const yMint=asAddr(client.tokenY?.mint?.address||client.tokenY?.publicKey);
   if(!xMint||!yMint)throw Error("SDK_TOKEN_MINT_MISSING");
+  // Independent API-vs-onchain mint check: symbols like DOPE-SOL are not IDs.
+  const metaResponse=await fetch("https://dlmm.datapi.meteora.ag/pools/"+address,{
+    headers:{Accept:"application/json"},signal:AbortSignal.timeout(12000)});
+  if(!metaResponse.ok)throw Error("POOL_DETAIL_HTTP_"+metaResponse.status);
+  const meta=await metaResponse.json();
+  if(meta?.address!==address||meta.token_x?.address!==xMint||
+     meta.token_y?.address!==yMint)throw Error("ONCHAIN_MINT_IDENTITY_MISMATCH");
   report.pool=address;report.token_mints=[xMint,yMint];
+  report.onchain_mints_match_official_api=true;
   const posAddress=process.env.LP_METEORA_POSITION_ADDRESS?.trim();
   let pos=null;
   if(posAddress){
@@ -83,8 +91,13 @@ if(!poolId){
     report.exit_state=pos&&oneHopStable&&assessed.state==="SINGLE_HOP_STABLE_SWAP_QUOTED"
        ? "SINGLE_HOP_SWAP_QUOTED_WITHOUT_WITHDRAW_SIMULATION"
        : pos?"BLOCKED_FULL_STABLE_EXIT":"BLOCKED_NO_POSITION";
-    if(pos&&oneHopStable&&assessed.state==="SINGLE_HOP_STABLE_SWAP_QUOTED")
-      report.exit_stable_min_raw=assessed.min_output_raw;
+    if(pos&&oneHopStable&&assessed.state==="SINGLE_HOP_STABLE_SWAP_QUOTED"){
+      const retained=raw(stableY?pos.positionData.totalYAmount:pos.positionData.totalXAmount);
+      if(retained!==null&&assessed.min_output_raw!==undefined){
+        report.hypothetical_post_withdraw_stable_min_raw=
+          (BigInt(retained)+BigInt(assessed.min_output_raw)).toString();
+      }
+    }
    }catch(err){
     report.reference_quote_state="BLOCKED_SDK_QUOTE";
     report.reference_quote_error=String(err?.message||err).slice(0,130);
@@ -104,7 +117,7 @@ if(!poolId){
     schema:"private-position-evidence-v1",generated_at_ms:Date.now(),
     position_address:posAddress,pool:address,public_sdk_state:report.state,
     position_data:positionSummary,exit_state:report.exit_state,
-    estimated_single_hop_min_output_raw:report.exit_stable_min_raw??null,
+    hypothetical_post_withdraw_stable_min_raw:report.hypothetical_post_withdraw_stable_min_raw??null,
     full_lp_withdrawal_verified:false
    },null,2)+"\n",{mode:0o600});
    await chmod(privateFile,0o600);
