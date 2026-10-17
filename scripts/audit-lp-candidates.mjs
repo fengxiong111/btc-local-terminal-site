@@ -20,6 +20,11 @@ for(const [name,url] of Object.entries(urls)) {
  if(name==="oldMeteora")console.log("AUDIT",JSON.stringify({name,http:r.http,error:r.error,keys:o?Object.keys(o):[],pool:o&&{address:o.address,name:o.name,tvl:o.tvl,created_at:o.created_at,fees:o.fees,volume:o.volume,apr:o.apr,token_x:o.token_x,token_y:o.token_y,config:o.pool_config,blacklisted:o.is_blacklisted}}));
  else if(name==="merklV4") {
   const old=Array.isArray(rows)?rows.find(x=>String(x.id)==="14902452956286592010"):null;
-  console.log("AUDIT",JSON.stringify({name,http:r.http,error:r.error,n:Array.isArray(rows)?rows.length:null,found:!!old,old:old&&{id:old.id,name:old.name,type:old.type,tvl:old.tvl,apr:old.apr,totalApr:old.totalApr,nativeApr:old.nativeApr,liveCampaigns:old.liveCampaigns,identifier:old.identifier,description:old.description?.slice(0,600),campaigns:old.campaigns?.map(c=>({apr:c.apr,start:c.startTimestamp,end:c.endTimestamp,status:c.campaignStatus?.status,rewardToken:c.rewardToken?.symbol,distributionType:c.distributionType,paramsKeys:Object.keys(c.params||{}),paramsSummary:{fee:c.params?.fee,hook:c.params?.hooks,poolId:c.params?.poolId,whitelist:c.params?.whitelist}}))}}));
+  console.log("AUDIT",JSON.stringify({name,http:r.http,error:r.error,n:Array.isArray(rows)?rows.length:null,found:!!old,old:old&&{id:old.id,name:old.name,type:old.type,tvl:old.tvl,apr:old.apr,totalApr:old.totalApr,nativeApr:old.nativeApr,liveCampaigns:old.liveCampaigns,identifier:old.identifier,description:old.description?.slice(0,600),campaigns:old.campaigns?.map(c=>({apr:c.apr,start:c.startTimestamp,end:c.endTimestamp,status:c.campaignStatus?.status,rewardToken:c.rewardToken?.symbol,distributionType:c.distributionType,paramsKeys:Object.keys(c.params||{}),paramsSummary:{fee:c.params?.fee,lpFee:c.params?.lpFee,hook:c.params?.hooks,
+  poolId:c.params?.poolId,whitelist:c.params?.whitelist,
+  weightFees:c.params?.weightFees,weightToken0:c.params?.weightToken0,weightToken1:c.params?.weightToken1,
+  isOutOfRangeIncentivized:c.params?.isOutOfRangeIncentivized,
+  computeScoreParameters:c.params?.computeScoreParameters,
+  distributionMethodParameters:c.params?.distributionMethodParameters}}}))}}));
  } else console.log("AUDIT",JSON.stringify({name,http:r.http,error:r.error,total:o?.total,rows:Array.isArray(rows)?rows.slice(0,8).map(p=>({address:p.address,name:p.name,tvl:p.tvl,fees24:p.fees?.["24h"],fees1h:p.fees?.["1h"],fees5m:p.fees?.["5m"],volume24:p.volume?.["24h"],ageMs:Date.now()-p.created_at,verified:[p.token_x?.is_verified,p.token_y?.is_verified]})):null}));
 }
