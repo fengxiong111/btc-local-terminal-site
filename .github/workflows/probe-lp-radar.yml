@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - "lp-radar-lib.js"
+      - "lp-verification-lib.js"
+      - "scripts/lp-verification.test.mjs"
+      - "scripts/verify-merkl-rewards.mjs"
+      - "scripts/sdk-probe/**"
       - "scripts/lp-radar.test.mjs"
       - "scripts/scan-lp-opportunities.mjs"
       - "scripts/probe-lp-radar.mjs"
@@ -11,6 +15,10 @@ on:
     branches: [main]
     paths:
       - "lp-radar-lib.js"
+      - "lp-verification-lib.js"
+      - "scripts/lp-verification.test.mjs"
+      - "scripts/verify-merkl-rewards.mjs"
+      - "scripts/sdk-probe/**"
       - "scripts/lp-radar.test.mjs"
       - "scripts/scan-lp-opportunities.mjs"
       - ".github/workflows/probe-lp-radar.yml"
@@ -26,7 +34,7 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,21 +45,41 @@ jobs:
       - name: Verify pure LP screening and code syntax
         run: |
           node --check lp-radar-lib.js
+          node --check lp-verification-lib.js
           node --check scripts/scan-lp-opportunities.mjs
-          node --test scripts/lp-radar.test.mjs
+          node --check scripts/verify-merkl-rewards.mjs
+          node --check scripts/sdk-probe/meteora-read.mjs
+          node --test scripts/lp-radar.test.mjs scripts/lp-verification.test.mjs
       - name: Refresh public Merkl and Meteora research snapshot
         run: node scripts/scan-lp-opportunities.mjs
+      - name: Read Merkl active campaign rules
+        run: node scripts/verify-merkl-rewards.mjs
+        env:
+          MERKL_PUBLIC_WALLET_ADDRESS: ${{ secrets.LP_MERKL_PUBLIC_WALLET_ADDRESS }}
+      - name: Install pinned Meteora SDK without lifecycle scripts
+        run: npm --prefix scripts/sdk-probe install --ignore-scripts --no-audit --no-fund
+      - name: Read active bins and SDK quote without signing
+        run: node scripts/sdk-probe/meteora-read.mjs
+        env:
+          SOLANA_RPC_URL: ${{ secrets.LP_SOLANA_RPC_URL }}
+          LP_METEORA_POSITION_ADDRESS: ${{ secrets.LP_METEORA_POSITION_ADDRESS }}
+      - name: Guard against unverified recommendations and private evidence
+        run: |
+          node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("lp-opportunities.json"));const m=JSON.parse(fs.readFileSync("lp-merkl-eligibility.json"));const s=JSON.parse(fs.readFileSync("lp-meteora-sdk.json"));if(x.merkl.best!==null||x.meteora.best!==null||m.best!==null||s.best!==null)throw Error("False verified LP");if(m.position_eligibility_verified||m.claimable_from_this_campaign_verified||s.full_lp_withdrawal_verified)throw Error("False proof");'
       - name: Publish CI snapshot as a review artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: lp-opportunities-shadow
-          path: lp-opportunities.json
+          path: |
+            lp-opportunities.json
+            lp-merkl-eligibility.json
+            lp-meteora-sdk.json
           retention-days: 7
       - name: Persist public research snapshot on main
         if: github.event_name != 'pull_request'
         run: |
-          git add -- lp-opportunities.json
+          git add -- lp-opportunities.json lp-merkl-eligibility.json lp-meteora-sdk.json
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
