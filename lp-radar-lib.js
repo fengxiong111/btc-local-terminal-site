@@ -94,3 +94,19 @@ export function assessDailyPoolPriceChange(bars){
  if(last[1].timestamp-last[0].timestamp<20*3600||last[1].timestamp-last[0].timestamp>28*3600)return null;
  return Math.round((last[1].close/last[0].close-1)*10000)/100;
 }
+
+
+/** Provider identity is the pool/opportunity ID plus immutable underlying asset IDs.
+ *  Symbols such as DOPE-SOL are not unique among real Meteora pools. */
+export function sameMeteoraPoolIdentity(listed,detail){
+ return !!(listed && detail && listed.address && listed.address===detail.address
+  && listed.token_x?.address && listed.token_x.address===detail.token_x?.address
+  && listed.token_y?.address && listed.token_y.address===detail.token_y?.address
+  && listed.is_blacklisted!==true && detail.is_blacklisted!==true);
+}
+export function sameMerklOpportunityIdentity(listed,detail){
+ return !!(listed && detail && String(listed.id)===String(detail.id)
+  && listed.identifier && listed.identifier===detail.identifier
+  && listed.chainId===detail.chainId && listed.type===detail.type
+  && listed.status==="LIVE" && detail.status==="LIVE");
+}
