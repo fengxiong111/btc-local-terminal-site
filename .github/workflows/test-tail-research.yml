@@ -4,6 +4,7 @@ on:
     paths:
       - "tail-convexity-lib.js"
       - "tail-alert-lib.js"
+      - "scripts/update-btc-metrics.mjs"
       - ".github/workflows/tail-notify.yml"
       - "tail-convexity-load.js"
       - "tail-board.js"
@@ -32,6 +33,7 @@ jobs:
           node --check tail-alert-lib.js
           node --check scripts/tail-notify.mjs
           node --check scripts/build-kindle-tail.mjs
+          node --check scripts/update-btc-metrics.mjs
           node --check tail-convexity-load.js
           node --check tail-board.js
           node --check scripts/update-tail-convexity.mjs
@@ -52,6 +54,8 @@ jobs:
       - name: Summarize research-only shadow results
         run: |
           node -e 'const s = require("./tail-convexity.json"); console.log(JSON.stringify({state:s.state,tail_state:s.tail_state,opportunity_state:s.opportunity_state,holdings:s.holdings,rank:s.board.map(x=>({symbol:x.symbol,tier:x.opportunity_tier,score:x.ranking_score,quality:x.quality.state,crash_scenarios:x.crash_scenarios.status})),funnel:s.funnel,evidence:s.radar.evidence,independent_protocol_coverage:s.radar.independent_protocol_coverage}))'
+      - name: Refresh BTC daily metrics from public spot API
+        run: node scripts/update-btc-metrics.mjs
       - name: Generate Kindle static page from shadow scan
         run: node scripts/build-kindle-tail.mjs
       - name: Verify generated no-JavaScript Kindle view
@@ -66,4 +70,5 @@ jobs:
           path: |
             tail-convexity.json
             kindle.html
+            btc-metrics.json
           retention-days: 7
