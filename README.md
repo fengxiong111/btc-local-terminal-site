@@ -4,7 +4,8 @@
 
 - BTC：Binance 现货 WebSocket 优先，OKX WebSocket / Hyperliquid REST 回退；日线 EMA200 / MA120
 - HYPE / UNI：Hyperliquid WebSocket 优先，REST 回退
-- SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` WebSocket 优先；单个标的缺失时回退 Binance USDⓈ-M 行情
+- SPCX / MU / SNDK / NVDA / IREN：Hyperliquid HIP-3 `xyz` WebSocket 优先；单个标的缺失时回退 Binance USDⓈ-M 行情（IREN 备用合约 `IRENUSDT`）
+- 股票板块展示的是跟踪美股的永续合约报价，不是纳斯达克 / 纽交所股票现货成交价；合约可在美股休市时继续波动
 - Uniswap 快照：仓库保留真实 ExploreStats 数据，静态首页不展示榜单
 - WebSocket 优先、REST 回退、浏览器缓存和失败回退均在 `index.html` 内完成
 - Binance 日线 EMA200 / MA120
