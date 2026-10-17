@@ -4,13 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "watch (event triggers) or digest (20:00 Taipei only)"
+        description: "watch, digest (20:00 Taipei only), or test (one message)"
         required: true
         default: watch
         type: choice
         options:
           - watch
           - digest
+          - test
   schedule:
     # Scan is planned for :23/:53 UTC. Notification checks shortly afterwards.
     - cron: "29,59 * * * *"
@@ -47,7 +48,9 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           MODE="watch"
-          if [ "$NOTIFY_MODE" = "digest" ] || [ "$SCHEDULE_SPEC" = "0 12 * * *" ]; then
+          if [ "$NOTIFY_MODE" = "test" ]; then
+            MODE="test"
+          elif [ "$NOTIFY_MODE" = "digest" ] || [ "$SCHEDULE_SPEC" = "0 12 * * *" ]; then
             MODE="digest"
           fi
           node scripts/tail-notify.mjs "$MODE"
