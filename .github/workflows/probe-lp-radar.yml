@@ -45,6 +45,9 @@ jobs:
         run: node scripts/audit-lp-candidates.mjs
       - name: Refresh public Merkl and Meteora research snapshot
         run: node scripts/scan-lp-opportunities.mjs
+      - name: Verify no unproven LP winner reaches Kindle
+        run: |
+          node -e 'const x=require("./lp-opportunities.json"); if(x.merkl.best!==null||x.meteora.best!==null) throw Error("Unproven LP promoted"); if(x.merkl.api_state==="PASS"&&x.merkl.research_lead&&x.merkl.identity_check!=="MATCHED") throw Error("Merkl identity mismatch"); if(x.meteora.api_state==="PASS"&&x.meteora.research_lead&&x.meteora.identity_check!=="MATCHED") throw Error("Meteora identity mismatch")'
       - name: Publish CI snapshot as a review artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
