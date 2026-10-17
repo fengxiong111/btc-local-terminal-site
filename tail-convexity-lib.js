@@ -472,9 +472,9 @@ export function buildBoard(evaluated) {
 }
 
 export function budgetView(ledger) {
-  const reauthorized = ledger?.reauthorized === true;
-  const requested = num(ledger?.annual_budget_usdt);
-  const annual = reauthorized && requested === REAUTH_BUDGET_CAP ? REAUTH_BUDGET_CAP : ANNUAL_BUDGET_CAP;
+  // A JSON file in a public website cannot authorize real capital or attest holdings.
+  const reauthorized = false;
+  const annual = ANNUAL_BUDGET_CAP;
   const spent = Math.max(0, num(ledger?.spent_usdt) ?? 0);
   return {
     annual_budget_usdt: annual,
@@ -482,7 +482,42 @@ export function budgetView(ledger) {
     remaining_usdt: Math.max(0, annual - spent),
     per_order_cap_usdt: ALL_IN_CAP,
     reauth_ceiling_usdt: REAUTH_BUDGET_CAP,
-    reauthorized
+    reauthorized,
+    authority: "PUBLIC_PLANNING_ONLY",
+    actual_spent_state: "UNKNOWN",
+    actual_remaining_state: "UNKNOWN"
+  };
+}
+
+// Read-only advice may be computed only from a separately attested and fresh private read.
+// The public ledger is deliberately incapable of satisfying these preconditions.
+export function assessReplacement(candidate, context = {}, now = Date.now()) {
+  const blocked = { state: "BLOCKED_LEDGER", execution_state: "DISPLAY_ONLY" };
+  if (context.source !== "PRIVATE_EXCHANGE_READ_ONLY" || context.authoritative !== true ||
+    !Number.isFinite(context.verified_at_ms) || context.verified_at_ms > now ||
+    now - context.verified_at_ms > 120000 || !Array.isArray(context.positions)) return blocked;
+  if (!candidate || candidate.opportunity_tier !== "RELATIVE_DISCOUNT_REVIEW") {
+    return { state: "RESEARCH_ONLY", execution_state: "DISPLAY_ONLY" };
+  }
+  const active = context.positions.filter((position) => position && position.quantity > 0);
+  if (active.some((position) => position.symbol === candidate.symbol)) {
+    return { state: "ALREADY_HELD", execution_state: "DISPLAY_ONLY" };
+  }
+  if (!active.length) return { state: "REVIEW_NEW_CANDIDATE", execution_state: "DISPLAY_ONLY" };
+  // Holders must supply a freshly evaluated current market candidate for EVERY holding.
+  // Comparing today's cohort-dependent ranking_score against an old score is invalid.
+  if (active.some((position) => !position.current_candidate || position.current_candidate.pass !== true)) {
+    return { state: "BLOCKED_COMPARISON_DATA", execution_state: "DISPLAY_ONLY" };
+  }
+  const ranked = rankFront([candidate, ...active.map((position) => position.current_candidate)]);
+  const weakest = ranked[ranked.length - 1];
+  if (!weakest || weakest.symbol === candidate.symbol) {
+    return { state: "NOT_BETTER", execution_state: "DISPLAY_ONLY" };
+  }
+  return {
+    state: "REVIEW_REPLACEMENT",
+    replace_symbol: weakest.symbol,
+    execution_state: "DISPLAY_ONLY"
   };
 }
 
