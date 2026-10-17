@@ -42,6 +42,11 @@ jobs:
           node-version: 22
       - name: Simulate the complete public Binance/DeFi scan (no orders)
         run: node scripts/update-tail-convexity.mjs
+      - name: Verify shadow freshness, schema and evidence status
+        run: node scripts/check-tail-health.mjs
+      - name: Summarize research-only shadow results
+        run: |
+          node -e 'const s = require("./tail-convexity.json"); console.log(JSON.stringify({state:s.state,tail_state:s.tail_state,opportunity_state:s.opportunity_state,holdings:s.holdings,rank:s.board.map(x=>({symbol:x.symbol,tier:x.opportunity_tier,score:x.ranking_score,quality:x.quality.state,crash_scenarios:x.crash_scenarios.status})),funnel:s.funnel,evidence:s.radar.evidence,independent_protocol_coverage:s.radar.independent_protocol_coverage}))'
       - name: Upload read-only shadow snapshot
         if: always()
         uses: actions/upload-artifact@v4
