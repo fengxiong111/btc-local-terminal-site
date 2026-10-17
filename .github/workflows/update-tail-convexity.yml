@@ -1,6 +1,14 @@
 name: Refresh tail convexity board
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "tail-convexity-lib.js"
+      - "tail-convexity-load.js"
+      - "scripts/update-tail-convexity.mjs"
+      - "scripts/tail-convexity.test.mjs"
+      - ".github/workflows/update-tail-convexity.yml"
   workflow_dispatch:
   schedule:
     - cron: "23,53 * * * *"
@@ -8,30 +16,44 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: tail-convexity-snapshot-main
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Refresh Binance put board
-        run: node scripts/update-tail-convexity.mjs
-        continue-on-error: true
+      - name: Verify pure strategy and market-page tests
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs
 
-      - name: Commit changed snapshot
+      - name: Refresh Binance put board
+        id: scan
+        run: node scripts/update-tail-convexity.mjs
+
+      # A failed scan writes BLOCKED_DATA and exits nonzero. Publish this state,
+      # but keep the GitHub Actions job failed rather than reporting false success.
+      - name: Publish verified snapshot or blocked receipt
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
         run: |
-          if git diff --quiet -- tail-convexity.json; then
+          git add -- tail-convexity.json
+          if git diff --cached --quiet; then
             echo "tail board unchanged"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tail-convexity.json
           git commit -m "chore: refresh tail convexity board"
-          git push
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

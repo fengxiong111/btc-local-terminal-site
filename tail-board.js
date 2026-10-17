@@ -7,6 +7,8 @@ import {
 } from "./tail-convexity-lib.js";
 
 const STALE_MS = 45 * 60 * 1000;
+const REFRESH_MS = 60 * 1000;
+let inFlight = null;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -28,8 +30,12 @@ function renderBoard(snapshot) {
   if (!listNode) return;
 
   const age = Date.now() - (snapshot.generated_at_ms || 0);
-  const stale = !snapshot.generated_at_ms || age > STALE_MS;
-  if (sectionNode) sectionNode.dataset.marketState = stale ? "stale" : "live";
+  const stale = !snapshot.generated_at_ms || age < -120000 || age > STALE_MS || snapshot.state === "BLOCKED_DATA" || snapshot.state === "BLOCKED_EVIDENCE";
+  if (sectionNode) {
+    sectionNode.dataset.marketState = stale ? "stale" : "live";
+    sectionNode.dataset.snapshotState = snapshot.state || "UNKNOWN";
+    sectionNode.dataset.opportunityState = snapshot.opportunity_state || "UNKNOWN";
+  }
 
   const ranked = Array.isArray(snapshot.board) ? snapshot.board : [];
   const rows = ranked[0]?.route
@@ -38,7 +44,7 @@ function renderBoard(snapshot) {
 
   listNode.replaceChildren();
   if (!rows.length) {
-    listNode.append(el("li", "tail-empty", "这轮没有可展示的期权。"));
+    listNode.append(el("li", "tail-empty", snapshot.state === "BLOCKED_DATA" ? "期权数据暂不可用。" : "这轮没有可展示的期权。"));
   }
 
   for (const item of rows) {
@@ -60,22 +66,27 @@ function renderBoard(snapshot) {
 }
 
 async function loadSnapshot() {
-  const response = await fetch("tail-convexity.json", { cache: "no-cache" });
+  const response = await fetch("tail-convexity.json", { cache: "no-store" });
   if (!response.ok) throw new Error("snapshot missing");
-  return response.json();
+  const snapshot = await response.json();
+  if (snapshot?.schema !== "tail-convexity-v1" || !Array.isArray(snapshot.board)) throw new Error("invalid snapshot schema");
+  return snapshot;
 }
 
-async function start() {
-  try {
-    renderBoard(await loadSnapshot());
-  } catch {
-    renderBoard({
-      state: "BLOCKED_DATA",
-      tail_state: "NORMAL",
-      generated_at_ms: 0,
-      board: []
-    });
-  }
+function refresh() {
+  if (inFlight) return inFlight;
+  inFlight = loadSnapshot().then(renderBoard).catch(() => renderBoard({
+    state: "BLOCKED_DATA",
+    tail_state: "UNKNOWN",
+    generated_at_ms: 0,
+    board: []
+  })).finally(() => { inFlight = null; });
+  return inFlight;
 }
 
-start();
+refresh();
+window.setInterval(refresh, REFRESH_MS);
+window.addEventListener("focus", refresh, { passive: true });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refresh();
+});

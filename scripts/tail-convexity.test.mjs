@@ -19,6 +19,12 @@ import {
   formatUsdt,
   annotateBoard,
   assessFragility,
+  assessReplacement,
+  budgetView as readPublicBudget,
+  quoteQuality,
+  theoreticalPut,
+  crashScenarios,
+  rankFront,
   nextProbeNotional,
   replayRoute,
   routeThesis,
@@ -189,18 +195,22 @@ test("pareto removes dominated names and mispricing outranks raw crash odds", ()
     persistence: 0.4
   });
   const board = buildBoard([cheap, rich, worse, flat, mild, closer]);
-  assert.equal(board.ranked[0].symbol, "CHEAP");
-  assert.ok(board.ranked.findIndex((item) => item.symbol === "CLOSER") < board.ranked.findIndex((item) => item.symbol === "MILD"));
-  assert.ok(board.ranked.findIndex((item) => item.symbol === "FLAT") > 0);
+  assert.ok(board.ranked.some((item) => item.symbol === "CHEAP"));
+  assert.ok(board.ranked.every((item) => item.opportunity_tier === "RESEARCH_ONLY")); // No depth proof in synthetic rows.
+  assert.ok(board.ranked.every((item) => Number.isFinite(item.ranking_score)));
+  assert.ok(board.ranked.every((item) => item.ranking_score >= 0 && item.ranking_score <= 1));
   assert.equal(board.ranked[0].rank, 1);
   assert.equal(board.edge_count, 1);
+  assert.equal(board.review_count, 0);
   assert.equal(board.ranked.some((item) => item.symbol === "WORSE"), false);
 });
 
 test("budget cannot be raised from the ledger and the scale ladder stays manual", () => {
   assert.equal(budgetView({ annual_budget_usdt: 5000, spent_usdt: 12 }).annual_budget_usdt, 300);
   assert.equal(budgetView({ annual_budget_usdt: 5000, spent_usdt: 12 }).remaining_usdt, 288);
-  assert.equal(budgetView({ annual_budget_usdt: 500, reauthorized: true }).annual_budget_usdt, 500);
+  assert.equal(budgetView({ annual_budget_usdt: 500, reauthorized: true }).annual_budget_usdt, 300);
+  assert.equal(budgetView({ annual_budget_usdt: 500, reauthorized: true }).authority, "PUBLIC_PLANNING_ONLY");
+  assert.equal(budgetView({ annual_budget_usdt: 500, reauthorized: true }).actual_spent_state, "UNKNOWN");
   assert.equal(budgetView({ annual_budget_usdt: 800, reauthorized: true }).annual_budget_usdt, 300);
   const ready = {
     mispricing: "PASS",
@@ -229,6 +239,7 @@ test("final state and the watched put are explicit", () => {
   assert.equal(finalState({ dataOk: true, tailState: "CRITICAL", bestInstrument: "PERP_SHORT" }), "CRITICAL_SHORT");
   assert.equal(finalState({ dataOk: true, tailState: "CRITICAL", bestInstrument: "PERP_SHORT", alsoPut: true }), "CRITICAL_COMBO");
   assert.equal(finalState({ dataOk: true, riskUnknown: true }), "BLOCKED_RISK");
+  assert.equal(finalState({ dataOk: true, evidenceUnknown: true }), "BLOCKED_EVIDENCE");
   assert.equal(finalState({ dataOk: true, tailState: "NORMAL", edgeCount: 2 }), "PUT_PROBE");
   assert.equal(finalState({ dataOk: true, tailState: "NORMAL", edgeCount: 0 }), "NO_EDGE");
 
@@ -279,6 +290,98 @@ test("local smile interpolates between neighboring strikes and ignores a wide ga
   assert.equal(wing.upper, "F");
   assert.deepEqual(bestLevel([{ price: "1", quote: "2" }, { price: "3", quote: "1" }], "bid"), { price: 3, size: 1 });
   assert.equal(bestLevel([{ price: "1", quote: "0" }], "ask"), null);
+});
+
+test("source independence prevents many Morpho markets from manufacturing CRITICAL", () => {
+  const correlated = assessFragility({
+    pegs: [{ symbol: "USDT", price: 1 }],
+    aave: { connected: true, rows: [] },
+    morpho: { connected: true, rows: [
+      { id: "a", loan: "USDC", supplyUsd: 10e6, badDebtUsd: 200000 },
+      { id: "b", loan: "USDT", supplyUsd: 10e6, badDebtUsd: 300000 }
+    ] }
+  });
+  assert.equal(correlated.tail_state, "WATCH");
+  assert.equal(correlated.authoritative_mechanisms, 1);
+  assert.equal(correlated.independent_stress, 1);
+  assert.deepEqual(correlated.mechanism_families, ["morpho"]);
+  assert.equal(correlated.independent_protocol_coverage, 2);
+  const severePeg = assessFragility({
+    pegs: [{ symbol: "USDT", price: 0.96 }],
+    aave: { connected: true, rows: [] },
+    morpho: { connected: true, rows: [] }
+  });
+  assert.equal(severePeg.tail_state, "WATCH");
+  assert.equal(severePeg.authoritative_mechanisms, 0);
+  const missing = assessFragility({ morpho: { connected: true, rows: [] } });
+  assert.equal(missing.tail_state, "UNKNOWN");
+  assert.equal(missing.known, false);
+});
+
+test("Pareto survivor ranking rewards balanced candidate quality, not one tiny IV difference", () => {
+  const quote = {
+    pass: true, mispricing: "FLAT", min_qty: 0.01,
+    bid: 12, bid_size: 2, ask_size: 2, spread: 0.01,
+    smile_extrapolated: false, fragility_objective: 0
+  };
+  const good = {
+    ...quote, symbol: "GOOD", mispricing_vol_points: 0.001, payoff_blend: 80,
+    dte: 100, liquidity: 0.9, persistence: 0.9, all_in_max_loss: 1
+  };
+  const ivOnly = {
+    ...quote, symbol: "IV_ONLY", mispricing_vol_points: 0.002, payoff_blend: 5,
+    dte: 30, liquidity: 0.1, persistence: 0.2, all_in_max_loss: 1
+  };
+  const results = rankFront([ivOnly, good]);
+  assert.equal(results[0].symbol, "GOOD");
+  assert.equal(results[0].opportunity_tier, "RESEARCH_ONLY");
+  const pass = { ...good, symbol: "RELATIVE_DISCOUNT", mispricing: "PASS", mispricing_vol_points: 0.02 };
+  assert.equal(rankFront([good, pass])[0].opportunity_tier, "RELATIVE_DISCOUNT_REVIEW");
+  assert.equal(quoteQuality({ ...pass, ask_size: 0.01 }).state, "RESEARCH_ONLY");
+  assert.equal(rankFront([{ ...pass, smile_extrapolated: true }])[0].opportunity_tier, "RESEARCH_ONLY");
+});
+
+test("model-only crash paths are bounded, horizon-aware and never executable quotes", () => {
+  const row = evaluateCandidate(validInput(), { smile, fragilityScore: 0 });
+  const scenarios = crashScenarios(row);
+  assert.equal(scenarios.status, "MODEL_ONLY");
+  assert.equal(scenarios.model_only, true);
+  assert.equal(scenarios.scenarios.length, 6); // Days 7,30 < 56d expiration; day 60 skipped.
+  assert.ok(scenarios.scenarios.every((r) => r.model_gross_multiple > 0 && Number.isFinite(r.model_exit_value)));
+  assert.ok(scenarios.scenarios.every((r) => r.crash_after_days < row.dte));
+  assert.equal(theoreticalPut({ spot: 50, strike: 100, volatility: 0.5, days: 0 }), 50);
+  assert.equal(theoreticalPut({ spot: -1, strike: 100, volatility: 0.5, days: 30 }), null);
+  assert.equal(crashScenarios({ ...row, dte: 6 }).status, "NO_VALID_HORIZON");
+});
+
+test("public ledger cannot authorize replacement or treat empty positions as verified flat", () => {
+  const candidate = {
+    symbol: "BTC-NEW-P", opportunity_tier: "RELATIVE_DISCOUNT_REVIEW",
+    mispricing: "PASS", mispricing_vol_points: 0.03, payoff_blend: 50,
+    dte: 60, liquidity: 0.8, persistence: 0.8, fragility_objective: 0,
+    bid: 30, bid_size: 10, ask_size: 10, spread: 0.01, min_qty: 0.01
+  };
+  assert.equal(assessReplacement(candidate, { source: "PUBLIC_LEDGER", positions: [] }).state, "BLOCKED_LEDGER");
+  const verified = {
+    source: "PRIVATE_EXCHANGE_READ_ONLY", authoritative: true, verified_at_ms: serverTimeMs, positions: []
+  };
+  assert.equal(assessReplacement(candidate, verified, serverTimeMs).state, "REVIEW_NEW_CANDIDATE");
+  assert.equal(assessReplacement(candidate, verified, serverTimeMs + 121000).state, "BLOCKED_LEDGER");
+  assert.equal(assessReplacement(candidate, {
+    ...verified, positions: [{ symbol: "BTC-NEW-P", quantity: 0.01 }]
+  }, serverTimeMs).state, "ALREADY_HELD");
+  assert.equal(readPublicBudget({ annual_budget_usdt: 9999, reauthorized: true }).annual_budget_usdt, 300);
+});
+
+test("browser handles polling and rejects expired snapshots without changing four-column layout", () => {
+  const board = readFileSync(join(root, "tail-board.js"), "utf8");
+  const workflow = readFileSync(join(root, ".github/workflows/update-tail-convexity.yml"), "utf8");
+  assert.ok(board.includes('window.setInterval(refresh, REFRESH_MS)'));
+  assert.ok(board.includes('cache: "no-store"'));
+  assert.ok(board.includes('snapshot.state === "BLOCKED_DATA"'));
+  assert.ok(board.includes('age > STALE_MS'));
+  assert.ok(!workflow.includes("continue-on-error: true"));
+  assert.ok(workflow.includes("if: ${{ always() && steps.scan.outcome != 'skipped' }}"));
 });
 
 test("display formatters stay compact", () => {
@@ -370,7 +473,7 @@ test("fragility needs two authoritative mechanisms and replay blocks illegal add
   const thirdParty = assessFragility({
     pegs: [{ symbol: "USDT", price: 0.9 }, { symbol: "USDC", price: 0.9 }]
   });
-  assert.equal(thirdParty.tail_state, "WATCH");
+  assert.equal(thirdParty.tail_state, "UNKNOWN"); // Peg-only warnings cannot attest independent protocol risk.
 
   const critical = assessFragility({
     aave: { connected: true, rows: [{ symbol: "USDT", price: 0.98, frozen: true, paused: false, utilization: 0.5, availableUsd: 1 }] },
@@ -381,7 +484,7 @@ test("fragility needs two authoritative mechanisms and replay blocks illegal add
   const absurd = assessFragility({
     morpho: { connected: true, rows: [{ id: "dust", loan: "USDC", supplyUsd: 12_000_000_000, liquidityUsd: 0, utilization: 1, badDebtUsd: 11_000_000_000 }] }
   });
-  assert.equal(absurd.tail_state, "NORMAL");
+  assert.equal(absurd.tail_state, "UNKNOWN");
 
   assert.equal(replayRoute([
     { tailState: "NORMAL", instrument: "LONG_PUT", total: 5, newInformation: true, leverage: 1 }

@@ -84,7 +84,8 @@ async function loadPendle(fetchImpl) {
     const response = await fetchImpl("https://api-v2.pendle.finance/core/v1/1/markets?limit=20&skip=0", { headers: HEADERS });
     if (!response.ok) return { connected: false, rows: [] };
     const body = await response.json();
-    const rows = (body.results || []).map((row) => ({
+    if (!Array.isArray(body.results)) return { connected: false, rows: [] };
+    const rows = body.results.map((row) => ({
       address: row.address,
       symbol: row.symbol,
       ptDiscount: num(row.ptDiscount),
@@ -107,7 +108,8 @@ async function loadAave(fetchImpl) {
     });
     if (!response.ok) return { connected: false, rows: [] };
     const body = await response.json();
-    const reserves = body.data?.markets?.[0]?.reserves || [];
+    if (body.errors?.length || !Array.isArray(body.data?.markets?.[0]?.reserves)) return { connected: false, rows: [] };
+    const reserves = body.data.markets[0].reserves;
     const wanted = new Set(["USDT", "USDC", "DAI", "USDE", "FDUSD", "GHO", "WETH"]);
     return {
       connected: true,
@@ -135,7 +137,8 @@ async function loadMorpho(fetchImpl) {
     });
     if (!response.ok) return { connected: false, rows: [] };
     const body = await response.json();
-    const items = body.data?.markets?.items || [];
+    if (body.errors?.length || !Array.isArray(body.data?.markets?.items)) return { connected: false, rows: [] };
+    const items = body.data.markets.items;
     return {
       connected: true,
       rows: items.map((row) => ({
