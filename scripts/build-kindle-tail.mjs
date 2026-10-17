@@ -3,6 +3,17 @@ import { readFile, writeFile } from "node:fs/promises";
 const esc = (text) => String(text ?? "").replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+// Exact same per-contract spot used by crashMultiple(..., drop: 0.5).
+// Do not use the independently refreshed BTC header price to label an old payoff.
+export function formatHalfSpotTarget(row) {
+  const spot = row?.spot;
+  if (typeof spot !== "number" || !Number.isFinite(spot) || spot <= 0
+    || typeof row?.payoff_50 !== "number" || !Number.isFinite(row.payoff_50)) return null;
+  return (spot / 2).toLocaleString("en-US", {
+    maximumFractionDigits: 0, minimumFractionDigits: 0
+  });
+}
+
 export function makeKindlePage(snapshot, metrics = null) {
   const metricsAge = Date.now() - (metrics?.observed_at_ms || 0);
   const metricsGood = metrics?.schema === "btc-metrics-v1"
@@ -23,7 +34,7 @@ export function makeKindlePage(snapshot, metrics = null) {
 <strong>${esc(row.symbol)}</strong>
 <span>${esc(Number.isFinite(row.dte) ? Math.ceil(row.dte) : "?")}天
  · ${esc(Number.isFinite(row.all_in_max_loss) ? row.all_in_max_loss.toFixed(2) : "?")} U
- · ${esc(Number.isFinite(row.payoff_50) ? row.payoff_50.toFixed(1) : "?")}×</span>
+ · ${esc(Number.isFinite(row.payoff_50) ? row.payoff_50.toFixed(2) : "?")}×${formatHalfSpotTarget(row) !== null ? ` · ${esc(formatHalfSpotTarget(row))}` : ""}</span>
 </li>`).join("\n");
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">

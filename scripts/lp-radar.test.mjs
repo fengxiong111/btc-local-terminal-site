@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {chooseMerkl,chooseMeteora,requirePositionNetEvidence,assessDailyPoolPriceChange,sameMeteoraPoolIdentity,sameMerklOpportunityIdentity} from "../lp-radar-lib.js";
+import {chooseMerkl,chooseMeteora,requirePositionNetEvidence,assessDailyPoolPriceChange,sameMeteoraPoolIdentity,sameMerklOpportunityIdentity,compareSameHorizonLP} from "../lp-radar-lib.js";
 const now=Date.parse("2026-10-17T13:30:00Z");
 const goodCampaign={startTimestamp:now/1000-86400,endTimestamp:now/1000+7*86400,
  rewardToken:{verified:true,price:1,symbol:"UNI"},campaignStatus:{status:"SUCCESS"},
@@ -91,4 +91,61 @@ test("Merkl list and exact detail must match ID, chain, pool key and LIVE status
  assert.equal(sameMerklOpportunityIdentity(a,{...a,identifier:"0xother"}),false);
  assert.equal(sameMerklOpportunityIdentity(a,{...a,chainId:42161}),false);
  assert.equal(sameMerklOpportunityIdentity(a,{...a,status:"PAST"}),false);
+});
+
+
+test("LP optimizer rejects stale, incomplete or different-horizon position economics",()=>{
+ const ev={source:"POSITION_LEVEL_INDEPENDENT_SIMULATION",observed_at_ms:now-30000,
+   horizon_hours:24,capital_usd:1000,pool_or_position_id:"a",
+   exit_route_verified:true,eligibility_verified:true,swap_back_to_stable_verified:true,
+   swap_fees_usd:30,flash_fees_usd:0,claimable_rewards_usd:4,
+   inventory_loss_usd:10,gas_usd:1,swap_slippage_usd:1,
+   rebalance_usd:2,out_of_range_usd:0,exit_cost_usd:2,migration_cost_usd:3};
+ const entry={id:"a",evidence:ev};
+ const good=compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,candidates:[entry]});
+ assert.equal(good.action,"CANARY_REVIEW");
+ assert.equal(good.leader.net_usd,18);
+ assert.equal(good.order_permission,"ABSENT");
+ assert.equal(compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   candidates:[{id:"a",evidence:{...ev,observed_at_ms:now-180000}}]}).action,"CASH");
+ assert.equal(compareSameHorizonLP({capitalUsd:1000,horizonHours:168,nowMs:now,
+   candidates:[entry]}).action,"CASH");
+ assert.equal(compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   candidates:[{id:"a",evidence:{...ev,exit_route_verified:false}}]}).action,"CASH");
+ assert.equal(compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   candidates:[{id:"a",evidence:{...ev,pool_or_position_id:"other"}}]}).action,"CASH");
+ assert.equal(compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   candidates:[{id:"a",evidence:{...ev,flash_fees_usd:undefined}}]}).action,"CASH");
+});
+
+test("LP optimizer demands improvement exceeding twice incremental migration costs",()=>{
+ const base={source:"POSITION_LEVEL_INDEPENDENT_SIMULATION",observed_at_ms:now-30000,
+   horizon_hours:24,capital_usd:1000,exit_route_verified:true,
+   eligibility_verified:true,swap_back_to_stable_verified:true,
+   swap_fees_usd:20,flash_fees_usd:2,claimable_rewards_usd:0,
+   inventory_loss_usd:5,gas_usd:1,swap_slippage_usd:1,
+   rebalance_usd:1,out_of_range_usd:1,exit_cost_usd:1,migration_cost_usd:0};
+ const incumbent={id:"old",evidence:{...base,pool_or_position_id:"old"}};
+ const incumbentNet=compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+    candidates:[incumbent]}).leader.net_usd;
+ assert.equal(incumbentNet,12);
+ // 18-12=6. Incremental migration=4, minimum required gain >8: HOLD.
+ const candidate={id:"new",evidence:{...base,pool_or_position_id:"new",
+   swap_fees_usd:26,migration_cost_usd:4}};
+ const hold=compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   incumbent,candidates:[candidate]});
+ assert.equal(hold.action,"HOLD_REVIEW");
+ assert.equal(hold.delta_usd,6);
+ assert.equal(hold.hurdle_usd,8);
+ // 23-12=11 >8: switch only in SHADOW mode, no execution.
+ const improved={id:"new",evidence:{...candidate.evidence,swap_fees_usd:31}};
+ const switcher=compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   incumbent,candidates:[improved]});
+ assert.equal(switcher.action,"SWITCH_REVIEW");
+ assert.equal(switcher.delta_usd,11);
+ assert.equal(switcher.order_permission,"ABSENT");
+ const blocked=compareSameHorizonLP({capitalUsd:1000,horizonHours:24,nowMs:now,
+   incumbent:{id:"old",evidence:{...base,exit_route_verified:false,pool_or_position_id:"old"}},
+   candidates:[improved]});
+ assert.equal(blocked.status,"BLOCKED_EVIDENCE");
 });
