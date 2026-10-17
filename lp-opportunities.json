@@ -1,0 +1,88 @@
+{
+  "schema": "lp-radar-v1",
+  "generated_at_ms": 1792243837723,
+  "read_only": true,
+  "merkl": {
+    "state": "PASS",
+    "sampled": 43,
+    "types": [
+      "UNISWAP_V3",
+      "UNISWAP_V4"
+    ],
+    "pages": {
+      "UNISWAP_V3": 1,
+      "UNISWAP_V4": 1
+    },
+    "used_backup": false,
+    "best": {
+      "platform": "Merkl",
+      "name": "Provide liquidity to UniswapV4 ETH-USDC Dynamic fee",
+      "opportunity_id": "14902452956286592010",
+      "chain_id": 1,
+      "pool_identifier": "0x98316e8405502774a5d0a0761276b5d26505a8195c1905169864008d5e7a3eea",
+      "type": "UNISWAP_V4",
+      "tvl_usd": 1398514.9802225353,
+      "incentive_apr_pct": 37.173810285341034,
+      "valid_campaign_count": 1,
+      "reward_tokens": [
+        "USDC"
+      ],
+      "nearest_end_unix_sec": 1793202600,
+      "underlying_tokens": [
+        "ETH",
+        "USDC"
+      ],
+      "score": 42.749882,
+      "status": "WATCH_NET_UNVERIFIED",
+      "missing": [
+        "underlying_pool_realized_fee_velocity",
+        "bin_tick_distribution",
+        "position_eligibility",
+        "exit_quote",
+        "IL_and_inventory_cost",
+        "net_reward_after_dilution"
+      ]
+    }
+  },
+  "meteora": {
+    "state": "PASS",
+    "sampled": 223,
+    "pages": 2,
+    "window_coverage": [
+      "30m",
+      "1h",
+      "4h",
+      "24h"
+    ],
+    "best": {
+      "platform": "Meteora",
+      "name": "DOPE-SOL",
+      "address": "J2XBZkpC7ygBQiPw2MWWCqiVJn9i44b8GwtTRoFV1ijj",
+      "token_symbols": [
+        "DOPE",
+        "SOL"
+      ],
+      "tvl_usd": 128894.89721601816,
+      "fee_30m_usd": 78.95097490110092,
+      "fee_1h_usd": 152.4183151519818,
+      "fee_4h_usd": 527.8180850609349,
+      "fee_24h_usd": 4371.729616825549,
+      "volume_24h_usd": 155557.86825998474,
+      "pool_age_days": 6,
+      "conservative_pool_fee_per_hour_usd": 131.95,
+      "gross_fee_to_tvl_24h_pct": 3.39,
+      "score": 0.0003498309,
+      "status": "WATCH_NET_UNVERIFIED",
+      "missing": [
+        "5m_trades",
+        "independent_trader_count",
+        "active_bin_and_tick_depth",
+        "position_fee_share",
+        "realized_position_fees",
+        "exit_quote",
+        "IL_and_inventory_cost"
+      ]
+    }
+  },
+  "comparability": "NET_EDGE_UNKNOWN"
+}
