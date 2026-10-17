@@ -1,0 +1,69 @@
+name: Tail research iPhone notifications
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "watch, digest (20:00 Taipei only), or test (one message)"
+        required: true
+        default: watch
+        type: choice
+        options:
+          - watch
+          - digest
+          - test
+  schedule:
+    # Scan is planned for :23/:53 UTC. Notification checks shortly afterwards.
+    - cron: "29,59 * * * *"
+    # 20:00 Asia/Taipei is 12:00 UTC, every day.
+    - cron: "0 12 * * *"
+
+permissions:
+  contents: write
+
+# Serialize against the scanner; never let two state files race.
+concurrency:
+  group: tail-convexity-snapshot-main
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main with the latest public snapshot
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Evaluate and send at most one notification
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NOTIFY_MODE: ${{ inputs.mode }}
+          SCHEDULE_SPEC: ${{ github.event.schedule }}
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          MODE="watch"
+          if [ "$NOTIFY_MODE" = "test" ]; then
+            MODE="test"
+          elif [ "$NOTIFY_MODE" = "digest" ] || [ "$SCHEDULE_SPEC" = "0 12 * * *" ]; then
+            MODE="digest"
+          fi
+          node scripts/tail-notify.mjs "$MODE"
+      - name: Persist non-sensitive deduplication state
+        run: |
+          git add -- tail-notify-state.json
+          if git diff --cached --quiet; then
+            echo "Notification policy unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update tail notification receipt"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - "tail-convexity-lib.js"
+      - "tail-alert-lib.js"
+      - "scripts/tail-alert.test.mjs"
+      - "scripts/build-kindle-tail.mjs"
+      - ".github/workflows/tail-notify.yml"
       - "tail-convexity-load.js"
       - "scripts/update-tail-convexity.mjs"
       - "scripts/tail-convexity.test.mjs"
@@ -35,18 +39,22 @@ jobs:
           node-version: 22
 
       - name: Verify pure strategy and market-page tests
-        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs
 
       - name: Refresh Binance put board
         id: scan
         run: node scripts/update-tail-convexity.mjs
+
+      - name: Build minimal Kindle-only static snapshot
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        run: node scripts/build-kindle-tail.mjs
 
       # A failed scan writes BLOCKED_DATA and exits nonzero. Publish this state,
       # but keep the GitHub Actions job failed rather than reporting false success.
       - name: Publish verified snapshot or blocked receipt
         if: ${{ always() && steps.scan.outcome != 'skipped' }}
         run: |
-          git add -- tail-convexity.json
+          git add -- tail-convexity.json kindle.html
           if git diff --cached --quiet; then
             echo "tail board unchanged"
             exit 0
