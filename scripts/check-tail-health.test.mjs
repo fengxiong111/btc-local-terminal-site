@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { assessHealth } from './check-tail-health.mjs';
+const now=Date.parse('2026-10-18T12:00:00Z');
+const tail=(m=20)=>({schema:'tail-convexity-v1', generated_at_ms:now-m*60000, state:'WATCH',board:[]});
+const btc=(m=20)=>({schema:'btc-metrics-v1',observed_at_ms:now-m*60000,status:'LIVE'});
+test('same epoch fresh scan passes',()=>assert.equal(assessHealth(tail(),btc(),now).result,'PASS'));
+test('old put snapshot blocked',()=>assert.equal(assessHealth(tail(121),btc(121),now).failure_state,'STALE_TAIL_SNAPSHOT'));
+test('BTC metrics stale even when Put scan fresh',()=>assert.equal(assessHealth(tail(20),btc(121),now).failure_state,'STALE_BTC_METRICS'));
+test('different scan epochs blocked',()=>assert.equal(assessHealth(tail(20),btc(27),now).failure_state,'MISMATCHED_SCAN_EPOCH'));
+test('blocked BTC status fails',()=>assert.equal(assessHealth(tail(20),{...btc(),status:'ERROR'},now).failure_state,'BLOCKED_BTC_METRICS'));
+test('missing metrics fail closed',()=>assert.equal(assessHealth(tail(),null,now).failure_state,'INVALID_BTC_TIMESTAMP'));
