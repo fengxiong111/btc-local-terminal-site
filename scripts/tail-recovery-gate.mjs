@@ -20,7 +20,8 @@ export function decideRecovery(tail, metrics, recentRuns, now = Date.now()) {
   const stale = tail?.schema !== 'tail-convexity-v1' || !Array.isArray(tail.board)
     || ['BLOCKED_DATA', 'BLOCKED_EVIDENCE'].includes(tail?.state)
     || metrics?.schema !== 'btc-metrics-v1' || metrics?.status !== 'LIVE'
-    || !tailAt || !metricsAt || ageTail >= STALE_MS || ageMetrics >= STALE_MS;
+    || !tailAt || !metricsAt || ageTail >= STALE_MS || ageMetrics >= STALE_MS
+    || Math.abs(tailAt - metricsAt) > 5 * 60_000;
   const ages = {
     age_tail_minutes: ageTail === null ? null : Math.round(ageTail / 60000),
     age_metrics_minutes: ageMetrics === null ? null : Math.round(ageMetrics / 60000),
@@ -28,7 +29,7 @@ export function decideRecovery(tail, metrics, recentRuns, now = Date.now()) {
   if (!stale) return { status: 'HEALTHY', recover: false, ...ages };
   if (!Array.isArray(recentRuns)) return { status: 'BLOCKED_RUN_HISTORY', recover: false, ...ages };
   const validRuns = recentRuns.map(x => ({
-    at: Date.parse(x?.createdAt ?? ''), status: x?.status,
+    at: Math.max(Date.parse(x?.createdAt ?? '') || 0, Date.parse(x?.updatedAt ?? '') || 0), status: x?.status,
   })).filter(x => Number.isFinite(x.at));
   if (recentRuns.length > 0 && validRuns.length === 0) {
     return { status: 'BLOCKED_RUN_HISTORY', recover: false, ...ages };
