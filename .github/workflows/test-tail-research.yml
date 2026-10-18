@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 22
       - name: Pure strategy and market board tests
-        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs scripts/tail-recovery-gate.test.mjs
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs scripts/tail-recovery-gate.test.mjs scripts/check-tail-health.test.mjs
       - name: Parse all runtime modules
         run: |
           node --check tail-convexity-lib.js
@@ -39,6 +39,7 @@ jobs:
           node --check tail-board.js
           node --check scripts/update-tail-convexity.mjs
           node --check scripts/tail-recovery-gate.mjs
+          node --check scripts/check-tail-health.mjs
 
   # Real public-data end-to-end scan on a PR branch. Never pushes to main/Pages.
   shadow-scan:
@@ -51,13 +52,13 @@ jobs:
           node-version: 22
       - name: Simulate the complete public Binance/DeFi scan (no orders)
         run: node scripts/update-tail-convexity.mjs
-      - name: Verify shadow freshness, schema and evidence status
-        run: node scripts/check-tail-health.mjs
       - name: Summarize research-only shadow results
         run: |
           node -e 'const s = require("./tail-convexity.json"); console.log(JSON.stringify({state:s.state,tail_state:s.tail_state,opportunity_state:s.opportunity_state,holdings:s.holdings,rank:s.board.map(x=>({symbol:x.symbol,tier:x.opportunity_tier,score:x.ranking_score,quality:x.quality.state,crash_scenarios:x.crash_scenarios.status})),funnel:s.funnel,evidence:s.radar.evidence,independent_protocol_coverage:s.radar.independent_protocol_coverage}))'
       - name: Refresh BTC daily metrics from public spot API
         run: node scripts/update-btc-metrics.mjs
+      - name: Verify shadow freshness, schema and evidence status
+        run: node scripts/check-tail-health.mjs
       - name: Generate Kindle static page from shadow scan
         run: node scripts/build-kindle-tail.mjs
       - name: Verify generated no-JavaScript Kindle view
