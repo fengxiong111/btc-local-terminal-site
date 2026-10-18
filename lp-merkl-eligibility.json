@@ -1,7 +1,7 @@
 {
   "schema": "merkl-eligibility-v1",
   "read_only": true,
-  "generated_at_ms": 1792274939833,
+  "generated_at_ms": 1792298282468,
   "state": "RULES_READ_PASS_POSITION_UNKNOWN",
   "rules_state": "RULES_VERIFIED_POSITION_UNKNOWN",
   "user_rewards_state": "BLOCKED_NO_PUBLIC_WALLET",
