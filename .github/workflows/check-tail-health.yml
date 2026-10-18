@@ -1,20 +1,61 @@
 name: Check tail snapshot freshness
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/check-tail-health.yml"
+      - "scripts/tail-recovery-gate.mjs"
+      - "scripts/tail-recovery-gate.test.mjs"
   workflow_dispatch:
+  # A separate recovery clock. GitHub may delay/drop cron jobs, so this is
+  # best-effort redundancy rather than a guaranteed 20-minute SLA.
   schedule:
-    - cron: "11 * * * *"
+    - cron: "7,27,47 * * * *"
 
 permissions:
   contents: read
+  actions: write
+
+concurrency:
+  group: tail-health-recovery-main
+  cancel-in-progress: false
 
 jobs:
   health:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Sync latest main before assessing freshness
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test recovery decision gate
+        run: node --test scripts/tail-recovery-gate.test.mjs
+      - name: Read recent scan runs (no credentials persisted)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run list --repo "$GITHUB_REPOSITORY" \
+            --workflow update-tail-convexity.yml \
+            --limit 12 --json createdAt,status,conclusion > /tmp/tail-scan-runs.json
+      - name: Assess recovery gate
+        id: recovery_gate
+        run: |
+          node scripts/tail-recovery-gate.mjs \
+            tail-convexity.json btc-metrics.json /tmp/tail-scan-runs.json \
+            >> "$GITHUB_OUTPUT"
+      - name: Dispatch one read-only public-data refresh if stale and no recent scan
+        if: ${{ steps.recovery_gate.outputs.recover == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run update-tail-convexity.yml --repo "$GITHUB_REPOSITORY" --ref main
       - name: Block on stale or failed evidence snapshot
+        # Remain failed until a fresh verified scan is published; dispatch is not recovery proof.
+        if: ${{ always() }}
         run: node scripts/check-tail-health.mjs
