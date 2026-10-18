@@ -1,6 +1,12 @@
 name: Check tail snapshot freshness
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/check-tail-health.yml"
+      - "scripts/tail-recovery-gate.mjs"
+      - "scripts/tail-recovery-gate.test.mjs"
   workflow_dispatch:
   # A separate recovery clock. GitHub may delay/drop cron jobs, so this is
   # best-effort redundancy rather than a guaranteed 20-minute SLA.
