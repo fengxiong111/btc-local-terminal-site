@@ -10,6 +10,7 @@ on:
       - "tail-board.js"
       - "scripts/**"
       - ".github/workflows/update-tail-convexity.yml"
+      - ".github/workflows/check-tail-health.yml"
       - ".github/workflows/test-tail-research.yml"
       - "index.html"
   workflow_dispatch:
@@ -26,7 +27,7 @@ jobs:
         with:
           node-version: 22
       - name: Pure strategy and market board tests
-        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs
+        run: node --test scripts/tail-convexity.test.mjs scripts/market-page.test.mjs scripts/tail-alert.test.mjs scripts/tail-recovery-gate.test.mjs
       - name: Parse all runtime modules
         run: |
           node --check tail-convexity-lib.js
@@ -37,6 +38,7 @@ jobs:
           node --check tail-convexity-load.js
           node --check tail-board.js
           node --check scripts/update-tail-convexity.mjs
+          node --check scripts/tail-recovery-gate.mjs
 
   # Real public-data end-to-end scan on a PR branch. Never pushes to main/Pages.
   shadow-scan:
