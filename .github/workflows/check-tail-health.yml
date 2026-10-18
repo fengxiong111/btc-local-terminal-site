@@ -36,14 +36,14 @@ jobs:
         with:
           node-version: 22
       - name: Test recovery decision gate
-        run: node --test scripts/tail-recovery-gate.test.mjs
+        run: node --test scripts/tail-recovery-gate.test.mjs scripts/check-tail-health.test.mjs
       - name: Read recent scan runs (no credentials persisted)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh run list --repo "$GITHUB_REPOSITORY" \
             --workflow update-tail-convexity.yml \
-            --limit 12 --json createdAt,status,conclusion > /tmp/tail-scan-runs.json
+            --limit 12 --json createdAt,updatedAt,status,conclusion > /tmp/tail-scan-runs.json
       - name: Assess recovery gate
         id: recovery_gate
         run: |
