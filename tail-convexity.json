@@ -3,8 +3,8 @@
   "strategy_version": "TAIL_CONVEXITY_V2_RESEARCH",
   "ranking_method": "PARETO_COHORT_WEIGHTED_V2",
   "router": "INSTRUMENT_ROUTER_V1",
-  "generated_at_ms": 1792622919045,
-  "server_time_ms": 1792622915270,
+  "generated_at_ms": 1792622944674,
+  "server_time_ms": 1792622939696,
   "state": "WATCH",
   "tail_state": "WATCH",
   "display_only": true,
@@ -16,7 +16,7 @@
     "comparison_state": "BLOCKED_LEDGER",
     "source": "PUBLIC_LEDGER_NOT_AUTHORITY"
   },
-  "new_information": true,
+  "new_information": false,
   "fingerprint": "WATCH|BTC-261127-60000-P:FLAT|BTC-261225-50000-P:FLAT|BTC-261225-54000-P:FLAT|morpho:debt:0xd9e34b1eed46d123ac1b69b224de1881dbc88798bc7b70f504920f62f58f28cc|morpho:util:0xb74aae3bada73b0bd1087bd110d35afaa390de0451e5745091fbb5d296684e1c|morpho:util:0xe1986e80099257c65dd18091ec7e34752ae2336870a5649f20c450c9c4931fb8|morpho:util:0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8|morpho:debt:0x9e90aec7d768403dacc9dd0d8320307fda3f980eed4df43e3e52168a1c667709",
   "budget": {
     "annual_budget_usdt": 300,
@@ -30,27 +30,27 @@
     "actual_remaining_state": "UNKNOWN"
   },
   "spots": {
-    "XAGUSDT": 57.77206532,
-    "ETHUSDT": 2485.32488372,
-    "XRPUSDT": 1.3724194,
-    "SOLUSDT": 107.46773115,
-    "BTCUSDT": 84481.28456522,
-    "BZUSDT": 106.14947239,
-    "BNBUSDT": 748.7444571,
-    "CLUSDT": 98.11768855,
-    "DOGEUSDT": 0.08227122,
-    "XAUUSDT": 4136.0600944
+    "XAGUSDT": 57.76248704,
+    "ETHUSDT": 2485.25046512,
+    "XRPUSDT": 1.37260962,
+    "SOLUSDT": 107.4684096,
+    "BTCUSDT": 84461.33695652,
+    "BZUSDT": 106.14864024,
+    "BNBUSDT": 748.72972951,
+    "CLUSDT": 98.10795081,
+    "DOGEUSDT": 0.0822778,
+    "XAUUSDT": 4135.64495584
   },
   "funnel": {
     "listed": 1658,
     "crypto_puts": 788,
     "dte_in_range": 159,
-    "ticker_book": 641,
-    "ticker_spread": 462,
-    "premium_under_cap": 310,
-    "depth_fetched": 53,
-    "qualified": 17,
-    "pareto": 17,
+    "ticker_book": 642,
+    "ticker_spread": 464,
+    "premium_under_cap": 311,
+    "depth_fetched": 54,
+    "qualified": 18,
+    "pareto": 18,
     "edge": 0
   },
   "radar": {
@@ -79,23 +79,7 @@
     ],
     "note": ""
   },
-  "replacement_report": [
-    {
-      "added": "BTC-261127-60000-P",
-      "removed": "ETH-261225-1500-P",
-      "reason": "排序变化"
-    },
-    {
-      "added": "BTC-261225-50000-P",
-      "removed": "BTC-261225-58000-P",
-      "reason": "排序变化"
-    },
-    {
-      "added": "BTC-261225-54000-P",
-      "removed": "BTC-261225-62000-P",
-      "reason": "排序变化"
-    }
-  ],
+  "replacement_report": [],
   "equity_proxy": {
     "state": "FAIL_CLOSED"
   },
@@ -117,12 +101,12 @@
     "symbol": "BTC-261127-60000-P",
     "underlying": "BTCUSDT",
     "side": "PUT",
-    "dte": 36.38292511574074,
+    "dte": 36.38264240740741,
     "strike": 60000,
-    "spot": 84481.28456522,
-    "strike_spot": 0.7102164734921813,
-    "delta": -0.02249454,
-    "ask_iv": 0.57359338,
+    "spot": 84461.33695652,
+    "strike_spot": 0.7103842084679232,
+    "delta": -0.02256273,
+    "ask_iv": 0.57360113,
     "mark_iv": 0.575,
     "bid": 130,
     "ask": 135,
@@ -134,30 +118,30 @@
     "all_in_max_loss": 1.485,
     "fee_rate": 0.00024,
     "fee_source": "published_regular_schedule",
-    "payoff_30": 5.812126628592608,
-    "payoff_50": 119.5916344605387,
-    "payoff_70": 233.37114229248482,
-    "payoff_90": 347.15065012443097,
-    "payoff_30_usdt": 8.631008043460024,
-    "payoff_50_usdt": 177.59357717389997,
-    "payoff_70_usdt": 346.55614630433996,
-    "payoff_90_usdt": 515.51871543478,
-    "payoff_blend": 153.72548681012253,
-    "bid_size": 45.57,
+    "payoff_30": 5.9061557605118065,
+    "payoff_50": 119.6587981261953,
+    "payoff_70": 233.41144049187878,
+    "payoff_90": 347.1640828575623,
+    "payoff_30_usdt": 8.770641304360034,
+    "payoff_50_usdt": 177.69331521740003,
+    "payoff_70_usdt": 346.61598913044,
+    "payoff_90_usdt": 515.53866304348,
+    "payoff_blend": 153.78459083590036,
+    "bid_size": 46.59,
     "ask_size": 42.12,
     "volume": 22.99,
-    "liquidity": 0.6698076072431793,
+    "liquidity": 0.6704283824654297,
     "fragility_score": 35,
     "fragility_objective": 35,
     "mispricing": "FLAT",
-    "mispricing_vol_points": 0.002576668021335271,
-    "smile_iv": 0.5761700480213353,
+    "mispricing_vol_points": 0.0025760586736615076,
+    "smile_iv": 0.5761771886736615,
     "smile_count": 26,
     "smile_extrapolated": true,
     "mispricing_evidence": "同期限更近的 BTC-261127-62000-P 和 BTC-261127-64000-P 向外推一档，IV 是 57.6%。卖价是 57.4%，差距不到 1 个点。",
-    "theta": -11.20960366,
-    "burn_ratio": 0.07548554653198652,
-    "persistence": 0.9298125885788076,
+    "theta": -11.2294721,
+    "burn_ratio": 0.07561934074074074,
+    "persistence": 0.929696930989857,
     "expiry_ms": 1795766400000,
     "price_scale": 3,
     "pass": true,
@@ -169,12 +153,12 @@
       "symbol": "BTC-261127-60000-P",
       "underlying": "BTCUSDT",
       "side": "PUT",
-      "dte": 36.38292511574074,
+      "dte": 36.38264240740741,
       "strike": 60000,
-      "spot": 84481.28456522,
-      "strike_spot": 0.7102164734921813,
-      "delta": -0.02249454,
-      "ask_iv": 0.57359338,
+      "spot": 84461.33695652,
+      "strike_spot": 0.7103842084679232,
+      "delta": -0.02256273,
+      "ask_iv": 0.57360113,
       "mark_iv": 0.575,
       "bid": 130,
       "ask": 135,
@@ -186,30 +170,30 @@
       "all_in_max_loss": 1.485,
       "fee_rate": 0.00024,
       "fee_source": "published_regular_schedule",
-      "payoff_30": 5.812126628592608,
-      "payoff_50": 119.5916344605387,
-      "payoff_70": 233.37114229248482,
-      "payoff_90": 347.15065012443097,
-      "payoff_30_usdt": 8.631008043460024,
-      "payoff_50_usdt": 177.59357717389997,
-      "payoff_70_usdt": 346.55614630433996,
-      "payoff_90_usdt": 515.51871543478,
-      "payoff_blend": 153.72548681012253,
-      "bid_size": 45.57,
+      "payoff_30": 5.9061557605118065,
+      "payoff_50": 119.6587981261953,
+      "payoff_70": 233.41144049187878,
+      "payoff_90": 347.1640828575623,
+      "payoff_30_usdt": 8.770641304360034,
+      "payoff_50_usdt": 177.69331521740003,
+      "payoff_70_usdt": 346.61598913044,
+      "payoff_90_usdt": 515.53866304348,
+      "payoff_blend": 153.78459083590036,
+      "bid_size": 46.59,
       "ask_size": 42.12,
       "volume": 22.99,
-      "liquidity": 0.6698076072431793,
+      "liquidity": 0.6704283824654297,
       "fragility_score": 35,
       "fragility_objective": 35,
       "mispricing": "FLAT",
-      "mispricing_vol_points": 0.002576668021335271,
-      "smile_iv": 0.5761700480213353,
+      "mispricing_vol_points": 0.0025760586736615076,
+      "smile_iv": 0.5761771886736615,
       "smile_count": 26,
       "smile_extrapolated": true,
       "mispricing_evidence": "同期限更近的 BTC-261127-62000-P 和 BTC-261127-64000-P 向外推一档，IV 是 57.6%。卖价是 57.4%，差距不到 1 个点。",
-      "theta": -11.20960366,
-      "burn_ratio": 0.07548554653198652,
-      "persistence": 0.9298125885788076,
+      "theta": -11.2294721,
+      "burn_ratio": 0.07561934074074074,
+      "persistence": 0.929696930989857,
       "expiry_ms": 1795766400000,
       "price_scale": 3,
       "pass": true,
@@ -222,7 +206,7 @@
         ]
       },
       "opportunity_tier": "RESEARCH_ONLY",
-      "ranking_score": 0.6458333333333334,
+      "ranking_score": 0.6498599439775911,
       "rank": 1,
       "route": {
         "best_instrument": "LONG_PUT",
@@ -232,7 +216,7 @@
         "spot_proposal": null,
         "rwa_state": "FAIL_CLOSED",
         "max_loss": 1.485,
-        "crash_payoff": 119.5916344605387,
+        "crash_payoff": 119.6587981261953,
         "path_dependency": "低",
         "liquidation_risk": "无",
         "funding": null,
@@ -249,43 +233,43 @@
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 151.33835879382826,
-            "model_gross_multiple": 101.91135272311666
+            "model_exit_value": 151.42155276656717,
+            "model_gross_multiple": 101.96737560038193
           },
           {
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 153.1330396609141,
-            "model_gross_multiple": 103.11989202755159
+            "model_exit_value": 153.21209416796896,
+            "model_gross_multiple": 103.17312738583767
           },
           {
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 158.95221165379152,
-            "model_gross_multiple": 107.03852636618957
+            "model_exit_value": 159.02360774776633,
+            "model_gross_multiple": 107.08660454395039
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 150.9545525462226,
-            "model_gross_multiple": 101.65289733752363
+            "model_exit_value": 151.03932969413052,
+            "model_gross_multiple": 101.7099863260138
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 150.95789773589897,
-            "model_gross_multiple": 101.65514999050436
+            "model_exit_value": 151.0426438662434,
+            "model_gross_multiple": 101.7122180917464
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 151.0869769145462,
-            "model_gross_multiple": 101.7420719963274
+            "model_exit_value": 151.17104591054115,
+            "model_gross_multiple": 101.79868411484252
           }
         ]
       }
@@ -294,12 +278,12 @@
       "symbol": "BTC-261225-50000-P",
       "underlying": "BTCUSDT",
       "side": "PUT",
-      "dte": 64.38292511574075,
+      "dte": 64.3826424074074,
       "strike": 50000,
-      "spot": 84481.28456522,
-      "strike_spot": 0.5918470612434844,
-      "delta": -0.01613762,
-      "ask_iv": 0.63854277,
+      "spot": 84461.33695652,
+      "strike_spot": 0.5919868403899359,
+      "delta": -0.01617754,
+      "ask_iv": 0.63854754,
       "mark_iv": 0.633,
       "bid": 145,
       "ask": 150,
@@ -312,29 +296,29 @@
       "fee_rate": 0.00024,
       "fee_source": "published_regular_schedule",
       "payoff_30": 0,
-      "payoff_50": 47.026410408424226,
-      "payoff_70": 149.42796745717575,
-      "payoff_90": 251.82952450592728,
+      "payoff_50": 47.086857707515165,
+      "payoff_70": 149.46423583663028,
+      "payoff_90": 251.8416139657455,
       "payoff_30_usdt": 0,
-      "payoff_50_usdt": 77.59357717389997,
-      "payoff_70_usdt": 246.55614630433996,
-      "payoff_90_usdt": 415.51871543478,
-      "payoff_blend": 88.82190685111514,
-      "bid_size": 14.36,
-      "ask_size": 32.13,
+      "payoff_50_usdt": 77.69331521740001,
+      "payoff_70_usdt": 246.61598913043997,
+      "payoff_90_usdt": 415.53866304348,
+      "payoff_blend": 88.8581752305697,
+      "bid_size": 23.97,
+      "ask_size": 20.17,
       "volume": 1.39,
-      "liquidity": 0.5716169041863683,
+      "liquidity": 0.568861827331334,
       "fragility_score": 35,
       "fragility_objective": 35,
       "mispricing": "FLAT",
-      "mispricing_vol_points": 0.002503672449788108,
-      "smile_iv": 0.6410464424497881,
-      "smile_count": 24,
+      "mispricing_vol_points": 0.0025048624497882033,
+      "smile_iv": 0.6410524024497882,
+      "smile_count": 25,
       "smile_extrapolated": false,
       "mispricing_evidence": "左右参照 BTC-261225-45000-P 和 BTC-261225-52000-P，插值 IV 是 64.1%。卖价是 63.9%，差距不到 1 个点。",
-      "theta": -7.07598979,
-      "burn_ratio": 0.04288478660606061,
-      "persistence": 0.9588786919160803,
+      "theta": -7.08633667,
+      "burn_ratio": 0.04294749496969697,
+      "persistence": 0.9588210382815628,
       "expiry_ms": 1798185600000,
       "price_scale": 3,
       "pass": true,
@@ -345,7 +329,7 @@
         "reasons": []
       },
       "opportunity_tier": "RESEARCH_ONLY",
-      "ranking_score": 0.625,
+      "ranking_score": 0.6246498599439777,
       "rank": 2,
       "route": {
         "best_instrument": "LONG_PUT",
@@ -355,7 +339,7 @@
         "spot_proposal": null,
         "rwa_state": "FAIL_CLOSED",
         "max_loss": 1.65,
-        "crash_payoff": 47.026410408424226,
+        "crash_payoff": 47.086857707515165,
         "path_dependency": "低",
         "liquidation_risk": "无",
         "funding": null,
@@ -372,64 +356,64 @@
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 80.8487165293313,
-            "model_gross_multiple": 48.99922213898867
+            "model_exit_value": 80.90867387494418,
+            "model_gross_multiple": 49.0355599242086
           },
           {
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 91.17740744178474,
-            "model_gross_multiple": 55.259034813202874
+            "model_exit_value": 91.23126476865984,
+            "model_gross_multiple": 55.291675617369606
           },
           {
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 107.71739160181941,
-            "model_gross_multiple": 65.28326763746631
+            "model_exit_value": 107.7648819024766,
+            "model_gross_multiple": 65.31204963786462
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 74.19210797569647,
-            "model_gross_multiple": 44.96491392466453
+            "model_exit_value": 74.25807557497546,
+            "model_gross_multiple": 45.00489428786392
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 81.36844513629211,
-            "model_gross_multiple": 49.31420917351037
+            "model_exit_value": 81.42791711911444,
+            "model_gross_multiple": 49.3502527994633
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 93.48195794962034,
-            "model_gross_multiple": 56.655732090678995
+            "model_exit_value": 93.53461196305358,
+            "model_gross_multiple": 56.68764361397187
           },
           {
             "crash_after_days": 60,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 66.02662510564238,
-            "model_gross_multiple": 40.016136427662055
+            "model_exit_value": 66.11064747396325,
+            "model_gross_multiple": 40.06705907512925
           },
           {
             "crash_after_days": 60,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 66.42282425222027,
-            "model_gross_multiple": 40.25625712255774
+            "model_exit_value": 66.50442188829683,
+            "model_gross_multiple": 40.30571023533142
           },
           {
             "crash_after_days": 60,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 67.93777746592669,
-            "model_gross_multiple": 41.174410585410115
+            "model_exit_value": 68.0139880995914,
+            "model_gross_multiple": 41.220598848237216
           }
         ]
       }
@@ -438,12 +422,12 @@
       "symbol": "BTC-261225-54000-P",
       "underlying": "BTCUSDT",
       "side": "PUT",
-      "dte": 64.38292511574075,
+      "dte": 64.3826424074074,
       "strike": 54000,
-      "spot": 84481.28456522,
-      "strike_spot": 0.6391948261429632,
-      "delta": -0.02371477,
-      "ask_iv": 0.58674335,
+      "spot": 84461.33695652,
+      "strike_spot": 0.6393457876211308,
+      "delta": -0.02377206,
+      "ask_iv": 0.58674872,
       "mark_iv": 0.585,
       "bid": 200,
       "ask": 205,
@@ -451,34 +435,34 @@
       "min_qty": 0.01,
       "unit": 1,
       "premium": 2.05,
-      "fees": 0.20275508295652803,
-      "all_in_max_loss": 2.252755082956528,
+      "fees": 0.20270720869564798,
+      "all_in_max_loss": 2.252707208695648,
       "fee_rate": 0.00024,
       "fee_source": "published_regular_schedule",
       "payoff_30": 0,
-      "payoff_50": 52.199894282146964,
-      "payoff_70": 127.20253012513999,
-      "payoff_90": 202.20516596813303,
+      "payoff_50": 52.24527837576649,
+      "payoff_70": 127.23179826658212,
+      "payoff_90": 202.2183181573978,
       "payoff_30_usdt": 0,
-      "payoff_50_usdt": 117.59357717389997,
-      "payoff_70_usdt": 286.55614630433996,
-      "payoff_90_usdt": 455.51871543478,
-      "payoff_blend": 79.26123334721407,
-      "bid_size": 34.85,
-      "ask_size": 18.92,
+      "payoff_50_usdt": 117.69331521740001,
+      "payoff_70_usdt": 286.61598913043997,
+      "payoff_90_usdt": 455.53866304348,
+      "payoff_blend": 79.289482646021,
+      "bid_size": 35.49,
+      "ask_size": 7,
       "volume": 0.23,
-      "liquidity": 0.6013531451125912,
+      "liquidity": 0.5888339784546601,
       "fragility_score": 35,
       "fragility_objective": 35,
       "mispricing": "FLAT",
-      "mispricing_vol_points": 0.0018160569662012405,
-      "smile_iv": 0.5885594069662012,
-      "smile_count": 24,
+      "mispricing_vol_points": 0.0018158462634494388,
+      "smile_iv": 0.5885645662634494,
+      "smile_count": 25,
       "smile_extrapolated": false,
       "mispricing_evidence": "左右参照 BTC-261225-52000-P 和 BTC-261225-55000-P，插值 IV 是 58.9%。卖价是 58.7%，差距不到 1 个点。",
-      "theta": -9.02064087,
-      "burn_ratio": 0.04004270565516275,
-      "persistence": 0.9614989793809109,
+      "theta": -9.03278269,
+      "burn_ratio": 0.0400974554311038,
+      "persistence": 0.9614483669566483,
       "expiry_ms": 1798185600000,
       "price_scale": 3,
       "pass": true,
@@ -489,7 +473,7 @@
         "reasons": []
       },
       "opportunity_tier": "RESEARCH_ONLY",
-      "ranking_score": 0.5863095238095238,
+      "ranking_score": 0.588235294117647,
       "rank": 3,
       "route": {
         "best_instrument": "LONG_PUT",
@@ -498,8 +482,8 @@
         "put_repriced": false,
         "spot_proposal": null,
         "rwa_state": "FAIL_CLOSED",
-        "max_loss": 2.252755082956528,
-        "crash_payoff": 52.199894282146964,
+        "max_loss": 2.252707208695648,
+        "crash_payoff": 52.24527837576649,
         "path_dependency": "低",
         "liquidation_risk": "无",
         "funding": null,
@@ -516,64 +500,64 @@
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 106.99260885432906,
-            "model_gross_multiple": 47.494114945647524
+            "model_exit_value": 107.0628087146362,
+            "model_gross_multiple": 47.52628672797084
           },
           {
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 115.40957729504706,
-            "model_gross_multiple": 51.23041477885954
+            "model_exit_value": 115.47215125143013,
+            "model_gross_multiple": 51.25928074704847
           },
           {
             "crash_after_days": 7,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 130.5482084980995,
-            "model_gross_multiple": 57.950466735499425
+            "model_exit_value": 130.60249349761744,
+            "model_gross_multiple": 57.97579596384312
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 102.84785092146466,
-            "model_gross_multiple": 45.654253185164976
+            "model_exit_value": 102.92410196022044,
+            "model_gross_multiple": 45.68907204758983
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 107.82206360198593,
-            "model_gross_multiple": 47.862310651400094
+            "model_exit_value": 107.89122902188889,
+            "model_gross_multiple": 47.89403105979297
           },
           {
             "crash_after_days": 30,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 117.9935603872013,
-            "model_gross_multiple": 52.37744718895314
+            "model_exit_value": 118.05426348131535,
+            "model_gross_multiple": 52.4055070386491
           },
           {
             "crash_after_days": 60,
             "price_drop": 0.5,
             "iv_shock_points": 0,
-            "model_exit_value": 99.95494784663619,
-            "model_gross_multiple": 44.37009091794159
+            "model_exit_value": 100.03971863542718,
+            "model_gross_multiple": 44.40866449455352
           },
           {
             "crash_after_days": 60,
             "price_drop": 0.5,
             "iv_shock_points": 20,
-            "model_exit_value": 99.97710223394915,
-            "model_gross_multiple": 44.37992527032218
+            "model_exit_value": 100.06166158403542,
+            "model_gross_multiple": 44.41840519610742
           },
           {
             "crash_after_days": 60,
             "price_drop": 0.5,
             "iv_shock_points": 50,
-            "model_exit_value": 100.30079978713614,
-            "model_gross_multiple": 44.523614904244646
+            "model_exit_value": 100.38360334723002,
+            "model_gross_multiple": 44.56131847038998
           }
         ]
       }
@@ -581,7 +565,7 @@
   ],
   "reject_counts": {
     "Delta 不在 0.01–0.08": 32,
-    "无法对照同期限参照，错价未知": 13,
+    "无法对照同期限参照，错价未知": 12,
     "最小数量的最大损失超过 5 USDT": 2
   },
   "method": "",
