@@ -1,11 +1,11 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1792762154388,
+  "generated_at_ms": 1792816843128,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
-    "sampled": 41,
+    "sampled": 37,
     "identity_check": "MATCHED",
     "types": [
       "UNISWAP_V3",
@@ -19,27 +19,27 @@
     "best": null,
     "research_leader": {
       "platform": "Merkl",
-      "name": "Provide liquidity to UniswapV4 MON-USDC 0.05%",
-      "opportunity_id": "8829080316986770972",
-      "chain_id": 143,
-      "pool_identifier": "0x18a9fc874581f3ba12b7898f80a683c66fd5877fd74b26a85ba9a3a79c549954",
+      "name": "Provide liquidity to UniswapV4 ETH-USDC Dynamic fee",
+      "opportunity_id": "14902452956286592010",
+      "chain_id": 1,
+      "pool_identifier": "0x98316e8405502774a5d0a0761276b5d26505a8195c1905169864008d5e7a3eea",
       "type": "UNISWAP_V4",
-      "tvl_usd": 375928.544560847,
-      "incentive_apr_pct": 31.33252078649836,
-      "valid_campaign_count": 1,
+      "tvl_usd": 3229958.133115342,
+      "incentive_apr_pct": 48.191574992604245,
+      "valid_campaign_count": 2,
       "reward_tokens": [
-        "WMON"
-      ],
-      "nearest_end_unix_sec": 1793638800,
-      "underlying_tokens": [
-        "MON",
         "USDC"
       ],
-      "score": 24.700221,
+      "nearest_end_unix_sec": 1793202600,
+      "underlying_tokens": [
+        "ETH",
+        "USDC"
+      ],
+      "score": 24.343476,
       "reward_policy": {
         "out_of_range_incentivized": false,
-        "fee_weight_min": 5000,
-        "fee_weight_max": 5000,
+        "fee_weight_min": 1000,
+        "fee_weight_max": 8000,
         "position_claimability": "UNKNOWN_NO_POSITION_OR_CAMPAIGN_PROOF"
       },
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
@@ -60,29 +60,29 @@
     "best": null,
     "fee_leader": {
       "platform": "Meteora",
-      "name": "Kimchi-SOL",
-      "address": "7ZvTsPCzoypD1x4cwGDhWCLG61GbMCF18TXwcMPsYLxg",
+      "name": "BMT-USDC",
+      "address": "CcXK5ixHDZ4uxCYqrgKx6VBUR4wACu6fw7KfKUvaZdMY",
       "token_mints": [
-        "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump",
-        "So11111111111111111111111111111111111111112"
+        "FQgtfugBdpFN7PZ6NdPrZpVLDBrPGxXesi4gVu3vErhY",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ],
       "token_symbols": [
-        "Kimchi",
-        "SOL"
+        "BMT",
+        "USDC"
       ],
-      "token_x_market_cap_usd": 11143562.036902566,
-      "token_y_market_cap_usd": 61479887807.34112,
-      "min_token_market_cap_usd": 11143562.036902566,
-      "tvl_usd": 164689.3818840853,
-      "fee_24h_usd": 30484.521204546338,
-      "fee_30m_usd": 78.7496142438214,
-      "fee_1h_usd": 135.8040469826826,
-      "fee_4h_usd": 831.058671771753,
-      "volume_24h_usd": 3228733.2751417523,
-      "pool_age_days": 2.6,
-      "pool_base_fee_pct": 0.5,
+      "token_x_market_cap_usd": 27293034.92328171,
+      "token_y_market_cap_usd": 7718544994.791259,
+      "min_token_market_cap_usd": 27293034.92328171,
+      "tvl_usd": 601880.5578700007,
+      "fee_24h_usd": 19869.091121351084,
+      "fee_30m_usd": 167.20378876548028,
+      "fee_1h_usd": 906.166925633821,
+      "fee_4h_usd": 18987.735593625595,
+      "volume_24h_usd": 2070121.876492488,
+      "pool_age_days": 304.7,
+      "pool_base_fee_pct": 0.25,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 30484.521204546338,
+      "ranking_value_usd": 19869.091121351084,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -95,29 +95,29 @@
     },
     "research_leader": {
       "platform": "Meteora",
-      "name": "Kimchi-SOL",
-      "address": "7ZvTsPCzoypD1x4cwGDhWCLG61GbMCF18TXwcMPsYLxg",
+      "name": "BMT-USDC",
+      "address": "CcXK5ixHDZ4uxCYqrgKx6VBUR4wACu6fw7KfKUvaZdMY",
       "token_mints": [
-        "CSocnzcRpgSCr1naKcNTieWZUxb6rABe45j844m7pump",
-        "So11111111111111111111111111111111111111112"
+        "FQgtfugBdpFN7PZ6NdPrZpVLDBrPGxXesi4gVu3vErhY",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ],
       "token_symbols": [
-        "Kimchi",
-        "SOL"
+        "BMT",
+        "USDC"
       ],
-      "token_x_market_cap_usd": 11143562.036902566,
-      "token_y_market_cap_usd": 61479887807.34112,
-      "min_token_market_cap_usd": 11143562.036902566,
-      "tvl_usd": 164689.3818840853,
-      "fee_24h_usd": 30484.521204546338,
-      "fee_30m_usd": 78.7496142438214,
-      "fee_1h_usd": 135.8040469826826,
-      "fee_4h_usd": 831.058671771753,
-      "volume_24h_usd": 3228733.2751417523,
-      "pool_age_days": 2.6,
-      "pool_base_fee_pct": 0.5,
+      "token_x_market_cap_usd": 27293034.92328171,
+      "token_y_market_cap_usd": 7718544994.791259,
+      "min_token_market_cap_usd": 27293034.92328171,
+      "tvl_usd": 601880.5578700007,
+      "fee_24h_usd": 19869.091121351084,
+      "fee_30m_usd": 167.20378876548028,
+      "fee_1h_usd": 906.166925633821,
+      "fee_4h_usd": 18987.735593625595,
+      "volume_24h_usd": 2070121.876492488,
+      "pool_age_days": 304.7,
+      "pool_base_fee_pct": 0.25,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 30484.521204546338,
+      "ranking_value_usd": 19869.091121351084,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -132,8 +132,8 @@
     "min_tvl_usd": 100000,
     "min_token_market_cap_usd": 500000,
     "token_market_cap_rule": "BOTH_TOKENS",
-    "sampled": 170,
-    "api_total_after_tvl_filter": 170,
+    "sampled": 167,
+    "api_total_after_tvl_filter": 167,
     "pages": 1,
     "page_size": 200,
     "max_pages": 12,
