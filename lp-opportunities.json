@@ -1,11 +1,11 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1793372661952,
+  "generated_at_ms": 1793425658922,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
-    "sampled": 42,
+    "sampled": 41,
     "identity_check": "MATCHED",
     "types": [
       "UNISWAP_V3",
@@ -19,27 +19,27 @@
     "best": null,
     "research_leader": {
       "platform": "Merkl",
-      "name": "Provide liquidity to UniswapV4 SPY-MU 0.05%",
-      "opportunity_id": "3832553206292798416",
+      "name": "Provide liquidity to UniswapV4 ETH-USDG Dynamic fee",
+      "opportunity_id": "10620463562208580671",
       "chain_id": 4663,
-      "pool_identifier": "0xcc2a903a8744a65258bb07fbeea553a25410f731c9fef306321d0c176a09542c",
+      "pool_identifier": "0xa791e5169faf703c0b63fd9552c33ec1128a773a00f5dc33a640da62a022cd35",
       "type": "UNISWAP_V4",
-      "tvl_usd": 413813.74421318935,
-      "incentive_apr_pct": 31.501404829570465,
+      "tvl_usd": 1421539.6245176627,
+      "incentive_apr_pct": 98.75533045843403,
       "valid_campaign_count": 1,
       "reward_tokens": [
         "USDG"
       ],
       "nearest_end_unix_sec": 1794488400,
       "underlying_tokens": [
-        "SPY",
-        "MU"
+        "ETH",
+        "USDG"
       ],
-      "score": 16.992162,
+      "score": 22.713726,
       "reward_policy": {
         "out_of_range_incentivized": false,
-        "fee_weight_min": 7000,
-        "fee_weight_max": 7000,
+        "fee_weight_min": 8000,
+        "fee_weight_max": 8000,
         "position_claimability": "UNKNOWN_NO_POSITION_OR_CAMPAIGN_PROOF"
       },
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
@@ -61,7 +61,7 @@
     "fee_leader": {
       "platform": "Meteora",
       "name": "GTA6-SOL",
-      "address": "xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a",
+      "address": "5AFbwVSQPJf4cgEjq4TajZYyPYUvYktrRN3SahNrPnmv",
       "token_mints": [
         "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz",
         "So11111111111111111111111111111111111111112"
@@ -70,19 +70,19 @@
         "GTA6",
         "SOL"
       ],
-      "token_x_market_cap_usd": 13629214.72897589,
-      "token_y_market_cap_usd": 55942977493.149574,
-      "min_token_market_cap_usd": 13629214.72897589,
-      "tvl_usd": 361651.44975880126,
-      "fee_24h_usd": 91130.20160602266,
-      "fee_30m_usd": 83.24473145743976,
-      "fee_1h_usd": 206.3626091223955,
-      "fee_4h_usd": 1973.1052431138285,
-      "volume_24h_usd": 4429504.476818038,
-      "pool_age_days": 63.8,
-      "pool_base_fee_pct": 1,
+      "token_x_market_cap_usd": 10402000.98417342,
+      "token_y_market_cap_usd": 56553556503.989,
+      "min_token_market_cap_usd": 10402000.98417342,
+      "tvl_usd": 106406.42227919084,
+      "fee_24h_usd": 9623.76260427668,
+      "fee_30m_usd": 39.45632720116986,
+      "fee_1h_usd": 119.25002866586166,
+      "fee_4h_usd": 670.2416075089593,
+      "volume_24h_usd": 2910271.995249641,
+      "pool_age_days": 1.7,
+      "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 91130.20160602266,
+      "ranking_value_usd": 9623.76260427668,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -96,7 +96,7 @@
     "research_leader": {
       "platform": "Meteora",
       "name": "GTA6-SOL",
-      "address": "xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a",
+      "address": "5AFbwVSQPJf4cgEjq4TajZYyPYUvYktrRN3SahNrPnmv",
       "token_mints": [
         "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz",
         "So11111111111111111111111111111111111111112"
@@ -105,19 +105,19 @@
         "GTA6",
         "SOL"
       ],
-      "token_x_market_cap_usd": 13629214.72897589,
-      "token_y_market_cap_usd": 55942977493.149574,
-      "min_token_market_cap_usd": 13629214.72897589,
-      "tvl_usd": 361651.44975880126,
-      "fee_24h_usd": 91130.20160602266,
-      "fee_30m_usd": 83.24473145743976,
-      "fee_1h_usd": 206.3626091223955,
-      "fee_4h_usd": 1973.1052431138285,
-      "volume_24h_usd": 4429504.476818038,
-      "pool_age_days": 63.8,
-      "pool_base_fee_pct": 1,
+      "token_x_market_cap_usd": 10402000.98417342,
+      "token_y_market_cap_usd": 56553556503.989,
+      "min_token_market_cap_usd": 10402000.98417342,
+      "tvl_usd": 106406.42227919084,
+      "fee_24h_usd": 9623.76260427668,
+      "fee_30m_usd": 39.45632720116986,
+      "fee_1h_usd": 119.25002866586166,
+      "fee_4h_usd": 670.2416075089593,
+      "volume_24h_usd": 2910271.995249641,
+      "pool_age_days": 1.7,
+      "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 91130.20160602266,
+      "ranking_value_usd": 9623.76260427668,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
