@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1793425658922,
+  "generated_at_ms": 1793457213785,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -24,8 +24,8 @@
       "chain_id": 4663,
       "pool_identifier": "0xa791e5169faf703c0b63fd9552c33ec1128a773a00f5dc33a640da62a022cd35",
       "type": "UNISWAP_V4",
-      "tvl_usd": 1421539.6245176627,
-      "incentive_apr_pct": 98.75533045843403,
+      "tvl_usd": 2662809.3206482516,
+      "incentive_apr_pct": 52.72049120844442,
       "valid_campaign_count": 1,
       "reward_tokens": [
         "USDG"
@@ -35,7 +35,7 @@
         "ETH",
         "USDG"
       ],
-      "score": 22.713726,
+      "score": 33.345711,
       "reward_policy": {
         "out_of_range_incentivized": false,
         "fee_weight_min": 8000,
@@ -61,7 +61,7 @@
     "fee_leader": {
       "platform": "Meteora",
       "name": "GTA6-SOL",
-      "address": "5AFbwVSQPJf4cgEjq4TajZYyPYUvYktrRN3SahNrPnmv",
+      "address": "xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a",
       "token_mints": [
         "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz",
         "So11111111111111111111111111111111111111112"
@@ -70,19 +70,19 @@
         "GTA6",
         "SOL"
       ],
-      "token_x_market_cap_usd": 10402000.98417342,
-      "token_y_market_cap_usd": 56553556503.989,
-      "min_token_market_cap_usd": 10402000.98417342,
-      "tvl_usd": 106406.42227919084,
-      "fee_24h_usd": 9623.76260427668,
-      "fee_30m_usd": 39.45632720116986,
-      "fee_1h_usd": 119.25002866586166,
-      "fee_4h_usd": 670.2416075089593,
-      "volume_24h_usd": 2910271.995249641,
-      "pool_age_days": 1.7,
-      "pool_base_fee_pct": 0.2,
+      "token_x_market_cap_usd": 7265357.521248366,
+      "token_y_market_cap_usd": 56369394374.34333,
+      "min_token_market_cap_usd": 7265357.521248366,
+      "tvl_usd": 344864.80870170455,
+      "fee_24h_usd": 11565.19570529477,
+      "fee_30m_usd": 213.1980960302156,
+      "fee_1h_usd": 675.9245119831885,
+      "fee_4h_usd": 3038.6730808021675,
+      "volume_24h_usd": 1012754.0294860308,
+      "pool_age_days": 64.8,
+      "pool_base_fee_pct": 1,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 9623.76260427668,
+      "ranking_value_usd": 11565.19570529477,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -96,7 +96,7 @@
     "research_leader": {
       "platform": "Meteora",
       "name": "GTA6-SOL",
-      "address": "5AFbwVSQPJf4cgEjq4TajZYyPYUvYktrRN3SahNrPnmv",
+      "address": "xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a",
       "token_mints": [
         "4kjruqGHDsSqkMdFfCjV7Vb62HPFhtXyWc2t6JpQzDnz",
         "So11111111111111111111111111111111111111112"
@@ -105,19 +105,19 @@
         "GTA6",
         "SOL"
       ],
-      "token_x_market_cap_usd": 10402000.98417342,
-      "token_y_market_cap_usd": 56553556503.989,
-      "min_token_market_cap_usd": 10402000.98417342,
-      "tvl_usd": 106406.42227919084,
-      "fee_24h_usd": 9623.76260427668,
-      "fee_30m_usd": 39.45632720116986,
-      "fee_1h_usd": 119.25002866586166,
-      "fee_4h_usd": 670.2416075089593,
-      "volume_24h_usd": 2910271.995249641,
-      "pool_age_days": 1.7,
-      "pool_base_fee_pct": 0.2,
+      "token_x_market_cap_usd": 7265357.521248366,
+      "token_y_market_cap_usd": 56369394374.34333,
+      "min_token_market_cap_usd": 7265357.521248366,
+      "tvl_usd": 344864.80870170455,
+      "fee_24h_usd": 11565.19570529477,
+      "fee_30m_usd": 213.1980960302156,
+      "fee_1h_usd": 675.9245119831885,
+      "fee_4h_usd": 3038.6730808021675,
+      "volume_24h_usd": 1012754.0294860308,
+      "pool_age_days": 64.8,
+      "pool_base_fee_pct": 1,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 9623.76260427668,
+      "ranking_value_usd": 11565.19570529477,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -132,8 +132,8 @@
     "min_tvl_usd": 100000,
     "min_token_market_cap_usd": 500000,
     "token_market_cap_rule": "BOTH_TOKENS",
-    "sampled": 156,
-    "api_total_after_tvl_filter": 156,
+    "sampled": 157,
+    "api_total_after_tvl_filter": 157,
     "pages": 1,
     "page_size": 200,
     "max_pages": 12,
