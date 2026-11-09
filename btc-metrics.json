@@ -1,12 +1,12 @@
 {
   "schema": "btc-metrics-v1",
   "status": "LIVE",
-  "observed_at_ms": 1794223331569,
+  "observed_at_ms": 1794226832138,
   "source": "Binance Spot BTCUSDT (1d UTC candle)",
-  "btc_price_usdt": 74690,
-  "btc_change_24h_pct": -1.748,
-  "ema200": 76245.71294184666,
-  "ma120": 75291.89308333329,
+  "btc_price_usdt": 74681.62,
+  "btc_change_24h_pct": -1.672,
+  "ema200": 76245.6175189611,
+  "ma120": 75291.81316666662,
   "last_kline_open_ms": 1794182400000,
   "error": null
 }
