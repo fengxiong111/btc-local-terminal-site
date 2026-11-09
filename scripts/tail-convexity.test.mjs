@@ -24,6 +24,7 @@ import {
   quoteQuality,
   theoreticalPut,
   crashScenarios,
+  tailTarget,
   rankFront,
   nextProbeNotional,
   replayRoute,
@@ -68,11 +69,13 @@ const smile = { fittedIv: 0.56, count: 8, lower: "BTC-261127-58000-P", upper: "B
 function scored(partial) {
   return {
     pass: true,
+    side: "PUT",
     mispricing: "PASS",
     fragility_objective: 0,
     min_qty: 0.01,
     ask: 100,
     all_in_max_loss: 2,
+    convexity_per_month: partial.payoff_blend * partial.dte / 30,
     ...partial
   };
 }
@@ -113,7 +116,8 @@ test("long put economics use contract unit and cap the fee", () => {
 
 test("hard gates fail closed", () => {
   const cases = [
-    [validInput({ side: "CALL" }), "不是 Put"],
+    [validInput({ side: "STRADDLE" }), "不是 Put 或 Call"],
+    [validInput({ side: "CALL" }), "行权价或 Delta 与期权方向不符"],
     [validInput({ underlyingType: "COMMODITY" }), "不是币安 USDT 加密期权"],
     [validInput({ expiryMs: serverTimeMs + 20 * 86400000 }), "剩余天数不在 21–120"],
     [validInput({ expiryMs: serverTimeMs + 121 * 86400000 }), "剩余天数不在 21–120"],
@@ -325,11 +329,11 @@ test("Pareto survivor ranking rewards balanced candidate quality, not one tiny I
     smile_extrapolated: false, fragility_objective: 0
   };
   const good = {
-    ...quote, symbol: "GOOD", mispricing_vol_points: 0.001, payoff_blend: 80,
+    ...quote, symbol: "GOOD", mispricing_vol_points: 0.001, payoff_blend: 80, convexity_per_month: 80 * 100 / 30,
     dte: 100, liquidity: 0.9, persistence: 0.9, all_in_max_loss: 1
   };
   const ivOnly = {
-    ...quote, symbol: "IV_ONLY", mispricing_vol_points: 0.002, payoff_blend: 5,
+    ...quote, symbol: "IV_ONLY", mispricing_vol_points: 0.002, payoff_blend: 5, convexity_per_month: 5,
     dte: 30, liquidity: 0.1, persistence: 0.2, all_in_max_loss: 1
   };
   const results = rankFront([ivOnly, good]);
@@ -404,7 +408,7 @@ test("tail board is compact, aligned, and does not pretend an order filled", () 
   assert.match(html, /\.tail-symbol \{ grid-column: 1 \/ -1;/);
   assert.match(board, /item\.all_in_max_loss/);
   assert.doesNotMatch(board, /formatPremium|item\.ask/);
-  assert.match(board, /route\.crash_payoff \?\? item\.payoff_50/);
+  assert.match(board, /formatMultiple\(item\.payoff_50\)/);
   assert.equal((board.match(/cell\("tail-/g) || []).length, 4);
   ["工具", "次选", "执行", "行权 / 现价", "Delta", "卖价 IV", "买 / 卖", "价差", "权利金", "费用", "最大损失", "错价", "状态", "路径依赖", "清算", "资金费", "盘口", "持有成本"].forEach((label) => {
     assert.equal(board.includes(`metric("${label}"`), false);
@@ -505,4 +509,74 @@ test("fragility needs two authoritative mechanisms and replay blocks illegal add
     { tailState: "CRITICAL", instrument: "PERP_SHORT", total: 10, newInformation: true, leverage: 1, marginMode: "ISOLATED" }
   ]);
   assert.equal(climbed.pass, true);
+});
+
+const callExpiry = expiryMs;
+function validCall(overrides = {}) {
+  return validInput({
+    symbol: "BTC-261127-120000-C",
+    side: "CALL",
+    strike: 120000,
+    delta: 0.03,
+    ...overrides
+  });
+}
+
+test("calls pass the same hard gates and pay off on a log-symmetric doubling", () => {
+  const callSmile = { fittedIv: 0.56, count: 8, lower: "BTC-261127-110000-C", upper: "BTC-261127-130000-C" };
+  const row = evaluateCandidate(validCall(), { smile: callSmile, fragilityScore: 0 });
+  assert.equal(row.pass, true, row.fail_reasons.join(","));
+  assert.equal(row.side, "CALL");
+  assert.equal(row.tail_target, 84756 * 2);
+  const doubled = crashMultiple({ side: "CALL", strike: 120000, spot: 84756, unit: 1, qty: 0.01, allIn: row.all_in_max_loss, drop: 0.5 });
+  assert.ok(Math.abs(doubled.usdt - (84756 * 2 - 120000) * 0.01) < 1e-9);
+  assert.ok(Math.abs(row.payoff_50 - doubled.multiple) < 1e-12);
+  assert.ok(Math.abs(row.convexity_per_month - row.payoff_blend * row.dte / 30) < 1e-9);
+  assert.equal(evaluateCandidate(validCall({ strike: 80000 }), { smile: callSmile, fragilityScore: 0 }).fail_reasons.includes("行权价或 Delta 与期权方向不符"), true);
+  const put = evaluateCandidate(validInput(), { smile, fragilityScore: 0 });
+  assert.equal(put.tail_target, 84756 / 2);
+
+  const scenarios = crashScenarios(row);
+  assert.equal(scenarios.status, "MODEL_ONLY");
+  assert.ok(scenarios.scenarios.every((r) => r.price_move === 1 && r.model_gross_multiple > 0));
+  assert.ok(crashScenarios(put).scenarios.every((r) => r.price_move === -0.5));
+});
+
+test("ranking prefers tail payoff per month of premium over raw short-dated payoff", () => {
+  const base = { pass: true, mispricing: "FLAT", mispricing_vol_points: 0, liquidity: 0.5, persistence: 0.5, fragility_objective: 0, min_qty: 0.01, all_in_max_loss: 2, side: "PUT" };
+  const shortDated = { ...base, symbol: "SHORT", payoff_blend: 60, dte: 25, convexity_per_month: 60 * 25 / 30 };
+  const longDated = { ...base, symbol: "LONG", payoff_blend: 30, dte: 110, convexity_per_month: 30 * 110 / 30 };
+  assert.equal(rankFront([shortDated, longDated])[0].symbol, "LONG");
+});
+
+test("boards rank puts and calls as separate cohorts and the snapshot shows both", () => {
+  const base = { pass: true, mispricing: "FLAT", mispricing_vol_points: 0, liquidity: 0.5, fragility_objective: 0, min_qty: 0.01, all_in_max_loss: 2, dte: 60, payoff_blend: 10, convexity_per_month: 20 };
+  const rows = [
+    { ...base, symbol: "BTC-1-P", side: "PUT", underlying: "BTCUSDT" },
+    { ...base, symbol: "BTC-1-C", side: "CALL", underlying: "BTCUSDT" },
+    { ...base, symbol: "ETH-1-C", side: "CALL", underlying: "ETHUSDT", convexity_per_month: 30 }
+  ];
+  assert.deepEqual(buildBoard(rows, "PUT").ranked.map((r) => r.symbol), ["BTC-1-P"]);
+  assert.deepEqual(buildBoard(rows, "CALL").ranked.map((r) => r.symbol), ["ETH-1-C"]);
+  const snapshot = composeSnapshot({ board: buildBoard(rows, "PUT"), call_board: buildBoard(rows, "CALL"), fragility: { tail_state: "NORMAL", known: true } });
+  assert.deepEqual(snapshot.board.map((r) => r.symbol), ["BTC-1-P"]);
+  assert.deepEqual(snapshot.call_board.map((r) => r.symbol), ["ETH-1-C"]);
+});
+
+test("call smile uses out-of-the-money call strikes above spot", () => {
+  const spot = 100000;
+  const points = [120000, 130000, 140000, 150000, 160000].map((strike, index) => ({
+    symbol: `BTC-261127-${strike}-C`, side: "CALL", strike, spot,
+    askIv: 0.6 + index * 0.02, bid: 10, ask: 10.5, spread: 0.05
+  }));
+  const smile = localSmile(points, "BTC-261127-135000-C", 135000, spot);
+  assert.ok(smile && Math.abs(smile.fittedIv - 0.63) < 0.005, JSON.stringify(smile));
+  assert.equal(smile.extrapolated, false);
+});
+
+test("call rally scenarios are capped so a fantasy +900% move cannot dominate ranking", () => {
+  assert.equal(tailTarget("CALL", 100, 0.5), 200);
+  assert.equal(tailTarget("CALL", 100, 0.9), 300);
+  assert.equal(tailTarget("CALL", 100, 0.7), 300);
+  assert.ok(Math.abs(tailTarget("PUT", 100, 0.9) - 10) < 1e-9);
 });

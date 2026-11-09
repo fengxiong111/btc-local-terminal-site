@@ -89,21 +89,26 @@ test("market caps stay compact, quiet, and custom ordered", () => {
   assert.doesNotMatch(html, /MC:/);
   assert.doesNotMatch(html, /Market Cap/);
   assert.doesNotMatch(html, /\$[0-9]/);
-  ["hype", "spcx", "mu", "sndk", "nvda", "uni"].forEach((id) => {
+  ["hype", "spcx", "mu", "sndk", "nvda"].forEach((id) => {
     assert.match(html, new RegExp(`id: "${id}"`));
   });
-  ["pons", "stonk", "sol", "paid"].forEach((id) => {
+  ["pons", "stonk", "sol", "paid", "uni", "iren"].forEach((id) => {
     assert.doesNotMatch(html, new RegExp(`id: "${id}"`));
   });
-  assert.match(html, /id: "hype"[\s\S]*id: "spcx"[\s\S]*id: "mu"[\s\S]*id: "sndk"[\s\S]*id: "nvda"[\s\S]*id: "uni"/);
+  assert.match(html, /id: "hype"[\s\S]*id: "spcx"[\s\S]*id: "mu"[\s\S]*id: "sndk"[\s\S]*id: "nvda"/);
 });
 
-test("IREN quote uses existing HIP-3 and Binance fallback without changing the layout", () => {
-  assert.match(html, /id: "iren", label: "IREN", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "IRENUSDT"/);
+test("stock quotes keep HIP-3 first with Binance fallback", () => {
   assert.match(html, /fetchHyperliquidMacro\(stockDefinitions, HIP3_STOCK_DEX\)/);
   assert.match(html, /return fetchBinanceMacro\(missingStocks\)/);
   assert.match(html, /fapi\.binance\.com\/fapi\/v1\/ticker\/24hr\?symbol=/);
-  assert.match(html, /id: "nvda"[\s\S]*id: "iren"[\s\S]*id: "uni"/);
+});
+
+test("UNI and IREN are removed and the option board shows calls", () => {
+  assert.doesNotMatch(html, /label: "UNI"|label: "IREN"|uni: \d/);
+  const board = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "tail-board.js"), "utf8");
+  assert.match(board, /snapshot\.call_board/);
+  assert.match(html, /aria-label="前三名币安 USDT 看跌与看涨期权"/);
 });
 
 test("compact market-cap examples use no currency prefix", () => {
@@ -124,7 +129,6 @@ test("compact market-cap examples use no currency prefix", () => {
 });
 
 test("removed prices stay off the board", () => {
-  assert.match(html, /id: "uni", label: "UNI", source: "hyperliquid"/);
   assert.match(html, /id: "hype", label: "HYPE", source: "hyperliquid"/);
   assert.doesNotMatch(html, /label: "PONS"|label: "STONK"|label: "SOL"|label: "PAID"/);
   assert.doesNotMatch(html, /fetchStonk|fetchJupiterStonk|fetchDexScreenerMacro|STONK_SOLANA_ADDRESS|PAID_SOLANA_ADDRESS/);

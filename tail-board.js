@@ -38,29 +38,33 @@ function renderBoard(snapshot) {
   }
 
   const ranked = Array.isArray(snapshot.board) ? snapshot.board : [];
-  const rows = ranked[0]?.route
+  const puts = ranked[0]?.route
     ? ranked.slice(0, DISPLAY_LIMIT)
     : annotateBoard(ranked, { tailState: snapshot.tail_state || "NORMAL" });
+  const calls = Array.isArray(snapshot.call_board) ? snapshot.call_board.slice(0, DISPLAY_LIMIT) : [];
+  const rows = puts.concat(calls);
 
   listNode.replaceChildren();
   if (!rows.length) {
     listNode.append(el("li", "tail-empty", snapshot.state === "BLOCKED_DATA" ? "期权数据暂不可用。" : "这轮没有可展示的期权。"));
   }
 
-  for (const item of rows) {
-    const route = item.route || {};
-    const row = el("li", "tail-card");
+  rows.forEach((item, index) => {
+    const side = item.side === "CALL" ? "CALL" : "PUT";
+    const firstCall = side === "CALL" && index > 0 && rows[index - 1].side !== "CALL";
+    const row = el("li", firstCall ? "tail-card tail-side-start" : "tail-card");
     row.setAttribute("role", "row");
     row.dataset.symbol = item.symbol;
+    row.dataset.side = side;
     if (stale) row.dataset.marketState = "stale";
     row.append(
       cell("tail-symbol", "标的名", item.symbol),
       cell("tail-days", "剩余天数", formatDte(item.dte)),
       cell("tail-cost", "最小下单成本", `${formatUsdt(item.all_in_max_loss)} USDT`),
-      cell("tail-multiple", "50% 跌幅倍数", formatMultiple(route.crash_payoff ?? item.payoff_50))
+      cell("tail-multiple", side === "CALL" ? "翻倍倍数" : "50% 跌幅倍数", formatMultiple(item.payoff_50))
     );
     listNode.append(row);
-  }
+  });
 
   window.__TAIL_BOARD__ = snapshot;
 }

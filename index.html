@@ -197,6 +197,7 @@
       .tail-list { display: grid; width: min(100%, 940px); margin: 0; padding: 0; list-style: none; }
       .tail-card { display: grid; grid-template-columns: minmax(250px, 1.55fr) minmax(92px, 0.55fr) minmax(164px, 0.98fr) minmax(100px, 0.55fr); column-gap: clamp(14px, 1.35vw, 22px); align-items: baseline; min-height: 64px; padding: 14px 4px; border-top: 1px solid rgba(120, 132, 125, 0.18); }
       .tail-card:first-child { border-top: 0; }
+      .tail-card[data-side="CALL"].tail-side-start { border-top: 2px solid rgba(120, 132, 125, 0.42); }
       .tail-card[data-market-state="stale"] { opacity: 0.84; }
       .tail-cell { min-width: 0; color: var(--muted); font-size: clamp(20px, 1.6vw, 28px); font-weight: 560; line-height: 1.1; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
       .tail-symbol { overflow: hidden; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 650; text-align: left; text-overflow: ellipsis; }
@@ -226,8 +227,8 @@
       <section id="market" class="market-section" aria-label="市场行情">
         <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
       </section>
-      <section id="tail" class="tail-section" aria-label="前三名币安 USDT 看跌期权">
-        <div class="tail-board" role="table" aria-label="标的名、剩余天数、最小下单成本和 50% 跌幅倍数">
+      <section id="tail" class="tail-section" aria-label="前三名币安 USDT 看跌与看涨期权">
+        <div class="tail-board" role="table" aria-label="标的名、剩余天数、最小下单成本和尾部倍数（Put 跌 50%，Call 涨 100%）">
           <ol id="tail-list" class="tail-list" role="rowgroup"></ol>
         </div>
       </section>
@@ -252,7 +253,7 @@
         var EMA_CANDLE_LIMIT = 1000;
         var ANIM_MS = 450;
         var ANIM_EASE = "linear(0,.005,.019,.039,.066,.096,.129,.165,.202,.24,.278,.316,.354,.39,.426,.461,.494,.526,.557,.586,.614,.64,.665,.689,.711,.731,.751,.769,.786,.802,.817,.831,.844,.856,.867,.877,.887,.896,.904,.912,.919,.925,.931,.937,.942,.947,.951,.955,.959,.962,.965,.968,.971,.973,.976,.978,.98,.981,.983,.984,.986,.987,.988,.989,.99,.991,.992,.992,.993,.994,.994,.995,.995,.996,.996,.9963,.9967,.9969,.9972,.9975,.9977,.9979,.9981,.9982,.9984,.9985,.9987,.9988,.9989,1)";
-        var BUILD_ID = "iren-20261017";
+        var BUILD_ID = "calls-20261109";
         var reduceMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
         var diagnostics = {
           buildId: BUILD_ID,
@@ -294,8 +295,7 @@
           spcx: 454000000000,
           mu: 262000000000,
           sndk: 20600000000,
-          nvda: 4440000000000,
-          uni: 5497666617
+          nvda: 4440000000000
         };
         var marketListElement = document.getElementById("market-list");
         var priceRequest = false;
@@ -322,9 +322,7 @@
           { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
-          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
-          { id: "iren", label: "IREN", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "IRENUSDT" },
-          { id: "uni", label: "UNI", source: "hyperliquid" }
+          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },

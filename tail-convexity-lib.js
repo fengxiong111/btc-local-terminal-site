@@ -23,15 +23,16 @@ export const TAKER_FEE_RATE = 0.00024;
 export const FEE_CAP_RATIO = 0.1;
 export const FEE_SOURCE = "https://www.binance.info/en/support/announcement/detail/8f1cae716974444da593806e7425e4ff";
 
+// Convexity capture: tail payoff per 30 days of premium spend dominates; relative IV discount
+// and exit liquidity break ties. Cohort-constant fields (fragility) are not ranking inputs.
+export const CONVEXITY_WINDOW_DAYS = 30;
 export const RANK_WEIGHTS = [
-  ["mispricing_vol_points", 6, "desc"],
-  ["payoff_blend", 5, "desc"],
-  ["dte", 4, "desc"],
-  ["liquidity", 3, "desc"],
-  ["fragility_objective", 2, "desc"],
-  ["persistence", 1, "desc"]
+  ["convexity_per_month", 6, "desc"],
+  ["mispricing_vol_points", 3, "desc"],
+  ["liquidity", 2, "desc"]
 ];
 
+export const RANKING_METHOD = "PARETO_CONVEXITY_PER_MONTH_V3";
 export const PARETO_KEYS = RANK_WEIGHTS.map(([key]) => key);
 
 export const PAYOFF_WEIGHTS = { m30: 0.2, m50: 0.4, m70: 0.3, m90: 0.1 };
@@ -69,6 +70,16 @@ export function theoreticalPut({ spot, strike, volatility, days }) {
   return Math.max(0, strike * normalCdf(-d1 + sigmaRoot) - spot * normalCdf(-d1));
 }
 
+export const OPTION_SIDES = ["PUT", "CALL"];
+
+// Log-symmetric tail target: a Put scenario "drop" d maps to a Call rally of 1/(1-d) (50% -> 2x),
+// capped at 3x spot so the unbounded call wing cannot be ranked on a +900% fantasy.
+export const CALL_TARGET_CAP = 3;
+export function tailTarget(side, spot, drop) {
+  if (!(spot > 0) || !(drop >= 0) || drop >= 1) return null;
+  return side === "CALL" ? spot * Math.min(1 / (1 - drop), CALL_TARGET_CAP) : spot * (1 - drop);
+}
+
 export function crashScenarios(row) {
   if (!(row?.spot > 0) || !(row?.strike > 0) || !(row?.ask_iv > 0)
     || !(row?.dte > 0) || !(row?.unit > 0) || !(row?.min_qty > 0) || !(row?.all_in_max_loss > 0)) {
@@ -80,17 +91,20 @@ export function crashScenarios(row) {
   const scenarios = [];
   for (const day of SCENARIO_DAYS) {
     if (day >= row.dte) continue;
+    const target = tailTarget(row.side, row.spot, 0.5);
     for (const volShock of [0, 0.2, 0.5]) {
-      const model = theoreticalPut({
-        spot: row.spot * 0.5, strike: row.strike,
+      const put = theoreticalPut({
+        spot: target, strike: row.strike,
         volatility: Math.min(3, row.ask_iv + volShock),
         days: row.dte - day
       });
-      if (model === null) continue;
+      if (put === null) continue;
+      // Zero-carry put-call parity.
+      const model = row.side === "CALL" ? put + target - row.strike : put;
       const stressedValue = model * row.unit * row.min_qty * (1 - exitHaircut);
       scenarios.push({
         crash_after_days: day,
-        price_drop: 0.5,
+        price_move: target / row.spot - 1,
         iv_shock_points: Math.round(volShock * 100),
         model_exit_value: stressedValue,
         model_gross_multiple: stressedValue / row.all_in_max_loss
@@ -130,9 +144,10 @@ export function entryFee({ index, unit = 1, ask, qty, rate }) {
   return Math.min(underlying * rate, premium * FEE_CAP_RATIO);
 }
 
-export function crashMultiple({ strike, spot, unit = 1, qty, allIn, drop }) {
-  if (!(strike > 0) || !(spot > 0) || !(unit > 0) || !(qty > 0) || !(allIn > 0) || !(drop >= 0) || drop >= 1) return null;
-  const intrinsic = Math.max(strike - spot * (1 - drop), 0) * unit * qty;
+export function crashMultiple({ side = "PUT", strike, spot, unit = 1, qty, allIn, drop }) {
+  const target = tailTarget(side, spot, drop);
+  if (!(strike > 0) || target === null || !(unit > 0) || !(qty > 0) || !(allIn > 0)) return null;
+  const intrinsic = Math.max(side === "CALL" ? target - strike : strike - target, 0) * unit * qty;
   return { usdt: intrinsic, multiple: intrinsic / allIn };
 }
 
@@ -176,7 +191,10 @@ export function bestLevel(levels, side) {
 }
 
 function usableSmilePoint(point, symbol) {
-  const moneyness = point?.spot > 0 && point?.strike > 0 ? point.strike / point.spot : null;
+  // Out-of-the-money moneyness, mirrored for calls so both wings use the same 0.35–1.08 band.
+  const moneyness = point?.spot > 0 && point?.strike > 0
+    ? (point.side === "CALL" ? point.spot / point.strike : point.strike / point.spot)
+    : null;
   return Boolean(point
     && point.symbol !== symbol
     && point.askIv >= 0.05
@@ -281,7 +299,11 @@ export function evaluateCandidate(input, context = {}) {
     && Math.abs(smileGap) <= 0.25;
   const mispricing = smileUsable ? classifyMispricing(smileIv, askIv) : { status: "UNKNOWN", gap: null };
 
-  if (side !== "PUT") pushReason(reasons, "不是 Put");
+  if (!OPTION_SIDES.includes(side)) pushReason(reasons, "不是 Put 或 Call");
+  else if (spot !== null && strike > 0 && delta !== null
+    && (side === "CALL" ? !(strike > spot && delta > 0) : !(strike < spot && delta < 0))) {
+    pushReason(reasons, "行权价或 Delta 与期权方向不符");
+  }
   if (underlyingType !== "CRYPTO") pushReason(reasons, "不是币安 USDT 加密期权");
   if (status !== "TRADING") pushReason(reasons, "合约未在交易");
   if (dte === null || dte < DTE_MIN || dte > DTE_MAX) pushReason(reasons, "剩余天数不在 21–120");
@@ -313,13 +335,15 @@ export function evaluateCandidate(input, context = {}) {
 
   const payoff = allIn !== null && strike !== null && spot !== null && minQty !== null && unit > 0
     ? {
-      m30: crashMultiple({ strike, spot, unit, qty: minQty, allIn, drop: 0.3 }),
-      m50: crashMultiple({ strike, spot, unit, qty: minQty, allIn, drop: 0.5 }),
-      m70: crashMultiple({ strike, spot, unit, qty: minQty, allIn, drop: 0.7 }),
-      m90: crashMultiple({ strike, spot, unit, qty: minQty, allIn, drop: 0.9 })
+      m30: crashMultiple({ side, strike, spot, unit, qty: minQty, allIn, drop: 0.3 }),
+      m50: crashMultiple({ side, strike, spot, unit, qty: minQty, allIn, drop: 0.5 }),
+      m70: crashMultiple({ side, strike, spot, unit, qty: minQty, allIn, drop: 0.7 }),
+      m90: crashMultiple({ side, strike, spot, unit, qty: minQty, allIn, drop: 0.9 })
     }
     : null;
   const blend = payoff && payoff.m30 && payoff.m50 && payoff.m70 && payoff.m90 ? payoffBlend(payoff) : null;
+  // Rolling-equivalent tail payoff per 30 days of premium: a 120D option at 10x equals four 30D rolls at 40x each.
+  const convexityPerMonth = blend !== null && dte > 0 ? blend * dte / CONVEXITY_WINDOW_DAYS : null;
   const burnRatio = theta !== null && minQty !== null && allIn > 0 ? Math.abs(theta) * minQty / allIn : null;
   const persistence = burnRatio !== null ? 1 / (1 + burnRatio) : null;
   const liquidity = liquidityScore({
@@ -370,6 +394,8 @@ export function evaluateCandidate(input, context = {}) {
     payoff_70_usdt: payoff?.m70?.usdt ?? null,
     payoff_90_usdt: payoff?.m90?.usdt ?? null,
     payoff_blend: blend,
+    convexity_per_month: convexityPerMonth,
+    tail_target: tailTarget(side, spot, 0.5),
     bid_size: bidSize,
     ask_size: askSize,
     volume,
@@ -452,14 +478,14 @@ export function rankFront(items) {
       return left.opportunity_tier === "RELATIVE_DISCOUNT_REVIEW" ? -1 : 1;
     }
     if (Math.abs(left.ranking_score - right.ranking_score) > 1e-12) return right.ranking_score - left.ranking_score;
-    return (right.payoff_blend ?? 0) - (left.payoff_blend ?? 0)
+    return (right.convexity_per_month ?? 0) - (left.convexity_per_month ?? 0)
       || left.all_in_max_loss - right.all_in_max_loss
       || left.symbol.localeCompare(right.symbol);
   });
 }
 
-export function buildBoard(evaluated) {
-  const qualified = evaluated.filter((item) => item.pass);
+export function buildBoard(evaluated, side = "PUT") {
+  const qualified = evaluated.filter((item) => item.pass && item.side === side);
   const front = paretoFront(qualified);
   const ranked = rankFront(front).map((item, index) => ({ ...item, rank: index + 1 }));
   return {
@@ -877,16 +903,18 @@ export function composeSnapshot(scan, extras = {}) {
     rwa: null,
     spotHeld: false
   }).map((item) => ({ ...item, crash_scenarios: crashScenarios(item) }));
+  const callBoard = (scan.call_board?.ranked ?? []).slice(0, DISPLAY_LIMIT)
+    .map((item) => ({ ...item, crash_scenarios: crashScenarios(item) }));
   const fingerprint = informationFingerprint({
     tailState,
-    board,
+    board: board.concat(callBoard),
     evidenceIds: scan.fragility?.evidence_ids
   });
   const best = board[0]?.route?.best_instrument || "NONE";
   return {
     schema: "tail-convexity-v1",
     strategy_version: "TAIL_CONVEXITY_V2_RESEARCH",
-    ranking_method: "PARETO_COHORT_WEIGHTED_V2",
+    ranking_method: RANKING_METHOD,
     router: "INSTRUMENT_ROUTER_V1",
     generated_at_ms: scan.generated_at_ms ?? Date.now(),
     server_time_ms: scan.server_time_ms ?? null,
@@ -934,6 +962,7 @@ export function composeSnapshot(scan, extras = {}) {
     research_counts: { relative_discount_review: scan.board?.review_count ?? 0, relative_iv_discounts: scan.board?.edge_count ?? 0 },
     watched: scan.watched ?? null,
     board,
+    call_board: callBoard,
     reject_counts: scan.reject_counts ?? {},
     method: "",
     fee_policy: {
@@ -952,7 +981,7 @@ export function blockedSnapshot(message, ledger) {
     state: "BLOCKED_DATA",
     tail_state: "UNKNOWN",
     strategy_version: "TAIL_CONVEXITY_V2_RESEARCH",
-    ranking_method: "PARETO_COHORT_WEIGHTED_V2",
+    ranking_method: RANKING_METHOD,
     opportunity_state: "BLOCKED_DATA",
     holdings: { state: "UNKNOWN", comparison_state: "BLOCKED_LEDGER", source: "PUBLIC_LEDGER_NOT_AUTHORITY" },
     budget: budgetView(ledger),
@@ -974,6 +1003,7 @@ export function blockedSnapshot(message, ledger) {
     },
     watched: null,
     board: [],
+    call_board: [],
     reject_counts: {},
     method: "",
     fee_policy: {

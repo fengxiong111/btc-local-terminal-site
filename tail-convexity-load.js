@@ -10,7 +10,8 @@ import {
   evaluateCandidate,
   assessFragility,
   localSmile,
-  num
+  num,
+  OPTION_SIDES
 } from "./tail-convexity-lib.js";
 
 const BASE = "https://www.binance.com/bapi/eoptions/v1/public/eoptions";
@@ -205,6 +206,7 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
   const funnel = {
     listed: symbols.size,
     crypto_puts: 0,
+    crypto_calls: 0,
     dte_in_range: 0,
     ticker_book: 0,
     ticker_spread: 0,
@@ -218,8 +220,8 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
   const queue = [];
 
   for (const spec of symbols.values()) {
-    if (spec.side !== "PUT" || !crypto.has(spec.underlying) || spec.underlyingType !== "CRYPTO") continue;
-    funnel.crypto_puts += 1;
+    if (!OPTION_SIDES.includes(spec.side) || !crypto.has(spec.underlying) || spec.underlyingType !== "CRYPTO") continue;
+    funnel[spec.side === "CALL" ? "crypto_calls" : "crypto_puts"] += 1;
     const ticker = tickers.get(spec.symbol) || {};
     const spot = spots[spec.underlying] ?? null;
     const expiryMs = num(spec.expiryDate);
@@ -237,6 +239,7 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
 
     const point = {
       symbol: spec.symbol,
+      side: spec.side,
       underlying: spec.underlying,
       expiryMs,
       strike: num(spec.strikePrice),
@@ -246,7 +249,7 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
       spread: spread ?? 99,
       askIv
     };
-    const chainKey = `${spec.underlying}|${expiryMs}`;
+    const chainKey = `${spec.underlying}|${expiryMs}|${spec.side}`;
     if (!chain.has(chainKey)) chain.set(chainKey, []);
     chain.get(chainKey).push(point);
 
@@ -270,7 +273,7 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
   funnel.depth_fetched = books.length;
 
   const evaluated = books.map(({ entry, mark, book }) => {
-    const chainKey = `${entry.spec.underlying}|${entry.spec.expiryDate}`;
+    const chainKey = `${entry.spec.underlying}|${num(entry.spec.expiryDate)}|${entry.spec.side}`;
     const strike = num(entry.spec.strikePrice);
     const smile = localSmile(chain.get(chainKey) || [], entry.spec.symbol, strike, entry.spot);
     return evaluateCandidate({
@@ -302,10 +305,13 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
     });
   });
 
-  const board = buildBoard(evaluated);
+  const board = buildBoard(evaluated, "PUT");
+  const callBoard = buildBoard(evaluated, "CALL");
   funnel.qualified = board.qualified_count;
   funnel.pareto = board.pareto_count;
   funnel.edge = board.edge_count;
+  funnel.call_qualified = callBoard.qualified_count;
+  funnel.call_pareto = callBoard.pareto_count;
   const watched = evaluated.find((item) => item.symbol === WATCHED_SYMBOL) ?? {
     symbol: WATCHED_SYMBOL,
     pass: false,
@@ -323,6 +329,7 @@ export async function scanTailConvexity({ fetchImpl = fetch, concurrency = 5, no
     evaluated,
     watched,
     board,
+    call_board: callBoard,
     fragility,
     reject_counts: countReasons(evaluated)
   };

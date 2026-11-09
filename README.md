@@ -3,8 +3,9 @@
 这是只用于 GitHub Pages 远程查看的静态价格 / 市场监控终端，不依赖本地服务或本机文件。页面以 BTC 为视觉锚点，其他行情按响应式网格排列；手机与 iPad 使用原生页面滚动，不设置内部滚动容器。
 
 - BTC：Binance 现货 WebSocket 优先，OKX WebSocket / Hyperliquid REST 回退；日线 EMA200 / MA120
-- HYPE / UNI：Hyperliquid WebSocket 优先，REST 回退
-- SPCX / MU / SNDK / NVDA / IREN：Hyperliquid HIP-3 `xyz` WebSocket 优先；单个标的缺失时回退 Binance USDⓈ-M 行情（IREN 备用合约 `IRENUSDT`）
+- HYPE：Hyperliquid WebSocket 优先，REST 回退
+- SPCX / MU / SNDK / NVDA：Hyperliquid HIP-3 `xyz` WebSocket 优先；单个标的缺失时回退 Binance USDⓈ-M 行情
+- UNI、IREN 已于 2026-11-09 从页面移除
 - 股票板块展示的是跟踪美股的永续合约报价，不是纳斯达克 / 纽交所股票现货成交价；合约可在美股休市时继续波动
 - Uniswap 快照：仓库保留真实 ExploreStats 数据，静态首页不展示榜单
 - WebSocket 优先、REST 回退、浏览器缓存和失败回退均在 `index.html` 内完成
@@ -20,7 +21,16 @@
 
 数据生成脚本：`scripts/update-uniswap-fee.mjs`。GitHub Actions：`.github/workflows/update-uniswap-fee.yml`。
 
-静态页展示 token 行情，并在同一页下方展示前三名币安 USDT 加密期权 Put。筛选仍比较买 Put、逐仓永续、现货对冲和反向 RWA；页面每行只显示标的、天数、最小下单成本和 50% 跌幅倍数，不显示标题、表头或卖一价格，也不提交委托。
+静态页展示 token 行情，并在同一页下方展示前三名币安 USDT 加密期权 Put 和前三名 Call（Put 在上，Call 在下，中间一条分隔线）。Put 和 Call 各自成组排名，互不比较。页面每行只显示标的、天数、最小下单成本和尾部倍数：Put 是标的跌 50% 的倍数，Call 是标的翻倍（涨 100%）的倍数。不显示标题、表头或卖一价格，也不提交委托。快照里 Put 在 `board`，Call 在 `call_board`；Kindle 和提醒仍只读 `board`。
+
+### 2026-11-09 凸性捕获排序（`PARETO_CONVEXITY_PER_MONTH_V3`）
+
+- 排序主指标是 `convexity_per_month = payoff_blend × dte / 30`：每花 30 天的权利金能换到多少尾部回款倍数。滚动等价：120 天 10× 与连续滚 4 张 30 天 40× 等价。旧做法把「倍数」和「天数」分开打分，会偏向短期限、贵的时间价值。
+- 权重：`convexity_per_month` 6、同期限 IV 相对折价 3、流动性 2。删除了对全部候选都一样的 `fragility_objective`，以及与月度凸性重复的 `dte`、`persistence`。帕累托淘汰改用这三个维度。
+- 「相对折价待审核」档仍排在「仅研究」档之前，硬门不变（21–120 天、|Delta| 0.01–0.08、≤5 USDT、价差 ≤10%）。
+- Call 情景按对数对称映射 Put 跌幅：跌 30%/50%/70%/90% ↔ 涨到现价的 1.43×/2×/3×/3×。上涨目标封顶 3 倍现价（`CALL_TARGET_CAP`），避免「涨 900%」这种情景主导排序。
+- Call 的同期限 IV 参照使用现价上方的虚值 Call，虚值程度区间与 Put 镜像。
+- 这是只读研究排序，没有用历史行情回测调参；`crash_scenarios` 仍是模型估算，不是可成交卖价。
 
 数据生成脚本：`scripts/update-tail-convexity.mjs`。结果：`tail-convexity.json`。账本：`tail-ledger.json`。GitHub Actions：`.github/workflows/update-tail-convexity.yml`，每 30 分钟用公开数据刷新一次快照。最小下单成本为最小数量的权利金与费用之和；倍数为标的下跌 50% 时的估算回报倍数。
 
