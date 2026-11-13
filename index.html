@@ -262,11 +262,9 @@
         var HIP3_STOCK_DEX = "xyz";
         var MARKET_CAP_BY_ID = {
           btc: 1644320920318,
-          hype: 20959322489,
-          spcx: 454000000000,
           mu: 262000000000,
-          sndk: 20600000000,
-          nvda: 4440000000000
+          nvda: 4440000000000,
+          googl: 3670000000000
         };
         var marketListElement = document.getElementById("market-list");
         var priceRequest = false;
@@ -289,11 +287,9 @@
         var hlLastWsAt = 0;
         var cachedState = readCache();
         var macroDefinitions = [
-          { id: "hype", label: "HYPE", source: "hyperliquid" },
-          { id: "spcx", label: "SPCX", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SPCXUSDT" },
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
-          { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
-          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
+          { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
+          { id: "googl", label: "GOOGL", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "GOOGLUSDT" }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "okx" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },
@@ -1163,7 +1159,7 @@
               if (message.data.dex === HIP3_STOCK_DEX) applyHyperliquidMids(mids, HIP3_STOCK_DEX);
               else {
                 applyHyperliquidMids(mids);
-                if (lookupMid(mids, "SPCX", HIP3_STOCK_DEX) !== null) applyHyperliquidMids(mids, HIP3_STOCK_DEX);
+                if (lookupMid(mids, "GOOGL", HIP3_STOCK_DEX) !== null) applyHyperliquidMids(mids, HIP3_STOCK_DEX);
               }
             },
             onDisconnect: function () {

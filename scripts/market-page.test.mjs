@@ -89,13 +89,13 @@ test("market caps stay compact, quiet, and custom ordered", () => {
   assert.doesNotMatch(html, /MC:/);
   assert.doesNotMatch(html, /Market Cap/);
   assert.doesNotMatch(html, /\$[0-9]/);
-  ["hype", "spcx", "mu", "sndk", "nvda"].forEach((id) => {
+  ["mu", "nvda", "googl"].forEach((id) => {
     assert.match(html, new RegExp(`id: "${id}"`));
   });
-  ["pons", "stonk", "sol", "paid", "uni", "iren"].forEach((id) => {
+  ["hype", "spcx", "sndk", "pons", "stonk", "sol", "paid", "uni", "iren"].forEach((id) => {
     assert.doesNotMatch(html, new RegExp(`id: "${id}"`));
   });
-  assert.match(html, /id: "hype"[\s\S]*id: "spcx"[\s\S]*id: "mu"[\s\S]*id: "sndk"[\s\S]*id: "nvda"/);
+  assert.match(html, /id: "mu"[\s\S]*id: "nvda"[\s\S]*id: "googl"/);
 });
 
 test("market page excludes the option board", () => {
@@ -122,7 +122,7 @@ test("compact market-cap examples use no currency prefix", () => {
 });
 
 test("removed prices stay off the board", () => {
-  assert.match(html, /id: "hype", label: "HYPE", source: "hyperliquid"/);
+  assert.match(html, /id: "googl", label: "GOOGL", source: "hyperliquid"/);
   assert.doesNotMatch(html, /label: "PONS"|label: "STONK"|label: "SOL"|label: "PAID"/);
   assert.doesNotMatch(html, /fetchStonk|fetchJupiterStonk|fetchDexScreenerMacro|STONK_SOLANA_ADDRESS|PAID_SOLANA_ADDRESS/);
   assert.doesNotMatch(html, /6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx|98kfF7rmsg1QDUEoCqNE7g7M1FdrTt92TEp2CLzypump/);
