@@ -22,7 +22,8 @@ test("static page has no implicit favicon request", () => {
   assert.match(html, /<link rel="icon" href="data:," \/>/);
 });
 
-test("EMA and MA do not render a dash change", () => {
+test("EMA displays without MA120 or a dash change", () => {
+  assert.doesNotMatch(html, /ma120|MA120/);
   assert.match(html, /market-change\.is-empty \{ display: none; \}/);
   assert.match(html, /refs\.change\.classList\.add\("is-empty"\)/);
   assert.equal(html.includes('refs.change.textContent = change === null ? "—"'), false);

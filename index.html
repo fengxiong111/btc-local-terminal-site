@@ -292,8 +292,7 @@
           { id: "googl", label: "GOOGL", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "GOOGLUSDT" }
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "okx" }].concat([
-          { id: "ema200", label: "EMA200", source: "btc-daily" },
-          { id: "ma120", label: "MA120", source: "btc-daily" }
+          { id: "ema200", label: "EMA200", source: "btc-daily" }
         ], macroDefinitions);
 
         function formatCompactMarketCap(value) {
@@ -320,7 +319,7 @@
 
         if (cachedState) {
           if (cachedState.btc) renderBtc(cachedState.btc, true);
-          if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120, true);
+          if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, true);
           if (cachedState.macro) renderMacro(cachedState.macro, true);
         }
 
@@ -410,8 +409,7 @@
               savedAt: Date.now(),
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
-              ema200: cachedState && cachedState.ema200,
-              ma120: cachedState && cachedState.ma120
+              ema200: cachedState && cachedState.ema200
             }));
           } catch (error) {
             // Private browsing or a restricted browser may disable storage.
@@ -450,7 +448,7 @@
 
         function staleLimit(id) {
           if (id === "btc") return BTC_STALE_MS;
-          if (id === "ema200" || id === "ma120") return EMA_STALE_MS;
+          if (id === "ema200") return EMA_STALE_MS;
           return HL_STALE_MS;
         }
 
@@ -807,7 +805,6 @@
             });
           }
           if (marketItemsById.ema200) cachedState.ema200 = marketItemsById.ema200.price;
-          if (marketItemsById.ma120) cachedState.ma120 = marketItemsById.ma120.price;
           cachedState.macro = macroDefinitions.map(function (definition) {
             return marketItemsById[definition.id];
           }).filter(function (item) {
@@ -834,7 +831,7 @@
           Object.keys(priceBuffer).forEach(function (id) {
             var item = priceBuffer[id];
             marketItemsById[id] = item;
-            if (id !== "btc" && id !== "ema200" && id !== "ma120") macroItemsById[id] = item;
+            if (id !== "btc" && id !== "ema200") macroItemsById[id] = item;
           });
           markStaleAssets();
           persistCachedState();
@@ -874,7 +871,7 @@
             odometersById = {};
             var fragment = document.createDocumentFragment();
             var btcItem = validItems.filter(function (item) { return item.id === "btc"; })[0] || null;
-            var metricItems = validItems.filter(function (item) { return item.id === "ema200" || item.id === "ma120"; });
+            var metricItems = validItems.filter(function (item) { return item.id === "ema200"; });
             if (btcItem || metricItems.length) {
               var heroRow = createBtcHeroRow(btcItem, metricItems);
               if (btcItem) marketRowsById.btc = heroRow;
@@ -882,7 +879,7 @@
               fragment.appendChild(heroRow);
             }
             validItems.forEach(function (item) {
-              if (item.id === "btc" || item.id === "ema200" || item.id === "ma120") return;
+              if (item.id === "btc" || item.id === "ema200") return;
               var row = createMarketRow(item);
               marketRowsById[item.id] = row;
               fragment.appendChild(row);
@@ -895,9 +892,8 @@
           });
         }
 
-        function renderEma200(value, ma120, isStale) {
+        function renderEma200(value, isStale) {
           var ema = finite(value);
-          var ma = finite(ma120);
           var stale = Boolean(isStale);
           if (ema !== null) {
             ingestQuote("ema200", {
@@ -911,18 +907,7 @@
               stale: stale
             });
           }
-          if (ma !== null) {
-            ingestQuote("ma120", {
-              label: "MA120",
-              source: "btc-daily",
-              provider: "okx-candles",
-              symbol: "BTC-1D",
-              price: ma,
-              change: null,
-              status: stale ? "STALE" : "LIVE",
-              stale: stale
-            });
-          }
+
         }
 
         function fetchEma200() {
@@ -931,18 +916,15 @@
           requestJson("https://www.okx.com/api/v5/market/history-candles?instId=BTC-USDT&bar=1Dutc&limit=300", 8000).then(function (payload) {
             if (!payload || payload.code !== "0") throw new Error("OKX 日线请求失败");
             var closes = (Array.isArray(payload.data) ? payload.data : []).slice().reverse().map(function (item) { return finite(item && item[4]); }).filter(function (value) { return value !== null && value > 0; });
-            if (closes.length < EMA_PERIOD || closes.length < 120) throw new Error("OKX 日线数据不足");
+            if (closes.length < EMA_PERIOD) throw new Error("OKX 日线数据不足");
             var sum = 0;
             for (var index = 0; index < EMA_PERIOD; index += 1) sum += closes[index];
             var ema = sum / EMA_PERIOD;
             var multiplier = 2 / (EMA_PERIOD + 1);
             for (var next = EMA_PERIOD; next < closes.length; next += 1) ema = (closes[next] - ema) * multiplier + ema;
-            var maStart = closes.length - 120;
-            var maSum = 0;
-            for (var maIndex = maStart; maIndex < closes.length; maIndex += 1) maSum += closes[maIndex];
-            renderEma200(ema, maSum / 120, false);
+            renderEma200(ema, false);
           }).catch(function () {
-            if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, cachedState.ma120, true);
+            if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, true);
           }).then(function () { emaRequest = false; }, function () { emaRequest = false; });
         }
 
