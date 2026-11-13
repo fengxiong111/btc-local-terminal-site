@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1794552548916,
+  "generated_at_ms": 1794587297858,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -24,8 +24,8 @@
       "chain_id": 4663,
       "pool_identifier": "0xa791e5169faf703c0b63fd9552c33ec1128a773a00f5dc33a640da62a022cd35",
       "type": "UNISWAP_V4",
-      "tvl_usd": 3277321.743918368,
-      "incentive_apr_pct": 39.771496359081276,
+      "tvl_usd": 3876740.064757884,
+      "incentive_apr_pct": 33.62290516906862,
       "valid_campaign_count": 1,
       "reward_tokens": [
         "USDG"
@@ -35,7 +35,7 @@
         "ETH",
         "USDG"
       ],
-      "score": 45.737221,
+      "score": 38.666341,
       "reward_policy": {
         "out_of_range_incentivized": false,
         "fee_weight_min": 8000,
@@ -60,29 +60,29 @@
     "best": null,
     "fee_leader": {
       "platform": "Meteora",
-      "name": "mihao-SOL",
-      "address": "92iqiEu5XADScMugFLSjaQUqS1uAKWeCsstNuJo35Cbs",
+      "name": "USDC-SANC",
+      "address": "F1KKNyUCsQcZLRjwQ4abX6Ri8gDAQ46nHwSHFKA5sFQv",
       "token_mints": [
-        "4CxjZyMNoF1p6eXHXHv1TWpS2X47CuUmLwtGe18spump",
-        "So11111111111111111111111111111111111111112"
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "CLoUDKc4Ane7HeQcPpE3YHnznRxhMimJ4MyaUqyHFzAu"
       ],
       "token_symbols": [
-        "mihao",
-        "SOL"
+        "USDC",
+        "SANC"
       ],
-      "token_x_market_cap_usd": 13956939.265497109,
-      "token_y_market_cap_usd": 47000630045.68944,
-      "min_token_market_cap_usd": 13956939.265497109,
-      "tvl_usd": 433639.94620864687,
-      "fee_24h_usd": 22780.854754935837,
-      "fee_30m_usd": 124.08305451160086,
-      "fee_1h_usd": 233.8237694794617,
-      "fee_4h_usd": 2227.7968495230157,
-      "volume_24h_usd": 7003399.975310383,
-      "pool_age_days": 2.3,
+      "token_x_market_cap_usd": 8786484223.5433,
+      "token_y_market_cap_usd": 48939376.390275486,
+      "min_token_market_cap_usd": 48939376.390275486,
+      "tvl_usd": 481200.3747326716,
+      "fee_24h_usd": 28978.590034416953,
+      "fee_30m_usd": 79.86030313654648,
+      "fee_1h_usd": 220.63576512247272,
+      "fee_4h_usd": 1236.6857558593483,
+      "volume_24h_usd": 6055657.304571493,
+      "pool_age_days": 848,
       "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 22780.854754935837,
+      "ranking_value_usd": 28978.590034416953,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -95,29 +95,29 @@
     },
     "research_leader": {
       "platform": "Meteora",
-      "name": "mihao-SOL",
-      "address": "92iqiEu5XADScMugFLSjaQUqS1uAKWeCsstNuJo35Cbs",
+      "name": "USDC-SANC",
+      "address": "F1KKNyUCsQcZLRjwQ4abX6Ri8gDAQ46nHwSHFKA5sFQv",
       "token_mints": [
-        "4CxjZyMNoF1p6eXHXHv1TWpS2X47CuUmLwtGe18spump",
-        "So11111111111111111111111111111111111111112"
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "CLoUDKc4Ane7HeQcPpE3YHnznRxhMimJ4MyaUqyHFzAu"
       ],
       "token_symbols": [
-        "mihao",
-        "SOL"
+        "USDC",
+        "SANC"
       ],
-      "token_x_market_cap_usd": 13956939.265497109,
-      "token_y_market_cap_usd": 47000630045.68944,
-      "min_token_market_cap_usd": 13956939.265497109,
-      "tvl_usd": 433639.94620864687,
-      "fee_24h_usd": 22780.854754935837,
-      "fee_30m_usd": 124.08305451160086,
-      "fee_1h_usd": 233.8237694794617,
-      "fee_4h_usd": 2227.7968495230157,
-      "volume_24h_usd": 7003399.975310383,
-      "pool_age_days": 2.3,
+      "token_x_market_cap_usd": 8786484223.5433,
+      "token_y_market_cap_usd": 48939376.390275486,
+      "min_token_market_cap_usd": 48939376.390275486,
+      "tvl_usd": 481200.3747326716,
+      "fee_24h_usd": 28978.590034416953,
+      "fee_30m_usd": 79.86030313654648,
+      "fee_1h_usd": 220.63576512247272,
+      "fee_4h_usd": 1236.6857558593483,
+      "volume_24h_usd": 6055657.304571493,
+      "pool_age_days": 848,
       "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 22780.854754935837,
+      "ranking_value_usd": 28978.590034416953,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -132,8 +132,8 @@
     "min_tvl_usd": 100000,
     "min_token_market_cap_usd": 500000,
     "token_market_cap_rule": "BOTH_TOKENS",
-    "sampled": 155,
-    "api_total_after_tvl_filter": 155,
+    "sampled": 153,
+    "api_total_after_tvl_filter": 153,
     "pages": 1,
     "page_size": 200,
     "max_pages": 12,
