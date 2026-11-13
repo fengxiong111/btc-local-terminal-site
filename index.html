@@ -128,23 +128,13 @@
       .market-change.up { color: var(--up); }
       .market-change.down { color: var(--down); }
 
-      .market-row--btc { grid-column: 1 / -1; min-height: 0; gap: clamp(16px, 1.3vw, 22px); padding: clamp(22px, 1.6vw, 32px); background: var(--surface-strong); }
-      .market-row--btc .market-symbol { font-size: clamp(16px, 1.15vw, 21px); }
-      .market-row--btc .market-quote { flex: 0 0 auto; gap: clamp(24px, 2.2vw, 40px); }
-      .market-row--btc .market-price { font-size: clamp(68px, 5vw, 96px); letter-spacing: -0.06em; }
-      .market-row--btc .market-change { font-size: clamp(15px, 1.1vw, 20px); }
-      .btc-metrics { display: grid; width: min(100%, 620px); max-width: 620px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 2.4vw, 40px); margin-top: 1px; padding-top: clamp(14px, 1.1vw, 20px); border-top: 1px solid rgba(120, 132, 125, 0.25); }
-      .btc-metric { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
-      .btc-metric .market-symbol { color: var(--muted); font-size: clamp(13px, 0.95vw, 16px); letter-spacing: 0; }
-      .btc-metric .market-price { font-size: clamp(28px, 2.1vw, 38px); letter-spacing: -0.045em; }
-
-      .empty { padding: 22px 12px; color: var(--muted); font-size: 14.5px; line-height: 18px; text-align: center; }
+      .btc-cap-group { display: flex; margin-left: auto; flex-direction: column; align-items: flex-end; gap: 3px; }
+      .btc-metric { display: flex; align-items: baseline; gap: 4px; color: var(--muted); font-size: clamp(9px, 0.7vw, 13px); line-height: 1.2; white-space: nowrap; }
+      .btc-metric .market-symbol, .btc-metric .market-price { color: inherit; font-size: inherit; font-weight: 500; letter-spacing: 0; }
+      .btc-metric[data-market-state="stale"] { opacity: 0.7; }
 
       @media (max-width: 1024px) and (min-width: 561px) {
         .market-price { font-size: clamp(24px, 3vw, 32px); }
-        .market-row--btc .market-price { font-size: clamp(48px, 6.5vw, 72px); }
-        .btc-metric .market-price { font-size: clamp(28px, 3.4vw, 36px); }
-        .market-row--btc { gap: 16px; }
       }
 
       @media (max-width: 560px) {
@@ -155,18 +145,10 @@
         .market-quote { gap: 6px; }
         .market-price { font-size: clamp(20px, 5.6vw, 26px); }
         .market-change { font-size: clamp(11px, 3.1vw, 14px); }
-        .market-row--btc { min-height: 0; gap: 14px; padding: 16px; }
-        .market-row--btc .market-quote { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
-        .market-row--btc .market-price { font-size: clamp(44px, 11vw, 56px); }
-        .market-row--btc .market-change { font-size: clamp(14px, 4vw, 18px); }
-        .btc-metrics { grid-template-columns: 1fr; gap: 12px; margin-top: 0; padding-top: 12px; }
-        .btc-metric .market-symbol { font-size: 13px; }
-        .btc-metric .market-price { font-size: clamp(25px, 7vw, 30px); }
       }
 
       @media (orientation: landscape) and (max-height: 620px) {
         .page { padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)); }
-        .market-row--btc { min-height: 170px; }
       }
 
       @media (max-width: 1399px) and (min-width: 901px) {
@@ -670,59 +652,29 @@
         }
 
         function createBtcHeroRow(btcItem, metricItems) {
-          var row = document.createElement("div");
-          row.className = "market-row market-row--btc";
+          var row = createMarketRow(btcItem || { id: "btc" });
+          var cap = row._marketRefs.marketCap;
+          var group = document.createElement("div");
+          group.className = "btc-cap-group";
+          cap.replaceWith(group);
+          group.appendChild(cap);
           var metricRows = {};
-
-          if (btcItem) {
-            var ident = document.createElement("div");
-            ident.className = "market-ident";
-            var symbol = document.createElement("strong");
-            symbol.className = "market-symbol";
-            var staleDot = document.createElement("span");
-            staleDot.className = "market-stale-dot";
-            staleDot.setAttribute("aria-hidden", "true");
-            var marketCapElement = document.createElement("span");
-            marketCapElement.className = "market-cap";
-            ident.append(symbol, staleDot, marketCapElement);
-
-            var quote = document.createElement("div");
-            quote.className = "market-quote";
-            var priceElement = document.createElement("span");
-            priceElement.className = "market-price";
-            priceElement.setAttribute("aria-hidden", "true");
-            var accessiblePriceElement = document.createElement("span");
-            accessiblePriceElement.className = "market-price-accessible sr-only";
-            var changeElement = document.createElement("span");
-            changeElement.className = "market-change is-empty";
-            quote.append(priceElement, accessiblePriceElement, changeElement);
-            row.append(ident, quote);
-            row._marketRefs = { symbol: symbol, marketCap: marketCapElement, price: priceElement, priceAccessible: accessiblePriceElement, change: changeElement };
-          }
-
-          if (metricItems.length) {
-            var metrics = document.createElement("div");
-            metrics.className = "btc-metrics";
-            metricItems.forEach(function (item) {
-              var metric = document.createElement("div");
-              metric.className = "btc-metric btc-metric--" + item.id;
-              var metricSymbol = document.createElement("strong");
-              metricSymbol.className = "market-symbol";
-              metricSymbol.textContent = item.label || item.id.toUpperCase();
-              var metricPrice = document.createElement("span");
-              metricPrice.className = "market-price";
-              metricPrice.setAttribute("aria-hidden", "true");
-              var accessibleMetricPrice = document.createElement("span");
-              accessibleMetricPrice.className = "market-price-accessible sr-only";
-              metric.append(metricSymbol, metricPrice, accessibleMetricPrice);
-              metric._isBtcMetric = true;
-              metric._marketRefs = { symbol: metricSymbol, price: metricPrice, priceAccessible: accessibleMetricPrice, change: null };
-              metricRows[item.id] = metric;
-              metrics.appendChild(metric);
-            });
-            row.appendChild(metrics);
-          }
-
+          metricItems.forEach(function (item) {
+            var metric = document.createElement("div");
+            metric.className = "btc-metric btc-metric--" + item.id;
+            var metricSymbol = document.createElement("span");
+            metricSymbol.className = "market-symbol";
+            var metricPrice = document.createElement("span");
+            metricPrice.className = "market-price";
+            metricPrice.setAttribute("aria-hidden", "true");
+            var accessibleMetricPrice = document.createElement("span");
+            accessibleMetricPrice.className = "market-price-accessible sr-only";
+            metric.append(metricSymbol, metricPrice, accessibleMetricPrice);
+            metric._isBtcMetric = true;
+            metric._marketRefs = { symbol: metricSymbol, price: metricPrice, priceAccessible: accessibleMetricPrice, change: null };
+            metricRows[item.id] = metric;
+            group.appendChild(metric);
+          });
           row._metricRows = metricRows;
           return row;
         }
