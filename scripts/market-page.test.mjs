@@ -41,7 +41,7 @@ test("generic decimal odometer is shared", () => {
 });
 
 test("websocket is primary and rest is fallback", () => {
-  assert.match(html, /wss:\/\/stream\.binance\.com:9443\/ws\/btcusdt@bookTicker/);
+  assert.doesNotMatch(html, /stream\.binance\.com|api\.binance\.com|fapi\.binance\.com/);
   assert.match(html, /wss:\/\/ws\.okx\.com:8443\/ws\/v5\/public/);
   assert.match(html, /wss:\/\/api\.hyperliquid\.xyz\/ws/);
   assert.doesNotMatch(html, /lite-api\.jup\.ag|api\.dexscreener\.com/);
@@ -98,17 +98,10 @@ test("market caps stay compact, quiet, and custom ordered", () => {
   assert.match(html, /id: "hype"[\s\S]*id: "spcx"[\s\S]*id: "mu"[\s\S]*id: "sndk"[\s\S]*id: "nvda"/);
 });
 
-test("stock quotes keep HIP-3 first with Binance fallback", () => {
+test("market page excludes the option board", () => {
   assert.match(html, /fetchHyperliquidMacro\(stockDefinitions, HIP3_STOCK_DEX\)/);
-  assert.match(html, /return fetchBinanceMacro\(missingStocks\)/);
-  assert.match(html, /fapi\.binance\.com\/fapi\/v1\/ticker\/24hr\?symbol=/);
-});
-
-test("UNI and IREN are removed and the option board shows calls", () => {
+  assert.doesNotMatch(html, /tail-board|tail-section|期权/);
   assert.doesNotMatch(html, /label: "UNI"|label: "IREN"|uni: \d/);
-  const board = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "tail-board.js"), "utf8");
-  assert.match(board, /snapshot\.call_board/);
-  assert.match(html, /aria-label="前三名币安 USDT 看跌与看涨期权"/);
 });
 
 test("compact market-cap examples use no currency prefix", () => {

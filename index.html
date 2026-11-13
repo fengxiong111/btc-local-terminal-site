@@ -192,30 +192,6 @@
         .market-section { padding-top: clamp(12px, 3svh, 32px); }
       }
 
-      .tail-section { width: 100%; margin-top: clamp(10px, 0.8vw, 16px); }
-      .tail-board { width: 100%; max-width: 1680px; margin: 0 auto; padding: clamp(10px, 0.8vw, 14px) clamp(14px, 1.1vw, 18px); border-radius: var(--radius-card); background: rgba(248, 250, 247, 0.88); box-shadow: var(--shadow-card); }
-      .tail-list { display: grid; width: min(100%, 940px); margin: 0; padding: 0; list-style: none; }
-      .tail-card { display: grid; grid-template-columns: minmax(250px, 1.55fr) minmax(92px, 0.55fr) minmax(164px, 0.98fr) minmax(100px, 0.55fr); column-gap: clamp(14px, 1.35vw, 22px); align-items: baseline; min-height: 64px; padding: 14px 4px; border-top: 1px solid rgba(120, 132, 125, 0.18); }
-      .tail-card:first-child { border-top: 0; }
-      .tail-card[data-side="CALL"].tail-side-start { border-top: 2px solid rgba(120, 132, 125, 0.42); }
-      .tail-card[data-market-state="stale"] { opacity: 0.84; }
-      .tail-cell { min-width: 0; color: var(--muted); font-size: clamp(20px, 1.6vw, 28px); font-weight: 560; line-height: 1.1; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
-      .tail-symbol { overflow: hidden; color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 650; text-align: left; text-overflow: ellipsis; }
-      .tail-cost { color: var(--text); font-weight: 650; }
-      .tail-empty { margin: 0; padding: 16px 4px; color: var(--muted); font-size: 16px; line-height: 1.45; }
-
-      @media (min-width: 1400px) {
-        .tail-board { max-width: 1520px; }
-      }
-
-      @media (max-width: 560px) {
-        .tail-board { padding: 6px 12px; }
-        .tail-list { width: 100%; }
-        .tail-card { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) minmax(0, 0.7fr); gap: 8px 12px; min-height: 92px; padding: 14px 4px; }
-        .tail-cell { font-size: clamp(18px, 5vw, 20px); text-align: left; }
-        .tail-symbol { grid-column: 1 / -1; font-size: clamp(16px, 4.4vw, 18px); }
-      }
-
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
       }
@@ -227,11 +203,6 @@
       <section id="market" class="market-section" aria-label="市场行情">
         <div id="market-list" class="market-list" aria-live="off"><p class="empty">正在读取公开行情…</p></div>
       </section>
-      <section id="tail" class="tail-section" aria-label="前三名币安 USDT 看跌与看涨期权">
-        <div class="tail-board" role="table" aria-label="标的名、剩余天数、最小下单成本和尾部倍数（Put 跌 50%，Call 涨 100%）">
-          <ol id="tail-list" class="tail-list" role="rowgroup"></ol>
-        </div>
-      </section>
     </main>
     <script>
       (function () {
@@ -239,7 +210,7 @@
 
         var CACHE_KEY = "btc-local-terminal-market-v1";
         var HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info";
-        var BINANCE_WS_URL = "wss://stream.binance.com:9443/ws/btcusdt@bookTicker";
+
         var OKX_WS_URL = "wss://ws.okx.com:8443/ws/v5/public";
         var HYPERLIQUID_WS_URL = "wss://api.hyperliquid.xyz/ws";
         var VISUAL_RENDER_MS = 1000;
@@ -324,7 +295,7 @@
           { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "SNDKUSDT" },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" }
         ];
-        var marketDefinitions = [{ id: "btc", label: "BTC", source: "binance" }].concat([
+        var marketDefinitions = [{ id: "btc", label: "BTC", source: "okx" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" },
           { id: "ma120", label: "MA120", source: "btc-daily" }
         ], macroDefinitions);
@@ -936,7 +907,7 @@
             ingestQuote("ema200", {
               label: "EMA200",
               source: "btc-daily",
-              provider: "binance-klines",
+              provider: "okx-candles",
               symbol: "BTC-1D",
               price: ema,
               change: null,
@@ -948,7 +919,7 @@
             ingestQuote("ma120", {
               label: "MA120",
               source: "btc-daily",
-              provider: "binance-klines",
+              provider: "okx-candles",
               symbol: "BTC-1D",
               price: ma,
               change: null,
@@ -961,9 +932,10 @@
         function fetchEma200() {
           if (emaRequest) return;
           emaRequest = true;
-          requestJson("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=" + EMA_CANDLE_LIMIT, 8000).then(function (candles) {
-            var closes = (Array.isArray(candles) ? candles : []).map(function (item) { return finite(item && item[4]); }).filter(function (value) { return value !== null && value > 0; });
-            if (closes.length < EMA_PERIOD || closes.length < 120) throw new Error("Binance 日线数据不足");
+          requestJson("https://www.okx.com/api/v5/market/history-candles?instId=BTC-USDT&bar=1Dutc&limit=300", 8000).then(function (payload) {
+            if (!payload || payload.code !== "0") throw new Error("OKX 日线请求失败");
+            var closes = (Array.isArray(payload.data) ? payload.data : []).slice().reverse().map(function (item) { return finite(item && item[4]); }).filter(function (value) { return value !== null && value > 0; });
+            if (closes.length < EMA_PERIOD || closes.length < 120) throw new Error("OKX 日线数据不足");
             var sum = 0;
             for (var index = 0; index < EMA_PERIOD; index += 1) sum += closes[index];
             var ema = sum / EMA_PERIOD;
@@ -1047,7 +1019,6 @@
         window.__TEST_BTC_ODOMETER__ = testBtcOdometer;
 
         function socketLabel(url) {
-          if (url === BINANCE_WS_URL) return "binance";
           if (url === OKX_WS_URL) return "okx";
           if (url === HYPERLIQUID_WS_URL) return "hyperliquid";
           return "unknown";
@@ -1127,32 +1098,6 @@
         }
 
         function startBtcSockets() {
-          connectSocket(BINANCE_WS_URL, {
-            onMessage: function (raw) {
-              var message;
-              try { message = JSON.parse(raw); } catch (error) { return; }
-              var bid = finite(message && message.b);
-              var ask = finite(message && message.a);
-              var price = bid !== null && ask !== null ? (bid + ask) / 2 : finite(message && message.p);
-              if (price === null) return;
-              btcPrimaryLive = true;
-              btcLastWsAt = Date.now();
-              ingestQuote("btc", {
-                label: "BTC",
-                source: "binance",
-                provider: "binance-spot-ws",
-                symbol: "BINANCE:BTCUSDT",
-                price: price,
-                status: "LIVE",
-                stale: false
-              });
-            },
-            onDisconnect: function () {
-              btcPrimaryLive = false;
-              fetchBtc();
-            }
-          });
-
           connectSocket(OKX_WS_URL, {
             onOpen: function (socket) {
               socket.send(JSON.stringify({ op: "subscribe", args: [{ channel: "tickers", instId: "BTC-USDT" }] }));
@@ -1161,22 +1106,24 @@
             pingMs: 20000,
             onMessage: function (raw) {
               if (raw === "pong") return;
-              if (btcPrimaryLive) return;
               var message;
               try { message = JSON.parse(raw); } catch (error) { return; }
               var ticker = message && message.data && message.data[0];
               var price = finite(ticker && ticker.last);
               if (price === null) return;
+              btcPrimaryLive = true;
+              btcLastWsAt = Date.now();
               ingestQuote("btc", {
                 label: "BTC",
                 source: "okx",
                 provider: "okx-spot-ws",
                 symbol: "OKX:BTC-USDT",
                 price: price,
-                status: "FALLBACK",
+                status: "LIVE",
                 stale: false
               });
-            }
+            },
+            onDisconnect: function () { btcPrimaryLive = false; fetchBtc(); }
           });
         }
 
@@ -1229,20 +1176,14 @@
         function fetchBtc() {
           if (btcPrimaryLive || priceRequest) return;
           priceRequest = true;
-          var fallback = requestJson("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", 2500).then(function (ticker) {
-            var price = finite(ticker.price);
-            if (price === null) throw new Error("Binance BTC price unavailable");
-            return { price: price, source: "binance", provider: "binance-spot-rest", symbol: "BINANCE:BTCUSDT" };
-          }).catch(function () {
-            return requestJson(HYPERLIQUID_INFO_URL, 2500, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "Accept": "application/json" },
-              body: JSON.stringify({ type: "allMids" })
-            }).then(function (mids) {
-              var price = finite(mids && mids.BTC);
-              if (price === null) throw new Error("Hyperliquid BTC price unavailable");
-              return { price: price, source: "hyperliquid", provider: "hyperliquid-rest", symbol: "HYPERLIQUID:BTC" };
-            });
+          var fallback = requestJson(HYPERLIQUID_INFO_URL, 2500, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ type: "allMids" })
+          }).then(function (mids) {
+            var price = finite(mids && mids.BTC);
+            if (price === null) throw new Error("Hyperliquid BTC price unavailable");
+            return { price: price, source: "hyperliquid", provider: "hyperliquid-rest", symbol: "HYPERLIQUID:BTC" };
           });
           fallback.then(function (quote) {
             ingestQuote("btc", {
@@ -1262,8 +1203,11 @@
         function fetchBtcStats() {
           if (statsRequest) return;
           statsRequest = true;
-          requestJson("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", 3000).then(function (ticker) {
-            var change = finite(ticker.priceChangePercent);
+          requestJson("https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT", 3000).then(function (payload) {
+            var ticker = payload && payload.data && payload.data[0];
+            var last = finite(ticker && ticker.last);
+            var open = finite(ticker && ticker.open24h);
+            var change = last !== null && open > 0 ? (last - open) / open * 100 : null;
             if (change === null) return;
             ingestQuote("btc", { change: change });
           }).then(function () { statsRequest = false; }, function () { statsRequest = false; });
@@ -1304,27 +1248,6 @@
           });
         }
 
-        function fetchBinanceMacro(definitions) {
-          return Promise.all(definitions.map(function (definition) {
-            return requestJson("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + definition.symbol, 3000).then(function (ticker) {
-              var price = finite(ticker.lastPrice);
-              var change = finite(ticker.priceChangePercent);
-              if (ticker.symbol !== definition.symbol || price === null) throw new Error(definition.label + " price unavailable");
-              return {
-                id: definition.id,
-                label: definition.label,
-                source: "binance",
-                provider: "binance-futures-rest",
-                symbol: "BINANCE-FUTURES:" + definition.symbol,
-                price: price,
-                change: change
-              };
-            }).catch(function () { return null; });
-          })).then(function (items) {
-            return items.filter(function (item) { return item !== null; });
-          });
-        }
-
         function applyMacroItems(items, fallback) {
           (items || []).forEach(function (item) {
             if (!item || finite(item.price) === null) return;
@@ -1352,13 +1275,6 @@
           ]).then(function (groups) {
             var items = groups[0].concat(groups[1]);
             applyMacroItems(items, !hlPrimaryLive);
-            var available = {};
-            items.forEach(function (item) { available[item.id] = true; });
-            var missingStocks = stockDefinitions.filter(function (definition) { return !available[definition.id]; });
-            if (!missingStocks.length) return [];
-            return fetchBinanceMacro(missingStocks);
-          }).then(function (fallbackItems) {
-            if (fallbackItems && fallbackItems.length) applyMacroItems(fallbackItems, true);
           }).then(function () { macroRequest = false; }, function () { macroRequest = false; });
         }
 
@@ -1409,6 +1325,5 @@
         });
       }());
     </script>
-    <script type="module" src="tail-board.js"></script>
   </body>
 </html>
