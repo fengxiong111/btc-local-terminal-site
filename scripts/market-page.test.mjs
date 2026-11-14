@@ -72,8 +72,8 @@ test("odometer digits expose an accessible display value", () => {
 });
 
 test("desktop grouping and display precision", () => {
-  assert.match(html, /\.market-quote \{[^}]*justify-content: flex-start;[^}]*gap: clamp\(18px, 1\.6vw, 28px\)/);
-  assert.match(html, /@media \(min-width: 1400px\) \{\s*\.market-list \{ max-width: 1520px; \}/);
+  assert.match(html, /function updateGrid\(\)/);
+  assert.match(html, /grid-template-columns: repeat\(var\(--columns, 2\)/);
   assert.match(html, /function priceFraction\(value\) \{\s*var price = finite\(value\);\s*return price !== null && price >= 1 \? 0 : 2;\s*\}/);
   assert.match(html, /fraction === 0 \? Math\.round\(number\) : number/);
 });

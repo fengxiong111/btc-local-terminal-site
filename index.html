@@ -71,16 +71,12 @@
       .skip-link:focus { transform: translateY(0); }
 
       .page {
-        width: min(100%, 1760px);
-        max-width: 100%;
-        min-height: 100vh;
-        min-height: 100svh;
-        margin: 0 auto;
-        padding-top: max(18px, calc(env(safe-area-inset-top) + 18px));
-        padding-right: max(clamp(16px, 3.4vw, 64px), calc(env(safe-area-inset-right) + 16px));
-        padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px));
-        padding-left: max(clamp(16px, 3.4vw, 64px), calc(env(safe-area-inset-left) + 16px));
+        --space: 16px;
+        width: 100%; min-height: 100vh; min-height: 100svh;
+        padding: max(var(--space), env(safe-area-inset-top)) max(var(--space), env(safe-area-inset-right)) max(var(--space), env(safe-area-inset-bottom)) max(var(--space), env(safe-area-inset-left));
+        display: flex; flex-direction: column;
       }
+      @media (max-width: 560px) { .page { --space: 8px; } }
 
       .market-row,
       .market-ident,
@@ -105,74 +101,34 @@
         border: 0;
       }
 
-      .market-section { margin-top: 0; }
-      .market-list { display: grid; width: 100%; min-width: 0; max-width: 1680px; margin: 0 auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(10px, 0.8vw, 16px); }
-      .market-row { min-width: 0; min-height: clamp(88px, 5.5vw, 108px); flex-direction: column; align-items: stretch; justify-content: space-between; gap: 6px; padding: clamp(14px, 1vw, 18px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); overflow: hidden; }
+      .market-section { display: flex; flex: 1 1 auto; min-height: 0; }
+      .market-list { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr)); grid-auto-rows: minmax(130px, 1fr); gap: var(--space); }
+      .market-row { container-type: inline-size; min-width: 0; min-height: 130px; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px; padding: clamp(12px, 4cqw, 24px); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); overflow: hidden; }
+
       .market-row[data-market-state="stale"],
       .market-row[data-market-state="fallback"] { opacity: 0.84; }
       .market-ident { width: 100%; min-width: 0; flex: 0 0 auto; flex-direction: row; align-items: center; gap: 7px; }
-      .market-symbol { color: var(--strong); font-size: clamp(16px, 1.15vw, 21px); font-weight: 600; line-height: 1.2; letter-spacing: -0.35px; }
-      .market-cap { min-width: 0; margin-left: auto; color: var(--muted); font-size: clamp(9px, 0.7vw, 13px); font-weight: 500; line-height: 1.2; letter-spacing: 0; white-space: nowrap; }
+      .market-symbol { color: var(--strong); font-size: clamp(16px, 5cqw, 40px); font-weight: 600; line-height: 1.2; letter-spacing: -0.35px; }
+      .market-cap { min-width: 0; margin-left: auto; color: var(--muted); font-size: clamp(12px, 3.2cqw, 25px); font-weight: 500; line-height: 1.2; letter-spacing: 0; white-space: nowrap; }
       .market-stale-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pending); opacity: 0; flex: 0 0 auto; }
       .market-row[data-market-state="stale"] .market-stale-dot,
       .market-row[data-market-state="fallback"] .market-stale-dot { opacity: 0.9; }
       .market-source { display: none; }
-      .market-quote { width: 100%; min-width: 0; flex: 1 1 auto; align-items: baseline; justify-content: flex-start; gap: clamp(18px, 1.6vw, 28px); }
-      .market-price { display: inline-flex; min-width: 0; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; color: var(--text); font-size: clamp(28px, 2vw, 36px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
+      .market-quote { width: 100%; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-start; gap: clamp(18px, 1.6vw, 28px); }
+      .market-price { display: inline-flex; min-width: 0; flex: 0 1 auto; align-items: baseline; justify-content: flex-start; gap: 0; overflow: visible; color: var(--text); font-size: clamp(24px, 11cqw, 140px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
       .market-price .digit { position: relative; display: inline-block; width: 0.70em; height: 1em; line-height: 1em; overflow: hidden; vertical-align: baseline; padding: 0 0.02em; box-sizing: content-box; }
       .market-price .sep { display: inline-block; width: 0.22em; margin: 0 -0.04em; text-align: center; opacity: 0.86; }
       .market-price .track { position: absolute; inset: 0; }
       .market-price .digit__num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-right: 0.03em; box-sizing: border-box; }
-      .market-change { min-width: 0; color: var(--muted); font-size: clamp(15px, 1.1vw, 20px); line-height: 1.2; text-align: right; white-space: nowrap; }
+      .market-change { min-width: 0; color: var(--muted); font-size: clamp(13px, 3.5cqw, 32px); line-height: 1.2; text-align: right; white-space: nowrap; }
       .market-change.is-empty { display: none; }
       .market-change.up { color: var(--up); }
       .market-change.down { color: var(--down); }
 
       .btc-cap-group { display: flex; margin-left: auto; flex-direction: column; align-items: flex-end; gap: 3px; }
-      .btc-metric { display: flex; align-items: baseline; gap: 4px; color: var(--muted); font-size: clamp(9px, 0.7vw, 13px); line-height: 1.2; white-space: nowrap; }
+      .btc-metric { display: flex; align-items: baseline; gap: 4px; color: var(--muted); font-size: clamp(12px, 3.2cqw, 25px); line-height: 1.2; white-space: nowrap; }
       .btc-metric .market-symbol, .btc-metric .market-price { color: inherit; font-size: inherit; font-weight: 500; letter-spacing: 0; }
       .btc-metric[data-market-state="stale"] { opacity: 0.7; }
-
-      @media (max-width: 1024px) and (min-width: 561px) {
-        .market-price { font-size: clamp(24px, 3vw, 32px); }
-      }
-
-      @media (max-width: 560px) {
-        .page { padding-top: max(14px, calc(env(safe-area-inset-top) + 14px)); }
-        .market-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-        .market-row { min-height: 82px; gap: 6px; padding: 12px; }
-        .market-symbol { font-size: clamp(14px, 3.9vw, 16px); }
-        .market-quote { gap: 6px; }
-        .market-price { font-size: clamp(20px, 5.6vw, 26px); }
-        .market-change { font-size: clamp(11px, 3.1vw, 14px); }
-      }
-
-      @media (orientation: landscape) and (max-height: 620px) {
-        .page { padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)); }
-      }
-
-      @media (max-width: 1399px) and (min-width: 901px) {
-        .market-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      }
-
-      @media (min-width: 1400px) {
-        .market-list { max-width: 1520px; }
-      }
-
-      @media (max-width: 900px) and (min-width: 561px) {
-        .market-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      }
-
-      @media (min-width: 561px) {
-        .page { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
-        .market-section { width: 100%; }
-      }
-
-      /* iPad portrait has enough vertical room to read the board from the top.
-         Avoid flex-centering the shorter market board into a large empty well. */
-      @media (max-width: 900px) and (min-width: 561px) {
-        .market-section { padding-top: clamp(12px, 3svh, 32px); }
-      }
 
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
@@ -803,6 +759,28 @@
           }
         }
 
+        function updateGrid() {
+          var count = marketListElement.querySelectorAll(".market-row").length;
+          if (!count) return;
+          var width = marketListElement.clientWidth || window.innerWidth;
+          var height = Math.max(window.innerHeight - 32, 130);
+          var gap = window.innerWidth <= 560 ? 8 : 16;
+          var best = 1, bestScore = Infinity;
+          for (var columns = 1; columns <= count; columns += 1) {
+            var rows = Math.ceil(count / columns);
+            var cardWidth = (width - gap * (columns - 1)) / columns;
+            if (cardWidth < 175 && columns > 1) continue;
+            var cardHeight = Math.max(130, (height - gap * (rows - 1)) / rows);
+            var score = Math.abs(Math.log((cardWidth / cardHeight) / 1.35)) + (columns * rows - count) * 0.4;
+            if (score < bestScore) { bestScore = score; best = columns; }
+          }
+          marketListElement.style.setProperty("--columns", String(best));
+          var cards = marketListElement.querySelectorAll(".market-row");
+          cards.forEach(function (card) { card.style.gridColumn = ""; });
+          var remainder = count % best;
+          if (remainder) cards[cards.length - 1].style.gridColumn = "span " + String(best - remainder + 1);
+        }
+
         function renderMarketBoard() {
           if (!marketListElement) return;
           var validItems = marketDefinitions.map(function (definition) {
@@ -842,6 +820,7 @@
               fragment.appendChild(row);
             });
             replaceChildrenCompat(marketListElement, fragment);
+            updateGrid();
           }
 
           validItems.forEach(function (item) {
@@ -1286,7 +1265,7 @@
           refitAllPrices("pageshow");
         }, { passive: true });
         window.addEventListener("orientationchange", function () { refitAllPrices("orientationchange"); }, { passive: true });
-        window.addEventListener("resize", function () { refitAllPrices("resize"); }, { passive: true });
+        window.addEventListener("resize", function () { updateGrid(); refitAllPrices("resize"); }, { passive: true });
         if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { refitAllPrices("visualViewport"); }, { passive: true });
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { refitAllPrices("fonts-ready"); }).catch(function () {});
         if (document.fonts && typeof document.fonts.addEventListener === "function") document.fonts.addEventListener("loadingdone", function () { refitAllPrices("fonts-loadingdone"); });
