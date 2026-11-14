@@ -275,7 +275,9 @@
         ];
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "okx" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" }
-        ], macroDefinitions);
+        ], macroDefinitions, macroDefinitions.map(function (definition) {
+          return { id: "ema200_" + definition.id, label: "EMA200", source: "hyperliquid-daily" };
+        }));
 
         function formatCompactMarketCap(value) {
           var number = finite(value);
@@ -303,6 +305,7 @@
           if (cachedState.btc) renderBtc(cachedState.btc, true);
           if (finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, true);
           if (cachedState.macro) renderMacro(cachedState.macro, true);
+          if (cachedState.stockEma) Object.keys(cachedState.stockEma).forEach(function (id) { renderStockEma(id, cachedState.stockEma[id], true); });
         }
 
         function finite(value) {
@@ -391,7 +394,8 @@
               savedAt: Date.now(),
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
-              ema200: cachedState && cachedState.ema200
+              ema200: cachedState && cachedState.ema200,
+              stockEma: cachedState && cachedState.stockEma
             }));
           } catch (error) {
             // Private browsing or a restricted browser may disable storage.
@@ -430,7 +434,7 @@
 
         function staleLimit(id) {
           if (id === "btc") return BTC_STALE_MS;
-          if (id === "ema200") return EMA_STALE_MS;
+          if (id === "ema200" || id.indexOf("ema200_") === 0) return EMA_STALE_MS;
           return HL_STALE_MS;
         }
 
@@ -757,6 +761,11 @@
             });
           }
           if (marketItemsById.ema200) cachedState.ema200 = marketItemsById.ema200.price;
+          cachedState.stockEma = cachedState.stockEma || {};
+          macroDefinitions.forEach(function (definition) {
+            var item = marketItemsById["ema200_" + definition.id];
+            if (item && finite(item.price) !== null) cachedState.stockEma[definition.id] = item.price;
+          });
           cachedState.macro = macroDefinitions.map(function (definition) {
             return marketItemsById[definition.id];
           }).filter(function (item) {
@@ -783,7 +792,7 @@
           Object.keys(priceBuffer).forEach(function (id) {
             var item = priceBuffer[id];
             marketItemsById[id] = item;
-            if (id !== "btc" && id !== "ema200") macroItemsById[id] = item;
+            if (id !== "btc" && id !== "ema200" && id.indexOf("ema200_") !== 0) macroItemsById[id] = item;
           });
           markStaleAssets();
           persistCachedState();
@@ -822,18 +831,14 @@
             marketRowsById = {};
             odometersById = {};
             var fragment = document.createDocumentFragment();
-            var btcItem = validItems.filter(function (item) { return item.id === "btc"; })[0] || null;
-            var metricItems = validItems.filter(function (item) { return item.id === "ema200"; });
-            if (btcItem || metricItems.length) {
-              var heroRow = createBtcHeroRow(btcItem, metricItems);
-              if (btcItem) marketRowsById.btc = heroRow;
-              metricItems.forEach(function (item) { marketRowsById[item.id] = heroRow._metricRows[item.id]; });
-              fragment.appendChild(heroRow);
-            }
             validItems.forEach(function (item) {
-              if (item.id === "btc" || item.id === "ema200") return;
-              var row = createMarketRow(item);
+              if (item.id === "ema200" || item.id.indexOf("ema200_") === 0) return;
+              var metricId = item.id === "btc" ? "ema200" : "ema200_" + item.id;
+              var metric = marketItemsById[metricId];
+              var metrics = metric && finite(metric.price) !== null ? [metric] : [];
+              var row = createBtcHeroRow(item, metrics);
               marketRowsById[item.id] = row;
+              metrics.forEach(function (entry) { marketRowsById[entry.id] = row._metricRows[entry.id]; });
               fragment.appendChild(row);
             });
             replaceChildrenCompat(marketListElement, fragment);
@@ -878,6 +883,39 @@
           }).catch(function () {
             if (cachedState && finite(cachedState.ema200) !== null) renderEma200(cachedState.ema200, true);
           }).then(function () { emaRequest = false; }, function () { emaRequest = false; });
+        }
+
+        function renderStockEma(id, value, stale) {
+          if (!macroDefinitions.some(function (definition) { return definition.id === id; })) return;
+          var price = finite(value);
+          if (price === null) return;
+          ingestQuote("ema200_" + id, {
+            label: "EMA200", source: "hyperliquid-daily", provider: "hyperliquid-candles",
+            symbol: "HYPERLIQUID:xyz:" + id.toUpperCase(), price: price, change: null,
+            status: stale ? "STALE" : "LIVE", stale: Boolean(stale)
+          });
+        }
+
+        function fetchStockEma200() {
+          if (fetchStockEma200.pending) return;
+          fetchStockEma200.pending = true;
+          var end = Date.now();
+          Promise.all(macroDefinitions.map(function (definition) {
+            return requestJson(HYPERLIQUID_INFO_URL, 8000, {
+              method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+              body: JSON.stringify({ type: "candleSnapshot", req: { coin: "xyz:" + definition.label, interval: "1d", startTime: end - 300 * 86400000, endTime: end } })
+            }).then(function (candles) {
+              if (!Array.isArray(candles)) throw new Error("Invalid candle data");
+              var closes = candles.slice().sort(function (a, b) { return a.t - b.t; }).map(function (candle) { return finite(candle.c); }).filter(function (value) { return value !== null && value > 0; });
+              if (closes.length < EMA_PERIOD) throw new Error("Insufficient candle data");
+              var ema = closes.slice(0, EMA_PERIOD).reduce(function (sum, value) { return sum + value; }, 0) / EMA_PERIOD;
+              var multiplier = 2 / (EMA_PERIOD + 1);
+              for (var index = EMA_PERIOD; index < closes.length; index += 1) ema = (closes[index] - ema) * multiplier + ema;
+              renderStockEma(definition.id, ema, false);
+            }).catch(function () {
+              if (cachedState && cachedState.stockEma) renderStockEma(definition.id, cachedState.stockEma[definition.id], true);
+            });
+          })).then(function () { fetchStockEma200.pending = false; }, function () { fetchStockEma200.pending = false; });
         }
 
         function renderBtc(btc, isStale) {
@@ -1226,6 +1264,7 @@
           fetchBtc();
           fetchBtcStats();
           fetchEma200();
+          fetchStockEma200();
           fetchHyperliquidMacroAll(hlPrimaryLive);
         }
 
@@ -1234,6 +1273,7 @@
         refreshAll();
         window.setInterval(fetchBtcStats, STATS_INTERVAL);
         window.setInterval(fetchEma200, EMA_INTERVAL);
+        window.setInterval(fetchStockEma200, EMA_INTERVAL);
         window.setInterval(function () {
           if (!btcPrimaryLive) fetchBtc();
           if (!hlPrimaryLive) fetchHyperliquidMacroAll(false);
