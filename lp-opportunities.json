@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1795073380731,
+  "generated_at_ms": 1795109037329,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -19,27 +19,27 @@
     "best": null,
     "research_leader": {
       "platform": "Merkl",
-      "name": "Provide liquidity to UniswapV4 BOLD-USDC 0.05%",
-      "opportunity_id": "13207567167701080626",
-      "chain_id": 1,
-      "pool_identifier": "0x5d0ed52610c76d7bf729130ce7ddc0488b2f4bd0a0db1f12adbe6a32deaff893",
+      "name": "Provide liquidity to UniswapV4 ETH-USDG Dynamic fee",
+      "opportunity_id": "10620463562208580671",
+      "chain_id": 4663,
+      "pool_identifier": "0xa791e5169faf703c0b63fd9552c33ec1128a773a00f5dc33a640da62a022cd35",
       "type": "UNISWAP_V4",
-      "tvl_usd": 3519712.040257943,
-      "incentive_apr_pct": 49.203480484917364,
+      "tvl_usd": 2788321.817786795,
+      "incentive_apr_pct": 46.75111101234713,
       "valid_campaign_count": 1,
       "reward_tokens": [
-        "BOLD"
+        "USDG"
       ],
-      "nearest_end_unix_sec": 1795651200,
+      "nearest_end_unix_sec": 1795698000,
       "underlying_tokens": [
-        "BOLD",
-        "USDC"
+        "ETH",
+        "USDG"
       ],
-      "score": 30.419108,
+      "score": 29.180348,
       "reward_policy": {
         "out_of_range_incentivized": false,
-        "fee_weight_min": 7500,
-        "fee_weight_max": 7500,
+        "fee_weight_min": 8000,
+        "fee_weight_max": 8000,
         "position_claimability": "UNKNOWN_NO_POSITION_OR_CAMPAIGN_PROOF"
       },
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
@@ -61,7 +61,7 @@
     "fee_leader": {
       "platform": "Meteora",
       "name": "DCTY-SOL",
-      "address": "4exs9btspvKHEYtuCFMXXV9snF99UvbFJKtDhAzmgYtz",
+      "address": "3gUa73kgEfZW6zj97uShGaCd4GAPjc7kd61aKkcCMqpw",
       "token_mints": [
         "9hjBLBrc7WZW2H8UQvBAvG5WiTZotXUv2Bdcn4f4pump",
         "So11111111111111111111111111111111111111112"
@@ -70,19 +70,19 @@
         "DCTY",
         "SOL"
       ],
-      "token_x_market_cap_usd": 11106998.526197957,
-      "token_y_market_cap_usd": 44063093946.74807,
-      "min_token_market_cap_usd": 11106998.526197957,
-      "tvl_usd": 108462.1141191036,
-      "fee_24h_usd": 129462.71148661104,
-      "fee_30m_usd": 68.04719108962982,
-      "fee_1h_usd": 272.9154086361295,
-      "fee_4h_usd": 12149.284265863003,
-      "volume_24h_usd": 4891052.230609334,
-      "pool_age_days": 0.6,
-      "pool_base_fee_pct": 2,
+      "token_x_market_cap_usd": 10403270.56182993,
+      "token_y_market_cap_usd": 43361853139.096085,
+      "min_token_market_cap_usd": 10403270.56182993,
+      "tvl_usd": 328799.4503119484,
+      "fee_24h_usd": 177087.96657124508,
+      "fee_30m_usd": 6234.161255498404,
+      "fee_1h_usd": 10538.844509581804,
+      "fee_4h_usd": 36175.183423463925,
+      "volume_24h_usd": 31427171.72370559,
+      "pool_age_days": 1,
+      "pool_base_fee_pct": 0.25,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 129462.71148661104,
+      "ranking_value_usd": 177087.96657124508,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -96,7 +96,7 @@
     "research_leader": {
       "platform": "Meteora",
       "name": "DCTY-SOL",
-      "address": "4exs9btspvKHEYtuCFMXXV9snF99UvbFJKtDhAzmgYtz",
+      "address": "3gUa73kgEfZW6zj97uShGaCd4GAPjc7kd61aKkcCMqpw",
       "token_mints": [
         "9hjBLBrc7WZW2H8UQvBAvG5WiTZotXUv2Bdcn4f4pump",
         "So11111111111111111111111111111111111111112"
@@ -105,19 +105,19 @@
         "DCTY",
         "SOL"
       ],
-      "token_x_market_cap_usd": 11106998.526197957,
-      "token_y_market_cap_usd": 44063093946.74807,
-      "min_token_market_cap_usd": 11106998.526197957,
-      "tvl_usd": 108462.1141191036,
-      "fee_24h_usd": 129462.71148661104,
-      "fee_30m_usd": 68.04719108962982,
-      "fee_1h_usd": 272.9154086361295,
-      "fee_4h_usd": 12149.284265863003,
-      "volume_24h_usd": 4891052.230609334,
-      "pool_age_days": 0.6,
-      "pool_base_fee_pct": 2,
+      "token_x_market_cap_usd": 10403270.56182993,
+      "token_y_market_cap_usd": 43361853139.096085,
+      "min_token_market_cap_usd": 10403270.56182993,
+      "tvl_usd": 328799.4503119484,
+      "fee_24h_usd": 177087.96657124508,
+      "fee_30m_usd": 6234.161255498404,
+      "fee_1h_usd": 10538.844509581804,
+      "fee_4h_usd": 36175.183423463925,
+      "volume_24h_usd": 31427171.72370559,
+      "pool_age_days": 1,
+      "pool_base_fee_pct": 0.25,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 129462.71148661104,
+      "ranking_value_usd": 177087.96657124508,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -132,8 +132,8 @@
     "min_tvl_usd": 100000,
     "min_token_market_cap_usd": 500000,
     "token_market_cap_rule": "BOTH_TOKENS",
-    "sampled": 151,
-    "api_total_after_tvl_filter": 151,
+    "sampled": 150,
+    "api_total_after_tvl_filter": 150,
     "pages": 1,
     "page_size": 200,
     "max_pages": 12,
