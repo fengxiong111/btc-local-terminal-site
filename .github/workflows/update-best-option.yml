@@ -9,6 +9,8 @@ on:
       - 'best-option-card.js'
       - 'scripts/update-best-option.mjs'
       - 'scripts/best-option-core.test.mjs'
+      - 'scripts/best-option-venues.test.mjs'
+      - 'best-option-venues.mjs'
       - 'index.html'
   schedule:
     - cron: '1,11,21,31,41,51 * * * *'
@@ -36,7 +38,7 @@ jobs:
         with:
           node-version: 22
       - name: Run read-only scanner tests
-        run: node --test scripts/best-option-core.test.mjs
+        run: node --test scripts/best-option-core.test.mjs scripts/best-option-venues.test.mjs
       - name: Scan public option chain (fail closed)
         id: scan
         run: node scripts/update-best-option.mjs
