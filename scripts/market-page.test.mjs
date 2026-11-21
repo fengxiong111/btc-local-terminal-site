@@ -94,9 +94,13 @@ test("market caps stay compact, quiet, and custom ordered", () => {
   assert.match(html, /id: "mu"[\s\S]*id: "nvda"[\s\S]*id: "googl"/);
 });
 
-test("market page excludes the option board", () => {
+test("market page keeps the original grid and shows exactly one single-winner option tile", () => {
   assert.match(html, /fetchHyperliquidMacro\(stockDefinitions, HIP3_STOCK_DEX\)/);
-  assert.doesNotMatch(html, /tail-board|tail-section|期权/);
+  assert.match(html, /function createBestOptionRow\(\)/);
+  assert.match(html, /id = "best-option-card"/);
+  assert.match(html, /src="\.\/best-option-card\.js"/);
+  assert.match(html, /if \(item\.id === "btc"\) fragment\.appendChild\(createBestOptionRow\(\)\)/);
+  assert.doesNotMatch(html, /tail-board|tail-section/);
   assert.doesNotMatch(html, /label: "UNI"|label: "IREN"|uni: \d/);
 });
 
