@@ -33,7 +33,7 @@ jobs:
         id: scan
         run: node scripts/update-best-option.mjs
       - name: Publish the selected candidate or blocked receipt
-        if: \${{ always() && steps.scan.outcome != 'skipped' }}
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
         run: |
           git add -- best-option.json
           if git diff --cached --quiet; then exit 0; fi
