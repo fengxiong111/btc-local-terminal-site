@@ -21,14 +21,20 @@ export function normalizeOKX({instruments,tickers,greeks,index},nowMs){
   const diag={raw_instruments:inst.length,raw_tickers:ticks.length,raw_greeks:stats.length,
     pairable:0,regex:0,live:0,btc_settlement:0,quotes:0,time_valid:0,
     first_instrument:inst[0]?{id:inst[0].instId,state:inst[0].state,settle:inst[0].settleCcy,
-      family:inst[0].instFamily,minSz:inst[0].minSz,ctVal:inst[0].ctVal}:null};
+      family:inst[0].instFamily,minSz:inst[0].minSz,ctVal:inst[0].ctVal,ctMult:inst[0].ctMult}:null};
   for(const i of inst){
     const m=/^BTC-USD-(\d{6})-(\d+)-([CP])$/.exec(i.instId||"");
     if(m)diag.regex++;
     if(m&&i.state==="live")diag.live++;
     if(m&&i.state==="live"&&i.settleCcy==="BTC")diag.btc_settlement++;
     if(!m||i.state!=="live"||i.instFamily!=="BTC-USD"||i.settleCcy!=="BTC") continue;
-    const min=num(i.minSz),unit=num(i.ctVal),exp=num(i.expTime),strike=num(m[2]);
+    // BTC-USD coin-margined option: 1 contract represents 0.01 BTC.
+    // Current public API can report ctVal=1 (face value), while contract
+    // multiplier is 0.01. Prefer verified ctMult; only use official BTC 0.01
+    // default when an instrument omits ctMult and ctVal is exactly 1.
+    const min=num(i.minSz),face=num(i.ctVal);
+    const mult=ok(i.ctMult)?num(i.ctMult):(face===1?0.01:NaN);
+    const unit=face*mult,exp=num(i.expTime),strike=num(m[2]);
     const q=quote.get(i.instId),g=greek.get(i.instId);
     if(!ok(min)||!ok(unit)||!ok(exp)||!ok(strike)||!q||!g)continue;
     diag.quotes++;
