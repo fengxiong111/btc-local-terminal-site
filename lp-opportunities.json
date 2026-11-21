@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1795193942218,
+  "generated_at_ms": 1795245216292,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -24,8 +24,8 @@
       "chain_id": 4663,
       "pool_identifier": "0xa791e5169faf703c0b63fd9552c33ec1128a773a00f5dc33a640da62a022cd35",
       "type": "UNISWAP_V4",
-      "tvl_usd": 1819256.1641552194,
-      "incentive_apr_pct": 71.64402160163549,
+      "tvl_usd": 2447455.075883207,
+      "incentive_apr_pct": 53.25840763199946,
       "valid_campaign_count": 1,
       "reward_tokens": [
         "USDG"
@@ -35,7 +35,7 @@
         "ETH",
         "USDG"
       ],
-      "score": 41.368975,
+      "score": 29.146621,
       "reward_policy": {
         "out_of_range_incentivized": false,
         "fee_weight_min": 8000,
@@ -60,29 +60,29 @@
     "best": null,
     "fee_leader": {
       "platform": "Meteora",
-      "name": "TTWO-SOL",
-      "address": "7qZPiJ2Lvwh9DV9gUBH2EwConBE3RUrAvGRjpN8vTjtT",
+      "name": "ANT-USDC",
+      "address": "8GTCUyGQsVNq7cdWEszyNb6w9uiUo727BdGu6v7UmpdX",
       "token_mints": [
-        "TTWofwAge91oFhZs7kpQdyrVRkmevgM88xijGvQFbKo",
-        "So11111111111111111111111111111111111111112"
+        "ANTBTZQ1EUuTxUs3tfeampxdqTWPHmwyJmcWj4xoAyNe",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ],
       "token_symbols": [
-        "TTWO",
-        "SOL"
+        "ANT",
+        "USDC"
       ],
-      "token_x_market_cap_usd": 5513475.472201945,
-      "token_y_market_cap_usd": 40948018320.84542,
-      "min_token_market_cap_usd": 5513475.472201945,
-      "tvl_usd": 563086.604207507,
-      "fee_24h_usd": 25201.82242369085,
-      "fee_30m_usd": 244.75362202933545,
-      "fee_1h_usd": 594.7716517512013,
-      "fee_4h_usd": 4068.062878863067,
-      "volume_24h_usd": 27415111.28435555,
-      "pool_age_days": 36.1,
-      "pool_base_fee_pct": 0.1,
+      "token_x_market_cap_usd": 5878688.116094102,
+      "token_y_market_cap_usd": 8247468433.314533,
+      "min_token_market_cap_usd": 5878688.116094102,
+      "tvl_usd": 737985.523904907,
+      "fee_24h_usd": 13455.874617401274,
+      "fee_30m_usd": 65.60104767378466,
+      "fee_1h_usd": 189.33345641477263,
+      "fee_4h_usd": 1354.0390378821887,
+      "volume_24h_usd": 7171122.242868992,
+      "pool_age_days": 2,
+      "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 25201.82242369085,
+      "ranking_value_usd": 13455.874617401274,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -95,29 +95,29 @@
     },
     "research_leader": {
       "platform": "Meteora",
-      "name": "TTWO-SOL",
-      "address": "7qZPiJ2Lvwh9DV9gUBH2EwConBE3RUrAvGRjpN8vTjtT",
+      "name": "ANT-USDC",
+      "address": "8GTCUyGQsVNq7cdWEszyNb6w9uiUo727BdGu6v7UmpdX",
       "token_mints": [
-        "TTWofwAge91oFhZs7kpQdyrVRkmevgM88xijGvQFbKo",
-        "So11111111111111111111111111111111111111112"
+        "ANTBTZQ1EUuTxUs3tfeampxdqTWPHmwyJmcWj4xoAyNe",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ],
       "token_symbols": [
-        "TTWO",
-        "SOL"
+        "ANT",
+        "USDC"
       ],
-      "token_x_market_cap_usd": 5513475.472201945,
-      "token_y_market_cap_usd": 40948018320.84542,
-      "min_token_market_cap_usd": 5513475.472201945,
-      "tvl_usd": 563086.604207507,
-      "fee_24h_usd": 25201.82242369085,
-      "fee_30m_usd": 244.75362202933545,
-      "fee_1h_usd": 594.7716517512013,
-      "fee_4h_usd": 4068.062878863067,
-      "volume_24h_usd": 27415111.28435555,
-      "pool_age_days": 36.1,
-      "pool_base_fee_pct": 0.1,
+      "token_x_market_cap_usd": 5878688.116094102,
+      "token_y_market_cap_usd": 8247468433.314533,
+      "min_token_market_cap_usd": 5878688.116094102,
+      "tvl_usd": 737985.523904907,
+      "fee_24h_usd": 13455.874617401274,
+      "fee_30m_usd": 65.60104767378466,
+      "fee_1h_usd": 189.33345641477263,
+      "fee_4h_usd": 1354.0390378821887,
+      "volume_24h_usd": 7171122.242868992,
+      "pool_age_days": 2,
+      "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 25201.82242369085,
+      "ranking_value_usd": 13455.874617401274,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -132,8 +132,8 @@
     "min_tvl_usd": 100000,
     "min_token_market_cap_usd": 500000,
     "token_market_cap_rule": "BOTH_TOKENS",
-    "sampled": 141,
-    "api_total_after_tvl_filter": 141,
+    "sampled": 136,
+    "api_total_after_tvl_filter": 136,
     "pages": 1,
     "page_size": 200,
     "max_pages": 12,
