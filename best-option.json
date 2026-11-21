@@ -1,12 +1,39 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 0,
-  "expires_at_ms": 0,
+  "generated_at_ms": 1795300420499,
+  "expires_at_ms": 1795301920499,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
+  "universe_count": 275,
   "decision": "CASH",
-  "state": "BLOCKED_DATA",
-  "candidate": null,
-  "reason": "Await first verified public market scan"
+  "state": "SHADOW",
+  "reason": "Best screened convexity candidate; positive expectancy NOT established",
+  "evidence": "BLOCKED_EVIDENCE",
+  "candidate": {
+    "call_symbol": "BTC-261204-62000-C",
+    "put_symbol": "BTC-261204-63000-P",
+    "call_strike": 62000,
+    "put_strike": 63000,
+    "expiry_ms": 1796371200000,
+    "qty_contracts": 0.01,
+    "premium_with_entry_fees_usdt": 58.4394,
+    "immediate_exit_net_usdt": 56.4606,
+    "roundtrip_loss_fraction": 0.0339,
+    "combined_delta": -0.2405,
+    "gamma_5pct_approx_usdt": 5.7165,
+    "conservative_rv_assumption": 0.4135549025755584,
+    "modeled_expiry_net_usdt": -12.0278,
+    "score": -0.2058
+  },
+  "rv_7_14_30": [
+    0.49489291141989744,
+    0.4942651397669007,
+    0.459505447306176
+  ],
+  "source": "Binance public options API via read-only connected market-data tool",
+  "top_depth_verified": 5,
+  "data_time_ms": 1795300417000,
+  "fetch_origin": "SERVER_VERIFIED",
+  "note": "Market quotes validated against actual top 10 L2 on 2026-11-22; not an expected-positive-return claim"
 }
