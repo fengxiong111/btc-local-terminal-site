@@ -1,12 +1,35 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795301080378,
-  "expires_at_ms": 1795302580378,
-  "decision": "CASH",
+  "generated_at_ms": 1795301907524,
+  "expires_at_ms": 1795303407524,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
+  "universe_count": 0,
+  "decision": "CASH",
+  "state": "NO_FEASIBLE_CANDIDATE",
   "candidate": null,
-  "state": "BLOCKED_DATA",
-  "reason": "Error: HTTP 451 from eapi.binance.com"
+  "reason": "No fresh, budget-feasible two-leg option pair with executable depth",
+  "venues_checked": [
+    "BINANCE",
+    "OKX",
+    "DERIBIT"
+  ],
+  "venues_responded": [
+    "OKX",
+    "DERIBIT"
+  ],
+  "source": "PUBLIC_MARKET_DATA_MULTI_VENUE",
+  "autonomous": true,
+  "venue_universe_counts": {
+    "OKX": 0,
+    "DERIBIT": 0
+  },
+  "validated_pairs": 0,
+  "scan_errors": [
+    "BINANCE: Error: HTTP 451 eapi.binance.com"
+  ],
+  "order_sent": false,
+  "signing": false,
+  "capital_at_risk": 0
 }
