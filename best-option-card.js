@@ -44,7 +44,7 @@
       name.textContent=String(c.call_strike)+"C / "+String(c.put_strike)+"P";
       expiry.textContent=String(d.getUTCMonth()+1).padStart(2,"0")+
         "/"+String(d.getUTCDate()).padStart(2,"0")+" · SHADOW";
-      badge.textContent="候选";
+      badge.textContent=c.venue||"候选";
       root.dataset.marketState="live";
       diagnostics.source=best.source||"github";
       root.title="筛选第一候选，不代表已证明正期望或允许交易";
@@ -93,62 +93,83 @@
   }
   async function directScan(){
     if(scanning || Date.now()<retryAfter || Date.now()-lastAttemptAt<5*60*1000){render();return;}
-    lastAttemptAt=Date.now();
-    scanning=true;scanError="";render();
-    var api="https://eapi.binance.com/eapi/v1/";
-    try{
-      var lib=await import("./best-option-core.mjs");
-      var values=await Promise.all([
-        getJson(api+"exchangeInfo"),getJson(api+"mark"),getJson(api+"ticker"),
-        getJson(api+"index?underlying=BTCUSDT")
-      ]);
-      var info=values[0],marks=values[1],tickers=values[2],index=values[3];
+    lastAttemptAt=Date.now();scanning=true;scanError="";render();
+    const roots={BINANCE:"https://eapi.binance.com/eapi/v1/",
+      OKX:"https://www.okx.com/api/v5/",DERIBIT:"https://www.deribit.com/api/v2/"};
+    try {
+      const mod=await import("./best-option-venues.mjs");
+      const core=await import("./best-option-core.mjs");
       var rv=null;
       try{
-        var bars=await getJson("https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=32",7000);
-        rv=[7,14,30].map(function(days){return lib.annualizedRv(bars,days);});
-      }catch(e){rv=null;}
-      var list=lib.buildPairs({exchangeInfo:info,marks:marks,tickers:tickers,index:index,nowMs:Date.now(),rv:rv});
-      var qualified=[];
-      var depths=new Map();
-      async function depth(symbol){
-        if(!depths.has(symbol)){
-          var d=await getJson(api+"depth?symbol="+encodeURIComponent(symbol)+"&limit=10");
-          depths.set(symbol,d);
+        const hist=await getJson(roots.OKX+"market/history-candles?instId=BTC-USDT&bar=1D&limit=36");
+        const bars=hist.code==="0" && Array.isArray(hist.data)?
+          hist.data.filter(x=>String(x[8])==="1").sort((a,b)=>Number(a[0])-Number(b[0])):[];
+        var computed=[7,14,30].map(x=>core.annualizedRv(bars,x));
+        if(computed.every(x=>Number.isFinite(x)&&x>0))rv=computed;
+      }catch(e){}
+      async function attempt(venue){
+        var root=roots[venue],adapter;
+        if(venue==="OKX"){
+          const [instruments,tickers,greeks,index]=await Promise.all([
+            getJson(root+"public/instruments?instType=OPTION&instFamily=BTC-USD"),
+            getJson(root+"market/tickers?instType=OPTION&instFamily=BTC-USD"),
+            getJson(root+"public/opt-summary?instFamily=BTC-USD"),
+            getJson(root+"market/index-tickers?instId=BTC-USD")]);
+          adapter=mod.normalizeOKX({instruments,tickers,greeks,index},Date.now());
+        }else if(venue==="DERIBIT"){
+          const [instruments,summaries]=await Promise.all([
+            getJson(root+"public/get_instruments?currency=BTC&kind=option&expired=false"),
+            getJson(root+"public/get_book_summary_by_currency?currency=BTC&kind=option")]);
+          adapter=mod.normalizeDeribit({instruments,summaries},Date.now());
+        }else {
+          const [exchangeInfo,marks,tickers,index]=await Promise.all([
+            getJson(root+"exchangeInfo"),getJson(root+"mark"),
+            getJson(root+"ticker"),getJson(root+"index?underlying=BTCUSDT")]);
+          adapter=mod.normalizeBinance({exchangeInfo,marks,tickers,index});
         }
-        return depths.get(symbol);
-      }
-      // A maximum of 6 pairs, serial requests: avoid per-user IP rate spikes.
-      for(var i=0;i<Math.min(list.length,6);i++){
-        try{
-          var pair=list[i];
-          var books=await Promise.all([depth(pair.call.symbol),depth(pair.put.symbol)]);
-          var vetted=lib.validateDepth(pair,books[0],books[1],Date.now());
-          if(vetted)qualified.push(vetted);
-        }catch(e){
-          if(/HTTP (429|418|403)/.test(String(e)))throw e;
+        const pairs=mod.rankVenue(adapter,rv,Date.now()).slice(0,3),passed=[],cache=new Map();
+        async function depth(symbol){
+          if(cache.has(symbol))return cache.get(symbol);
+          var url=venue==="OKX"?
+            root+"market/books?instId="+encodeURIComponent(symbol)+"&sz=10":
+            venue==="DERIBIT"?
+            root+"public/get_order_book?instrument_name="+encodeURIComponent(symbol)+"&depth=10":
+            root+"depth?symbol="+encodeURIComponent(symbol)+"&limit=10";
+          var json=await getJson(url,7000);
+          var book=venue==="OKX"?mod.normalizeOKXBook(json,adapter.spot):
+            venue==="DERIBIT"?mod.normalizeDeribitBook(json,adapter.spot):
+            mod.normalizeBinanceBook(json);
+          cache.set(symbol,book);return book;
         }
+        for(const pair of pairs){
+          try{
+            const books=await Promise.all([depth(pair.call.symbol),depth(pair.put.symbol)]);
+            const valid=mod.verifyVenuePair(pair,books[0],books[1],Date.now());
+            if(valid)passed.push(valid);
+          }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e;}
+        }
+        return passed;
       }
-      var winner=lib.chooseWinner(qualified,snapshots.browser);
-      var snap=lib.toSnapshot(winner,Date.now(),list.length,rv);
-      snap.source="browser";
-      snapshots.browser=snap;
-      diagnostics.browserScan=snap.state;
-      diagnostics.lastScanAt=Date.now();
-      diagnostics.lastError="";
-      scanError="";
-    }catch(e){
-      diagnostics.browserScan="BLOCKED_DATA";
-      diagnostics.lastError=String(e);
-      if(/HTTP (418|429)/.test(String(e)))retryAfter=Date.now()+30*60*1000;
-      if(/HTTP (451|403)/.test(String(e)))retryAfter=Date.now()+60*60*1000;
-      scanError=/HTTP 451/.test(String(e)) ? "币安接口受限(451)" :
-        /Failed to fetch|NetworkError|Load failed|TypeError/i.test(String(e))?
-        "公开接口不可达":"行情获取失败";
-      // Never publish a synthetic or unverified quote on failure.
-    }finally{
-      scanning=false;render();
-    }
+      var names=["OKX","DERIBIT","BINANCE"];
+      var outcomes=await Promise.allSettled(names.map(x=>attempt(x)));
+      var candidates=[],errors=[];
+      for(var i=0;i<outcomes.length;i++){
+        if(outcomes[i].status==="fulfilled")candidates.push(...outcomes[i].value);
+        else errors.push(names[i]+": "+String(outcomes[i].reason));
+      }
+      var winner=mod.chooseAcrossVenues(candidates,snapshots.browser);
+      var snap=mod.snapshotFromVenues(winner,Date.now(),candidates.length,rv,
+        {venues_checked:names,venues_responded:names.filter((x,i)=>outcomes[i].status==="fulfilled")});
+      if(outcomes.every(x=>x.status==="rejected"))snap.state="BLOCKED_DATA";
+      snap.source="browser-multi-venue";
+      snapshots.browser=snap;diagnostics.browserScan=snap.state;
+      diagnostics.lastScanAt=Date.now();diagnostics.lastError=errors.join("; ");
+      scanError=errors.length===names.length?"所有公开接口不可达":"";
+      if(errors.some(x=>/HTTP (418|429)/.test(x)))retryAfter=Date.now()+30*60*1000;
+    }catch(error){
+      diagnostics.browserScan="BLOCKED_DATA";diagnostics.lastError=String(error);
+      scanError="多交易所行情受阻";
+    }finally{scanning=false;render();}
   }
   async function refresh(){
     await readGithub();
