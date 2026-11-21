@@ -11,7 +11,7 @@ on:
       - 'scripts/best-option-core.test.mjs'
       - 'index.html'
   schedule:
-    - cron: '7,17,27,37,47,57 * * * *'
+    - cron: '1,11,21,31,41,51 * * * *'
 
 permissions:
   contents: write
