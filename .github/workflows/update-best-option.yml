@@ -2,6 +2,14 @@ name: Refresh single BTC convexity candidate
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/update-best-option.yml'
+      - 'best-option-core.mjs'
+      - 'best-option-card.js'
+      - 'scripts/update-best-option.mjs'
+      - 'scripts/best-option-core.test.mjs'
+      - 'index.html'
   schedule:
     - cron: '7,17,27,37,47,57 * * * *'
 
