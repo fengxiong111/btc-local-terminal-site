@@ -6,6 +6,7 @@
   var scanError="";
   var scanning=false;
   var lastAttemptAt=0;
+  var retryAfter=0;
   var MAX_AGE=25*60*1000;
   var diagnostics={source:"none",browserScan:"PENDING",lastError:"",lastScanAt:0};
   window.__BEST_OPTION_DIAGNOSTICS__=diagnostics;
@@ -51,7 +52,8 @@
     }
     name.textContent="CASH";
     if(best){
-      expiry.textContent=best.state==="BLOCKED_DATA"?"行情受阻":
+      expiry.textContent=best.state==="BLOCKED_DATA"?
+        (scanError || (/451/.test(best.reason||"") ? "服务端地区限制(451)" : "行情受阻")):
         best.state==="NO_FEASIBLE_CANDIDATE"?"暂无合格组合":"证据未通过";
     }else if(scanning){
       expiry.textContent="扫描期权行情…";
@@ -90,7 +92,7 @@
     }catch(e){}
   }
   async function directScan(){
-    if(scanning || Date.now()-lastAttemptAt<5*60*1000)return;
+    if(scanning || Date.now()<retryAfter || Date.now()-lastAttemptAt<5*60*1000){render();return;}
     lastAttemptAt=Date.now();
     scanning=true;scanError="";render();
     var api="https://eapi.binance.com/eapi/v1/";
@@ -138,6 +140,8 @@
     }catch(e){
       diagnostics.browserScan="BLOCKED_DATA";
       diagnostics.lastError=String(e);
+      if(/HTTP (418|429)/.test(String(e)))retryAfter=Date.now()+30*60*1000;
+      if(/HTTP (451|403)/.test(String(e)))retryAfter=Date.now()+60*60*1000;
       scanError=/HTTP 451/.test(String(e)) ? "币安接口受限(451)" :
         /Failed to fetch|NetworkError|Load failed|TypeError/i.test(String(e))?
         "公开接口不可达":"行情获取失败";
