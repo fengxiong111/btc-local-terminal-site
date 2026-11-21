@@ -63,7 +63,10 @@ export function buildPairs({exchangeInfo, marks, tickers, index, nowMs, rv, poli
   const byTicker=new Map((Array.isArray(tickers)?tickers:[]).map(x=>[x.symbol,x]));
   const grouped=new Map();
   for (const info of exchangeInfo?.optionSymbols||[]) {
-    if (info.underlying!=="BTCUSDT" || !/^BTC-\d{6}-\d+-(C|P)$/.test(info.symbol)) continue;
+    // Native instrument IDs differ across Binance (BTC-261204-60000-C),
+    // OKX (BTC-USD-261204-60000-C), and Deribit (BTC-4DEC26-60000-C).
+    const m=/^BTC(?:-USD)?-[A-Za-z0-9]+-\d+-(C|P)$/.exec(info.symbol||"");
+    if(info.underlying!=="BTCUSDT"||!m||(m[1]==="C")!==(info.side==="CALL"))continue;
     const leg=usableLeg(info,byMark.get(info.symbol),byTicker.get(info.symbol),spot,nowMs,policy);
     if (!leg) continue;
     const key=String(leg.expiryMs);
