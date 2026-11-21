@@ -1,15 +1,42 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795301999017,
-  "expires_at_ms": 1795303499017,
+  "generated_at_ms": 1795302089263,
+  "expires_at_ms": 1795303589263,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
-  "universe_count": 0,
+  "universe_count": 376,
   "decision": "CASH",
-  "state": "NO_FEASIBLE_CANDIDATE",
-  "candidate": null,
-  "reason": "No fresh, budget-feasible two-leg option pair with executable depth",
+  "state": "SHADOW",
+  "reason": "Best screened convexity candidate; positive expectancy NOT established",
+  "evidence": "BLOCKED_EVIDENCE",
+  "candidate": {
+    "call_symbol": "BTC-USD-261204-62000-C",
+    "put_symbol": "BTC-USD-261204-63000-P",
+    "call_strike": 62000,
+    "put_strike": 63000,
+    "expiry_ms": 1796371200000,
+    "qty_contracts": 1,
+    "premium_with_entry_fees_usdt": 58.5723,
+    "immediate_exit_net_usdt": 56.952,
+    "roundtrip_loss_fraction": 0.0277,
+    "combined_delta": -0.2729,
+    "gamma_5pct_approx_usdt": 5.609,
+    "conservative_rv_assumption": 0.373074939297193,
+    "modeled_expiry_net_usdt": -14.2964,
+    "score": -0.2441,
+    "venue": "OKX",
+    "settlement_ccy": "BTC",
+    "min_notional_btc": 0.01,
+    "research_only": true,
+    "fee_schedule": "public_taker_assumption_not_account_verified",
+    "model_rv_not_alpha": true
+  },
+  "rv_7_14_30": [
+    0.41753234703455605,
+    0.4145277103302144,
+    0.4290488958666059
+  ],
   "venues_checked": [
     "BINANCE",
     "OKX",
@@ -22,7 +49,7 @@
   "source": "PUBLIC_MARKET_DATA_MULTI_VENUE",
   "autonomous": true,
   "venue_universe_counts": {
-    "OKX": 0,
+    "OKX": 376,
     "DERIBIT": 0
   },
   "venue_diagnostics": {
@@ -44,7 +71,8 @@
           "settle": "BTC",
           "family": "BTC-USD",
           "minSz": "1",
-          "ctVal": "1"
+          "ctVal": "1",
+          "ctMult": "0.01"
         }
       }
     },
@@ -53,7 +81,7 @@
       "detail": null
     }
   },
-  "validated_pairs": 0,
+  "validated_pairs": 6,
   "scan_errors": [
     "BINANCE: Error: HTTP 451 eapi.binance.com"
   ],
