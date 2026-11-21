@@ -18,22 +18,32 @@ export function normalizeOKX({instruments,tickers,greeks,index},nowMs){
   const quote=new Map(ticks.map(x=>[x.instId,x]));
   const greek=new Map(stats.map(x=>[x.instId,x]));
   const ei={optionSymbols:[]},marks=[],outTicks=[];
+  const diag={raw_instruments:inst.length,raw_tickers:ticks.length,raw_greeks:stats.length,
+    pairable:0,regex:0,live:0,btc_settlement:0,quotes:0,time_valid:0,
+    first_instrument:inst[0]?{id:inst[0].instId,state:inst[0].state,settle:inst[0].settleCcy,
+      family:inst[0].instFamily,minSz:inst[0].minSz,ctVal:inst[0].ctVal}:null};
   for(const i of inst){
     const m=/^BTC-USD-(\d{6})-(\d+)-([CP])$/.exec(i.instId||"");
+    if(m)diag.regex++;
+    if(m&&i.state==="live")diag.live++;
+    if(m&&i.state==="live"&&i.settleCcy==="BTC")diag.btc_settlement++;
     if(!m||i.state!=="live"||i.instFamily!=="BTC-USD"||i.settleCcy!=="BTC") continue;
     const min=num(i.minSz),unit=num(i.ctVal),exp=num(i.expTime),strike=num(m[2]);
     const q=quote.get(i.instId),g=greek.get(i.instId);
     if(!ok(min)||!ok(unit)||!ok(exp)||!ok(strike)||!q||!g)continue;
+    diag.quotes++;
     if(!Number.isFinite(t(q))||nowMs-t(q)>90000||!Number.isFinite(t(g))||nowMs-t(g)>120000)continue;
+    diag.time_valid++;
     const ask=num(q.askPx),bid=num(q.bidPx),iv=num(g.markVol),delta=num(g.deltaBS);
     if(!ok(ask)||!ok(bid)||!ok(iv)||!Number.isFinite(delta)||bid>ask)continue;
     ei.optionSymbols.push({symbol:i.instId,underlying:"BTCUSDT",status:"TRADING",
       side:m[3]==="C"?"CALL":"PUT",strikePrice:strike,expiryDate:exp,minQty:min,unit});
+    diag.pairable++;
     marks.push({symbol:i.instId,markIV:iv,delta});
     outTicks.push({symbol:i.instId,askPrice:ask*spot,bidPrice:bid*spot});
   }
   return {exchangeInfo:ei,marks,tickers:outTicks,index:{indexPrice:spot,time:indexAt},
-    policy:policyOKX,venue:"OKX",currency:"BTC",spot,expiryCurrency:"BTC"};
+    policy:policyOKX,venue:"OKX",currency:"BTC",spot,expiryCurrency:"BTC",diagnostics:diag};
 }
 export function normalizeOKXBook(payload,spot){
   const books=okxData(payload),b=books[0];
