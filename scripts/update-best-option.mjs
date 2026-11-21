@@ -1,59 +1,94 @@
-// PUBLIC GET only. Zero credentials, zero orders, zero account endpoints.
-import {readFile,writeFile} from 'node:fs/promises';
-import {buildPairs,validateDepth,chooseWinner,toSnapshot,annualizedRv} from '../best-option-core.mjs';
-const now=()=>Date.now();
-const base='https://eapi.binance.com/eapi/v1/';
-async function get(url) {
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),12000);
-  try {
-    const r=await fetch(url,{headers:{'Accept':'application/json','User-Agent':'TCE-GitHub-Pages-ReadOnly/1'},signal:controller.signal});
-    if(!r.ok) throw Error('HTTP '+r.status+' from '+new URL(url).host);
-    return await r.json();
-  } finally {clearTimeout(timer);}
+// Public BTC options: 3 venue scanner, no credentials or execution.
+import {readFile,writeFile} from "node:fs/promises";
+import {annualizedRv} from "../best-option-core.mjs";
+import {normalizeBinance,normalizeBinanceBook,normalizeOKX,normalizeOKXBook,
+  normalizeDeribit,normalizeDeribitBook,rankVenue,verifyVenuePair,
+  chooseAcrossVenues,snapshotFromVenues} from "../best-option-venues.mjs";
+const urls={BINANCE:"https://eapi.binance.com/eapi/v1/",
+ OKX:"https://www.okx.com/api/v5/",DERIBIT:"https://www.deribit.com/api/v2/"};
+async function get(url){
+ const c=new AbortController(),timer=setTimeout(()=>c.abort(),10000);
+ try{const r=await fetch(url,{signal:c.signal,headers:{Accept:"application/json"}});
+  if(!r.ok)throw Error("HTTP "+r.status+" "+new URL(url).host);
+  return await r.json();
+ }finally{clearTimeout(timer)}
 }
-async function oldWinner() {
-  try{return JSON.parse(await readFile('best-option.json','utf8'));}catch{return null;}
+async function rvHistory(){
+ try{
+  const r=await get(urls.OKX+"market/history-candles?instId=BTC-USDT&bar=1D&limit=36");
+  if(r.code!=="0"||!Array.isArray(r.data))return null;
+  const bars=r.data.filter(x=>String(x[8])==="1").sort((a,b)=>Number(a[0])-Number(b[0]));
+  const rv=[7,14,30].map(d=>annualizedRv(bars,d));
+  return rv.every(x=>Number.isFinite(x)&&x>0)?rv:null;
+ }catch{return null}
 }
-async function run() {
-  const previous=await oldWinner();
-  try {
-    const [info,marks,tickers,index,klines]=await Promise.all([
-      get(base+'exchangeInfo'),get(base+'mark'),get(base+'ticker'),
-      get(base+'index?underlying=BTCUSDT'),
-      get('https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=32')
-        .catch(()=>null)
-    ]);
-    const rv=[7,14,30].map(d=>annualizedRv(klines,d));
-    const pairs=buildPairs({exchangeInfo:info,marks,tickers,index,nowMs:now(),rv});
-    const qualified=[], depthCache=new Map();
-    async function depth(sym) {
-      if(!depthCache.has(sym)) depthCache.set(sym,await get(base+'depth?symbol='+encodeURIComponent(sym)+'&limit=10'));
-      return depthCache.get(sym);
-    }
-    for (const pair of pairs.slice(0,12)) {
-      try {
-        const [c,p]=await Promise.all([depth(pair.call.symbol),depth(pair.put.symbol)]);
-        const valid=validateDepth(pair,c,p,now());
-        if(valid) qualified.push(valid);
-      } catch(error) {
-        if(String(error).includes('HTTP 429')||String(error).includes('HTTP 418')) throw error;
-      }
-    }
-    const winner=chooseWinner(qualified,previous);
-    const snapshot=toSnapshot(winner,now(),pairs.length,rv);
-    snapshot.source='Binance official public /eapi/v1 exchangeInfo,index,mark,ticker,depth';
-    snapshot.top_depth_verified=qualified.length;
-    await writeFile('best-option.json',JSON.stringify(snapshot,null,2)+'\n');
-    console.log(snapshot.state,winner?winner.call.symbol+' + '+winner.put.symbol:'CASH');
-  } catch(error) {
-    const snapshot={schema:'tce-best-option-v1',generated_at_ms:now(),
-      expires_at_ms:now()+25*60*1000,decision:'CASH',
-      mode:'READ_ONLY',tradable:false,auto_order:false,candidate:null,
-      state:'BLOCKED_DATA',reason:String(error).slice(0,240)};
-    await writeFile('best-option.json',JSON.stringify(snapshot,null,2)+'\n');
-    console.error('FAIL-CLOSED:',snapshot.reason);
-    process.exitCode=1;
-  }
+async function prepare(venue){
+ const u=urls[venue];
+ if(venue==="BINANCE"){
+  const [exchangeInfo,marks,tickers,index]=await Promise.all([
+   get(u+"exchangeInfo"),get(u+"mark"),get(u+"ticker"),get(u+"index?underlying=BTCUSDT")]);
+  return normalizeBinance({exchangeInfo,marks,tickers,index});
+ }
+ if(venue==="OKX"){
+  const [instruments,tickers,greeks,index]=await Promise.all([
+   get(u+"public/instruments?instType=OPTION&instFamily=BTC-USD"),
+   get(u+"market/tickers?instType=OPTION&instFamily=BTC-USD"),
+   get(u+"public/opt-summary?instFamily=BTC-USD"),
+   get(u+"market/index-tickers?instId=BTC-USD")]);
+  return normalizeOKX({instruments,tickers,greeks,index},Date.now());
+ }
+ const [instruments,summaries]=await Promise.all([
+  get(u+"public/get_instruments?currency=BTC&kind=option&expired=false"),
+  get(u+"public/get_book_summary_by_currency?currency=BTC&kind=option")]);
+ return normalizeDeribit({instruments,summaries},Date.now());
 }
-await run();
+async function getBook(venue,symbol,spot){
+ const url=urls[venue],name=encodeURIComponent(symbol);
+ if(venue==="BINANCE")return normalizeBinanceBook(await get(url+"depth?symbol="+name+"&limit=10"));
+ if(venue==="OKX")return normalizeOKXBook(await get(url+"market/books?instId="+name+"&sz=10"),spot);
+ return normalizeDeribitBook(await get(url+"public/get_order_book?instrument_name="+name+"&depth=10"),spot);
+}
+async function probe(venue,rv){
+ const adapter=await prepare(venue),pairs=rankVenue(adapter,rv,Date.now()),cache=new Map(),vetted=[];
+ for(const pair of pairs.slice(0,6)){
+  const book=async sym=>{
+   if(!cache.has(sym))cache.set(sym,getBook(venue,sym,adapter.spot));
+   return cache.get(sym);
+  };
+  try{
+   const [c,p]=await Promise.all([book(pair.call.symbol),book(pair.put.symbol)]);
+   const good=verifyVenuePair(pair,c,p,Date.now());
+   if(good)vetted.push(good);
+  }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e}
+ }
+ return {venue,universe:pairs.length,vetted};
+}
+async function main(){
+ let prev=null;
+ try{prev=JSON.parse(await readFile("best-option.json","utf8"))}catch{}
+ const rv=await rvHistory(),names=["BINANCE","OKX","DERIBIT"];
+ const result=await Promise.allSettled(names.map(name=>probe(name,rv)));
+ const candidates=[],responded=[],errors=[],counts={};
+ for(let i=0;i<result.length;i++){
+  const x=result[i],venue=names[i];
+  if(x.status==="fulfilled"){
+   responded.push(venue);counts[venue]=x.value.universe;
+   candidates.push(...x.value.vetted);
+  }else errors.push(venue+": "+String(x.reason).slice(0,180));
+ }
+ const winner=chooseAcrossVenues(candidates,prev);
+ const snapshot=snapshotFromVenues(winner,Date.now(),Object.values(counts).reduce((a,b)=>a+b,0),rv,
+  {venues_checked:names,venues_responded:responded});
+ snapshot.source="PUBLIC_MARKET_DATA_MULTI_VENUE";snapshot.autonomous=true;
+ snapshot.venue_universe_counts=counts;snapshot.validated_pairs=candidates.length;
+ snapshot.scan_errors=errors;snapshot.order_sent=false;snapshot.signing=false;snapshot.capital_at_risk=0;
+ if(responded.length===0){
+  snapshot.state="BLOCKED_DATA";snapshot.candidate=null;
+  snapshot.reason="All 3 venue public market scans unavailable";
+ }
+ await writeFile("best-option.json",JSON.stringify(snapshot,null,2)+"\n");
+ console.log(JSON.stringify({status:snapshot.state,venues:responded,winner:snapshot.candidate?.call_symbol,
+  validated:candidates.length,errors}));
+ if(responded.length===0)process.exitCode=1;
+}
+await main();
