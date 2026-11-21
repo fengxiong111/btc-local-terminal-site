@@ -61,18 +61,19 @@ async function probe(venue,rv){
    if(good)vetted.push(good);
   }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e}
  }
- return {venue,universe:pairs.length,vetted};
+ return {venue,universe:pairs.length,normalized:adapter.exchangeInfo?.optionSymbols?.length,diagnostics:adapter.diagnostics||null,vetted};
 }
 async function main(){
  let prev=null;
  try{prev=JSON.parse(await readFile("best-option.json","utf8"))}catch{}
  const rv=await rvHistory(),names=["BINANCE","OKX","DERIBIT"];
  const result=await Promise.allSettled(names.map(name=>probe(name,rv)));
- const candidates=[],responded=[],errors=[],counts={};
+ const candidates=[],responded=[],errors=[],counts={},venueDiagnostics={};
  for(let i=0;i<result.length;i++){
   const x=result[i],venue=names[i];
   if(x.status==="fulfilled"){
    responded.push(venue);counts[venue]=x.value.universe;
+   venueDiagnostics[venue]={normalized:x.value.normalized,detail:x.value.diagnostics};
    candidates.push(...x.value.vetted);
   }else errors.push(venue+": "+String(x.reason).slice(0,180));
  }
@@ -80,7 +81,8 @@ async function main(){
  const snapshot=snapshotFromVenues(winner,Date.now(),Object.values(counts).reduce((a,b)=>a+b,0),rv,
   {venues_checked:names,venues_responded:responded});
  snapshot.source="PUBLIC_MARKET_DATA_MULTI_VENUE";snapshot.autonomous=true;
- snapshot.venue_universe_counts=counts;snapshot.validated_pairs=candidates.length;
+ snapshot.venue_universe_counts=counts;snapshot.venue_diagnostics=venueDiagnostics;
+ snapshot.validated_pairs=candidates.length;
  snapshot.scan_errors=errors;snapshot.order_sent=false;snapshot.signing=false;snapshot.capital_at_risk=0;
  if(responded.length===0){
   snapshot.state="BLOCKED_DATA";snapshot.candidate=null;
