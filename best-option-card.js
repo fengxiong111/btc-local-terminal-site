@@ -139,9 +139,9 @@
       scanning=false;render();
     }
   }
-  function refresh(){
-    readGithub();
-    if(!isFresh(snapshots.github))directScan();
+  async function refresh(){
+    await readGithub();
+    if(!isFresh(snapshots.github)) await directScan();
     else render();
   }
   refresh();
