@@ -1,0 +1,45 @@
+name: Refresh single BTC convexity candidate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7,17,27,37,47,57 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tce-best-option-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Sync default branch
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run read-only scanner tests
+        run: node --test scripts/best-option-core.test.mjs
+      - name: Scan public option chain (fail closed)
+        id: scan
+        run: node scripts/update-best-option.mjs
+      - name: Publish the selected candidate or blocked receipt
+        if: \${{ always() && steps.scan.outcome != 'skipped' }}
+        run: |
+          git add -- best-option.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh best BTC convexity candidate"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
