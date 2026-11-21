@@ -1,7 +1,7 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795301070680,
-  "expires_at_ms": 1795302570680,
+  "generated_at_ms": 1795301080378,
+  "expires_at_ms": 1795302580378,
   "decision": "CASH",
   "mode": "READ_ONLY",
   "tradable": false,
