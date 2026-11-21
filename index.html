@@ -130,6 +130,11 @@
       .btc-metric .market-symbol, .btc-metric .market-price { color: inherit; font-size: inherit; font-weight: 500; letter-spacing: 0; }
       .btc-metric[data-market-state="stale"] { opacity: 0.7; }
 
+
+      /* One quiet convexity candidate tile; same grid, no order controls. */
+      .option-name { display:block; color:var(--text); font-size:clamp(17px, min(7.2cqw, 15cqh), 67px); font-weight:600; line-height:1.1; letter-spacing:-0.035em; white-space:nowrap; }
+      .option-foot { color:var(--muted); font-size:clamp(13px, min(4.8cqw, 8cqh), 44px); white-space:nowrap; }
+
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
       }
@@ -787,6 +792,21 @@
           if (remainder) cards[cards.length - 1].style.gridColumn = "span " + String(best - remainder + 1);
         }
 
+
+        function createBestOptionRow() {
+          var card = document.createElement("article");
+          card.id = "best-option-card";
+          card.className = "market-row";
+          card.dataset.marketState = "stale";
+          card.setAttribute("aria-label", "BTC options research candidate; read only");
+          card.innerHTML =
+            '<div class="market-ident"><span class="market-symbol">OPT</span>' +
+            '<span class="market-cap" data-option-state>只读</span></div>' +
+            '<div class="market-quote"><strong class="option-name" data-option-name>CASH</strong>' +
+            '<span class="option-foot" data-option-date>正在读取…</span></div>';
+          return card;
+        }
+
         function renderMarketBoard() {
           if (!marketListElement) return;
           var validItems = marketDefinitions.map(function (definition) {
@@ -824,9 +844,11 @@
               marketRowsById[item.id] = row;
               metrics.forEach(function (entry) { marketRowsById[entry.id] = row._metricRows[entry.id]; });
               fragment.appendChild(row);
+              if (item.id === "btc") fragment.appendChild(createBestOptionRow());
             });
             replaceChildrenCompat(marketListElement, fragment);
             updateGrid();
+            if (window.__BEST_OPTION_RENDER__) window.__BEST_OPTION_RENDER__();
           }
 
           validItems.forEach(function (item) {
@@ -1280,5 +1302,6 @@
         });
       }());
     </script>
+    <script defer src="./best-option-card.js"></script>
   </body>
 </html>
