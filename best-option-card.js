@@ -19,8 +19,14 @@
   }
   function chosen(){
     var candidates=[snapshots.github,snapshots.browser].filter(isFresh);
-    candidates.sort(function(a,b){return b.generated_at_ms-a.generated_at_ms;});
-    return candidates[0]||null;
+    // A fresh BLOCKED_DATA receipt from a geo-blocked GitHub runner must
+    // never suppress a separately verified fresh browser SHADOW candidate.
+    var valid=candidates.filter(function(x){
+      return x.state==="SHADOW" && x.candidate && x.candidate.expiry_ms>Date.now();
+    });
+    var ranked=valid.length?valid:candidates;
+    ranked.sort(function(a,b){return b.generated_at_ms-a.generated_at_ms;});
+    return ranked[0]||null;
   }
   function render(){
     var root=document.getElementById("best-option-card");
@@ -132,7 +138,8 @@
     }catch(e){
       diagnostics.browserScan="BLOCKED_DATA";
       diagnostics.lastError=String(e);
-      scanError=/Failed to fetch|NetworkError|Load failed|TypeError/i.test(String(e))?
+      scanError=/HTTP 451/.test(String(e)) ? "币安接口受限(451)" :
+        /Failed to fetch|NetworkError|Load failed|TypeError/i.test(String(e))?
         "公开接口不可达":"行情获取失败";
       // Never publish a synthetic or unverified quote on failure.
     }finally{
@@ -144,7 +151,8 @@
     // Even if GitHub holds a previously published snapshot, independently
     // rescan when it becomes older than five minutes. No ChatGPT is involved.
     var githubAge=snapshots.github?Date.now()-snapshots.github.generated_at_ms:Infinity;
-    if(!isFresh(snapshots.github) || githubAge>5*60*1000) await directScan();
+    if(!isFresh(snapshots.github) || snapshots.github.state!=="SHADOW" ||
+       githubAge>5*60*1000) await directScan();
     else render();
   }
   refresh();
