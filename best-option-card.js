@@ -141,7 +141,10 @@
   }
   async function refresh(){
     await readGithub();
-    if(!isFresh(snapshots.github)) await directScan();
+    // Even if GitHub holds a previously published snapshot, independently
+    // rescan when it becomes older than five minutes. No ChatGPT is involved.
+    var githubAge=snapshots.github?Date.now()-snapshots.github.generated_at_ms:Infinity;
+    if(!isFresh(snapshots.github) || githubAge>5*60*1000) await directScan();
     else render();
   }
   refresh();
