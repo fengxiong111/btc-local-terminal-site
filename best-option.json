@@ -1,7 +1,7 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795301907524,
-  "expires_at_ms": 1795303407524,
+  "generated_at_ms": 1795301966208,
+  "expires_at_ms": 1795303466208,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
@@ -24,6 +24,34 @@
   "venue_universe_counts": {
     "OKX": 0,
     "DERIBIT": 0
+  },
+  "venue_diagnostics": {
+    "OKX": {
+      "normalized": 889,
+      "detail": {
+        "raw_instruments": 950,
+        "raw_tickers": 950,
+        "raw_greeks": 950,
+        "pairable": 889,
+        "regex": 950,
+        "live": 950,
+        "btc_settlement": 950,
+        "quotes": 950,
+        "time_valid": 950,
+        "first_instrument": {
+          "id": "BTC-USD-261122-46000-C",
+          "state": "live",
+          "settle": "BTC",
+          "family": "BTC-USD",
+          "minSz": "1",
+          "ctVal": "1"
+        }
+      }
+    },
+    "DERIBIT": {
+      "normalized": 0,
+      "detail": null
+    }
   },
   "validated_pairs": 0,
   "scan_errors": [
