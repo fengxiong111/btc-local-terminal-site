@@ -150,6 +150,9 @@ export function toSnapshot(pair,nowMs,universeSize,rv) {
     auto_order:false,universe_count:universeSize,decision:"CASH"};
   if(!pair) return {...base,state:"NO_FEASIBLE_CANDIDATE",candidate:null,
       reason:"No fresh, budget-feasible two-leg option pair with executable depth"};
+  if(!pair.verifiedDepth || !Number.isFinite(pair.exitValue) || !Number.isFinite(pair.entryCost))
+    return {...base,state:"BLOCKED_DATA",candidate:null,
+      reason:"Candidate has not passed verified executable L2 depth"};
   return {...base,state:"SHADOW",reason:"Best screened convexity candidate; positive expectancy NOT established",
     evidence:"BLOCKED_EVIDENCE",candidate:{
       call_symbol:pair.call.symbol,put_symbol:pair.put.symbol,
