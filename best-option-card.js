@@ -32,7 +32,7 @@
   }
   window.__BEST_OPTION_RENDER__=render;
   function refresh(){
-    fetch('./best-option.json?t='+Date.now(),{cache:'no-store'}).then(function(r){
+    fetch('https://raw.githubusercontent.com/fengxiong111/btc-local-terminal-site/main/best-option.json?t='+Math.floor(Date.now()/60000),{cache:'no-store',mode:'cors'}).then(function(r){
       if(!r.ok) throw Error('HTTP '+r.status);
       return r.json();
     }).then(function(j){
