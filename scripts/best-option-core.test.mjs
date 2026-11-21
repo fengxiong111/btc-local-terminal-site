@@ -34,7 +34,12 @@ test('winner hysteresis is stable within threshold',()=>{
 });
 test('no candidate is CASH; candidate remains SHADOW even modeled net positive',()=>{
  assert.equal(toSnapshot(null,now,0,null).decision,'CASH');
- const s=toSnapshot(buildPairs(input)[0],now,4,[.7,.63,.51]);
+ const unverified=buildPairs(input)[0];
+ assert.equal(toSnapshot(unverified,now,4,[.7,.63,.51]).state,'BLOCKED_DATA');
+ const book=leg=>({T:now,bids:[[leg.bid,.05]],asks:[[leg.ask,.05]]});
+ const vetted=validateDepth(unverified,book(unverified.call),book(unverified.put),now);
+ assert(vetted);
+ const s=toSnapshot(vetted,now,4,[.7,.63,.51]);
  assert.equal(s.decision,'CASH');assert.equal(s.state,'SHADOW');assert.equal(s.tradable,false);
 });
 test('rv requires enough real observations',()=>{assert.equal(annualizedRv([],7),null);});
