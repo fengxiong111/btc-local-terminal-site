@@ -34,8 +34,7 @@
     if(!root) return;
     var name=root.querySelector("[data-option-name]");
     var expiry=root.querySelector("[data-option-date]");
-    var badge=root.querySelector("[data-option-state]");
-    if(!name||!expiry||!badge)return;
+    if(!name||!expiry)return;
     var best=chosen(),c=best&&best.candidate;
     var valid=best&&best.state==="SHADOW"&&c&&c.expiry_ms>Date.now()&&
       Number.isFinite(c.call_strike)&&Number.isFinite(c.put_strike);
@@ -43,8 +42,7 @@
       var d=new Date(c.expiry_ms);
       name.textContent=String(c.call_strike)+"C / "+String(c.put_strike)+"P";
       expiry.textContent=String(d.getUTCMonth()+1).padStart(2,"0")+
-        "/"+String(d.getUTCDate()).padStart(2,"0")+" · SHADOW";
-      badge.textContent=c.venue||"候选";
+        "/"+String(d.getUTCDate()).padStart(2,"0");
       root.dataset.marketState="live";
       diagnostics.source=best.source||"github";
       root.title="筛选第一候选，不代表已证明正期望或允许交易";
@@ -62,7 +60,6 @@
     }else{
       expiry.textContent="尚无有效报价";
     }
-    badge.textContent="只读";
     root.dataset.marketState="stale";
   }
   window.__BEST_OPTION_RENDER__=render;
