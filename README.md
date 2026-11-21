@@ -129,3 +129,17 @@ node scripts/check-tail-health.mjs
 - 输出：**手续费绝对金额最大的一个池**。`fee_leader` 是这三个条件下的扫描胜者；不再把复杂指标和仓位级模拟当作发现池的前置资格。筛选只读，不需要钱包。
 - 保留 `best=null` 专供真实仓位级净收益确认；不妨碍把 `fee_leader` 报为“24小时全池手续费第一”。
 - Merkl 活动接口公开的是激励 APR，不是底层可比的 24h Swap Fees，不能伪称与 Meteora 用相同手续费排行榜。目前 Merkl 最低 TVL 也改为 $100,000，等待有可核验底层手续费/代币市值后再做同规则排行。
+
+
+## 唯一 BTC 期权候选卡片（2026-11，纯只读）
+
+静态首页行情网格新增 OPT 卡片；任何时刻只展示一组同到期日的 BTC Call / Put 执行价及到期日。无合格或无新鲜数据时显示 CASH；不自动交易。
+
+- GitHub Actions：.github/workflows/update-best-option.yml，每 10 分钟计划扫描一次；GitHub 调度可能延迟，**不是逐秒实时**。
+- 扫描：scripts/update-best-option.mjs；纯筛选：best-option-core.mjs；公开快照：best-option.json；网页展示：best-option-card.js。
+- 仅用 Binance 官方公开 REST 读取交易规则、期权报价/Greeks、指数、真实 L2；不使用 API Key、私钥、账户接口、订单接口。前端每 60 秒读取公开 JSON；数据超过 25 分钟自动 CASH。
+- 搜索 7–45D 的同到期 Call + Put（允许非对称执行价），最小单位总权利金及开仓费不超过 60U；限制组合净 Delta、单腿点差、双腿立即退出摩擦，并核验真实盘口足够成交最小单位。
+- 排名使用保守历史 RV 情景下的到期期望内在价值（**不是已验证未来预测**）、5% 价格变化下的近似 Gamma 收益、价差/手续费和净 Delta 惩罚。只有前向样本外证据才能证明 Alpha。此卡**只表示已通过可行性筛查的第一研究候选**；即使展示候选，决策仍为 CASH / SHADOW。
+- 平台不能保证 GitHub Pages 跨地区访问或交易所 API 的实时可用性，抓取失败会发布 BLOCKED_DATA 或在陈旧时自动失效，不会使用历史价格冒充当前最优。
+
+禁止为它添加交易密钥、钱包划转与自动下单。
