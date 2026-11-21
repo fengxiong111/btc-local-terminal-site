@@ -92,9 +92,10 @@ export function buildPairs({exchangeInfo, marks, tickers, index, nowMs, rv, poli
       const modeledNet=conservative===null ? null : expectedIntrinsic(conservative)-entryCost
         -0.00015*spot*(call.coinQty+put.coinQty);
       const gamma5pct=0.5*(call.gamma+put.gamma)*(spot*0.05)**2;
-      const fixedDeltaPenalty=Math.abs(totalDelta)*spot*call.coinQty*0.01;
-      const liquidityPenalty=friction*entryCost;
-      const score=(modeledNet??0) + 0.12*gamma5pct - liquidityPenalty - fixedDeltaPenalty;
+      // Lexicographic hard gates above; objective is conservative modeled net ROI,
+      // not an arbitrary weighted mix of incompatible units. Without RV, compare
+      // execution-adjusted gamma efficiency only (research, never alpha evidence).
+      const score=modeledNet===null ? gamma5pct/entryCost-friction : modeledNet/entryCost;
       out.push({
         call,put,expiryMs:N(expiry),entryCost,bidValue,friction,delta:totalDelta,
         gamma5pct, modeledNet, score,spot,conservativeRv:conservative
@@ -129,8 +130,9 @@ export function validateDepth(pair,bookCall,bookPut,nowMs,policy=POLICY) {
   }
   const friction=(cost-exit)/cost;
   if(cost>policy.premiumCap || friction>policy.maxRoundTrip || friction<0) return null;
-  return {...pair,entryCost:cost,exitValue:exit,friction,
-    score:pair.score - Math.max(0,cost-pair.entryCost), verifiedDepth:true};
+  const modeledNet=pair.modeledNet===null ? null : pair.modeledNet-(cost-pair.entryCost);
+  const score=modeledNet===null ? pair.gamma5pct/cost-friction : modeledNet/cost;
+  return {...pair,entryCost:cost,exitValue:exit,friction,modeledNet,score,verifiedDepth:true};
 }
 export function chooseWinner(candidates,previous) {
   const arr=[...candidates].sort((a,b)=>b.score-a.score);
@@ -138,7 +140,7 @@ export function chooseWinner(candidates,previous) {
   if(previous?.candidate?.call_symbol && previous?.candidate?.put_symbol) {
     const old=arr.find(x=>x.call.symbol===previous.candidate.call_symbol &&
         x.put.symbol===previous.candidate.put_symbol);
-    if(old && arr[0].score-old.score < Math.max(0.5,Math.abs(arr[0].score)*0.15)) return old;
+    if(old && arr[0].score-old.score < Math.max(0.03,Math.abs(arr[0].score)*0.15)) return old;
   }
   return arr[0];
 }
