@@ -1,11 +1,11 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795304508686,
-  "expires_at_ms": 1795306008686,
+  "generated_at_ms": 1795306552738,
+  "expires_at_ms": 1795308052738,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
-  "universe_count": 370,
+  "universe_count": 373,
   "decision": "CASH",
   "state": "SHADOW",
   "reason": "Best screened convexity candidate; positive expectancy NOT established",
@@ -17,14 +17,14 @@
     "put_strike": 63000,
     "expiry_ms": 1796371200000,
     "qty_contracts": 1,
-    "premium_with_entry_fees_usdt": 58.0738,
-    "immediate_exit_net_usdt": 55.8494,
-    "roundtrip_loss_fraction": 0.0383,
-    "combined_delta": -0.2635,
-    "gamma_5pct_approx_usdt": 5.7182,
+    "premium_with_entry_fees_usdt": 57.5134,
+    "immediate_exit_net_usdt": 55.5883,
+    "roundtrip_loss_fraction": 0.0335,
+    "combined_delta": -0.2581,
+    "gamma_5pct_approx_usdt": 5.7569,
     "conservative_rv_assumption": 0.373074939297193,
-    "modeled_expiry_net_usdt": -14.2626,
-    "score": -0.2456,
+    "modeled_expiry_net_usdt": -13.9001,
+    "score": -0.2417,
     "venue": "OKX",
     "settlement_ccy": "BTC",
     "min_notional_btc": 0.01,
@@ -49,17 +49,17 @@
   "source": "PUBLIC_MARKET_DATA_MULTI_VENUE",
   "autonomous": true,
   "venue_universe_counts": {
-    "OKX": 370,
+    "OKX": 373,
     "DERIBIT": 0
   },
   "venue_diagnostics": {
     "OKX": {
-      "normalized": 887,
+      "normalized": 888,
       "detail": {
         "raw_instruments": 950,
         "raw_tickers": 950,
         "raw_greeks": 950,
-        "pairable": 887,
+        "pairable": 888,
         "regex": 950,
         "live": 950,
         "btc_settlement": 950,
@@ -87,5 +87,14 @@
   ],
   "order_sent": false,
   "signing": false,
-  "capital_at_risk": 0
+  "capital_at_risk": 0,
+  "straddle_ladder": {
+    "schema": "btc-atm-straddle-ladder-v1",
+    "generated_at_ms": 1795306552738,
+    "state": "BLOCKED_DATA",
+    "rows": [],
+    "source": "REAL_PUBLIC_L2",
+    "decision": "CASH",
+    "note": "Expiry breakevens are approximate USD equivalents; BTC settled venues bear BTC conversion and exercise fee risk"
+  }
 }
