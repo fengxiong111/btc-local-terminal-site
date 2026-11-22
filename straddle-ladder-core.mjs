@@ -80,14 +80,17 @@ export function validateStraddle(row,callBook,putBook,nowMs=Date.now(),policy=LA
     roundtrip_fraction:+((cost-exit)/cost).toFixed(4),
     verified_depth:true,quote_time_ms:Math.min(n(callBook.T),n(putBook.T))};
 }
-export function chooseFive(rows){
-  const seen=new Set(),out=[];
-  for(const row of [...rows].sort((a,b)=>a.expiry_ms-b.expiry_ms||
+export function chooseFive(rows,nowMs=Date.now()){
+  const sorted=[...rows].sort((a,b)=>a.expiry_ms-b.expiry_ms||
     Math.abs(a.call_strike-a.index_price_usd)-Math.abs(b.call_strike-b.index_price_usd)||
-    a.all_in_cost_usd-b.all_in_cost_usd)){
-    if(seen.has(row.expiry_ms))continue;
-    seen.add(row.expiry_ms);out.push(row);
-    if(out.length===5)break;
-  }
-  return out;
+    a.all_in_cost_usd-b.all_in_cost_usd);
+  const dates=[...new Map(sorted.map(r=>[r.expiry_ms,r])).values()];
+  // Retain short-term convexity AND a longer dated comparison, not five
+  // nearly identical daily expirations.
+  const result=[],add=x=>{if(x&&!result.some(y=>y.expiry_ms===x.expiry_ms))result.push(x)};
+  dates.slice(0,3).forEach(add);
+  add(dates.find(x=>(x.expiry_ms-nowMs)/86400000>=4 && (x.expiry_ms-nowMs)/86400000<8));
+  add(dates.find(x=>(x.expiry_ms-nowMs)/86400000>=8));
+  for(const x of dates){if(result.length>=5)break;add(x)}
+  return result.sort((a,b)=>a.expiry_ms-b.expiry_ms).slice(0,5);
 }
