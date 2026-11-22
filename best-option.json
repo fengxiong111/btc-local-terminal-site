@@ -1,11 +1,11 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795306608709,
-  "expires_at_ms": 1795308108709,
+  "generated_at_ms": 1795306636205,
+  "expires_at_ms": 1795308136205,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
-  "universe_count": 373,
+  "universe_count": 366,
   "decision": "CASH",
   "state": "SHADOW",
   "reason": "Best screened convexity candidate; positive expectancy NOT established",
@@ -17,14 +17,14 @@
     "put_strike": 63000,
     "expiry_ms": 1796371200000,
     "qty_contracts": 1,
-    "premium_with_entry_fees_usdt": 57.5145,
-    "immediate_exit_net_usdt": 55.5893,
-    "roundtrip_loss_fraction": 0.0335,
-    "combined_delta": -0.2595,
-    "gamma_5pct_approx_usdt": 5.7618,
+    "premium_with_entry_fees_usdt": 57.5304,
+    "immediate_exit_net_usdt": 55.9055,
+    "roundtrip_loss_fraction": 0.0282,
+    "combined_delta": -0.2582,
+    "gamma_5pct_approx_usdt": 5.7696,
     "conservative_rv_assumption": 0.373074939297193,
-    "modeled_expiry_net_usdt": -13.9063,
-    "score": -0.2418,
+    "modeled_expiry_net_usdt": -13.988,
+    "score": -0.2431,
     "venue": "OKX",
     "settlement_ccy": "BTC",
     "min_notional_btc": 0.01,
@@ -49,17 +49,17 @@
   "source": "PUBLIC_MARKET_DATA_MULTI_VENUE",
   "autonomous": true,
   "venue_universe_counts": {
-    "OKX": 373,
+    "OKX": 366,
     "DERIBIT": 0
   },
   "venue_diagnostics": {
     "OKX": {
-      "normalized": 889,
+      "normalized": 887,
       "detail": {
         "raw_instruments": 950,
         "raw_tickers": 950,
         "raw_greeks": 950,
-        "pairable": 889,
+        "pairable": 887,
         "regex": 950,
         "live": 950,
         "btc_settlement": 950,
@@ -74,11 +74,38 @@
           "ctVal": "1",
           "ctMult": "0.01"
         }
+      },
+      "ladder": {
+        "near_atm_candidates": 18,
+        "near_atm_dates": 6,
+        "attempted": 12,
+        "failed": 12,
+        "reasons": [
+          "ReferenceError: book is not defined",
+          "ReferenceError: book is not defined",
+          "ReferenceError: book is not defined"
+        ],
+        "first": {
+          "symbols": [
+            "BTC-USD-261122-60000-C",
+            "BTC-USD-261122-60000-P"
+          ],
+          "cost": 8.786017199999998,
+          "expiry_ms": 1795334400000
+        }
       }
     },
     "DERIBIT": {
       "normalized": 0,
-      "detail": null
+      "detail": null,
+      "ladder": {
+        "near_atm_candidates": 0,
+        "near_atm_dates": 0,
+        "attempted": 0,
+        "failed": 0,
+        "reasons": [],
+        "first": null
+      }
     }
   },
   "validated_pairs": 6,
@@ -90,7 +117,7 @@
   "capital_at_risk": 0,
   "straddle_ladder": {
     "schema": "btc-atm-straddle-ladder-v1",
-    "generated_at_ms": 1795306608709,
+    "generated_at_ms": 1795306636205,
     "state": "BLOCKED_DATA",
     "rows": [],
     "source": "REAL_PUBLIC_L2",
