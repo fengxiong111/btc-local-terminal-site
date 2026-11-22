@@ -1,6 +1,7 @@
 // Public BTC options: 3 venue scanner, no credentials or execution.
 import {readFile,writeFile} from "node:fs/promises";
 import {annualizedRv} from "../best-option-core.mjs";
+import {shortlistStraddles,validateStraddle,chooseFive} from "../straddle-ladder-core.mjs";
 import {normalizeBinance,normalizeBinanceBook,normalizeOKX,normalizeOKXBook,
   normalizeDeribit,normalizeDeribitBook,rankVenue,verifyVenuePair,
   chooseAcrossVenues,snapshotFromVenues} from "../best-option-venues.mjs";
@@ -49,7 +50,7 @@ async function getBook(venue,symbol,spot){
  return normalizeDeribitBook(await get(url+"public/get_order_book?instrument_name="+name+"&depth=10"),spot);
 }
 async function probe(venue,rv){
- const adapter=await prepare(venue),pairs=rankVenue(adapter,rv,Date.now()),cache=new Map(),vetted=[];
+ const adapter=await prepare(venue),pairs=rankVenue(adapter,rv,Date.now()),cache=new Map(),vetted=[],ladder=[];
  for(const pair of pairs.slice(0,6)){
   const book=async sym=>{
    if(!cache.has(sym))cache.set(sym,getBook(venue,sym,adapter.spot));
@@ -61,20 +62,37 @@ async function probe(venue,rv){
    if(good)vetted.push(good);
   }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e}
  }
- return {venue,universe:pairs.length,normalized:adapter.exchangeInfo?.optionSymbols?.length,diagnostics:adapter.diagnostics||null,vetted};
+ // Independently screen near-ATM long straddles at the five nearest expirations.
+ // Keep the single-winner search untouched, and use the same cached L2 fetcher.
+ const shortlist=shortlistStraddles(adapter,Date.now());
+ const expirations=[...new Set(shortlist.map(x=>x.expiry_ms))].slice(0,6);
+ const tried=new Map();
+ for(const candidate of shortlist){
+  if(!expirations.includes(candidate.expiry_ms))continue;
+  if((tried.get(candidate.expiry_ms)||0)>=2 || ladder.some(x=>x.expiry_ms===candidate.expiry_ms))continue;
+  tried.set(candidate.expiry_ms,(tried.get(candidate.expiry_ms)||0)+1);
+  try{
+   const [c,p]=await Promise.all([book(candidate.call.symbol),book(candidate.put.symbol)]);
+   const verified=validateStraddle(candidate,c,p,Date.now());
+   if(verified)ladder.push(verified);
+  }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e}
+ }
+ return {venue,universe:pairs.length,normalized:adapter.exchangeInfo?.optionSymbols?.length,
+   diagnostics:adapter.diagnostics||null,vetted,ladder};
 }
 async function main(){
  let prev=null;
  try{prev=JSON.parse(await readFile("best-option.json","utf8"))}catch{}
  const rv=await rvHistory(),names=["BINANCE","OKX","DERIBIT"];
  const result=await Promise.allSettled(names.map(name=>probe(name,rv)));
- const candidates=[],responded=[],errors=[],counts={},venueDiagnostics={};
+ const candidates=[],ladderRows=[],responded=[],errors=[],counts={},venueDiagnostics={};
  for(let i=0;i<result.length;i++){
   const x=result[i],venue=names[i];
   if(x.status==="fulfilled"){
    responded.push(venue);counts[venue]=x.value.universe;
    venueDiagnostics[venue]={normalized:x.value.normalized,detail:x.value.diagnostics};
    candidates.push(...x.value.vetted);
+   ladderRows.push(...x.value.ladder);
   }else errors.push(venue+": "+String(x.reason).slice(0,180));
  }
  const winner=chooseAcrossVenues(candidates,prev);
@@ -84,6 +102,13 @@ async function main(){
  snapshot.venue_universe_counts=counts;snapshot.venue_diagnostics=venueDiagnostics;
  snapshot.validated_pairs=candidates.length;
  snapshot.scan_errors=errors;snapshot.order_sent=false;snapshot.signing=false;snapshot.capital_at_risk=0;
+ snapshot.straddle_ladder={
+   schema:"btc-atm-straddle-ladder-v1",
+   generated_at_ms:snapshot.generated_at_ms,
+   state:ladderRows.length?"SHADOW":"BLOCKED_DATA",
+   rows:chooseFive(ladderRows),source:"REAL_PUBLIC_L2",decision:"CASH",
+   note:"Expiry breakevens are approximate USD equivalents; BTC settled venues bear BTC conversion and exercise fee risk"
+ };
  if(responded.length===0){
   snapshot.state="BLOCKED_DATA";snapshot.candidate=null;
   snapshot.reason="All 3 venue public market scans unavailable";
