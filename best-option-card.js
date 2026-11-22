@@ -137,6 +137,17 @@
       var json=JSON.parse(new TextDecoder().decode(bytes));
       if(isFresh(json)){json.source="github";snapshots.github=json;render();}
     }catch(e){}
+    // Same-origin Pages or CDN can still work when GitHub raw/API is blocked
+    // by the user's network. Never trust them without fresh schema/time checks.
+    for(const url of [
+      "./best-option.json?t="+Math.floor(Date.now()/120000),
+      "https://cdn.jsdelivr.net/gh/fengxiong111/btc-local-terminal-site@main/best-option.json?t="+Math.floor(Date.now()/120000)
+    ]){
+      try{
+        const json=await getJson(url,5500);
+        if(isFresh(json)){json.source="verified-fallback";snapshots.github=json;render();return;}
+      }catch(e){}
+    }
   }
   async function directScan(){
     if(scanning || Date.now()<retryAfter || Date.now()-lastAttemptAt<5*60*1000){render();return;}
