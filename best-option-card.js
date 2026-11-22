@@ -40,8 +40,7 @@
     }).sort(function(a,b){return b.generated_at_ms-a.generated_at_ms;});
     var best=sources[0]||null,ladder=best&&best.straddle_ladder;
     var valid=best&&ladder&&ladder.schema==="btc-atm-straddle-ladder-v1"&&
-      Array.isArray(ladder.rows)&&ladder.rows.length>0&&
-      ladder.rows.every(function(x){return x.verified_depth===true &&
+      Array.isArray(ladder.rows)&&ladder.rows.some(function(x){return x.verified_depth===true &&
         x.expiry_ms>Date.now()&&Number.isFinite(x.all_in_cost_usd)&&
         Number.isFinite(x.breakeven_low_usd)&&Number.isFinite(x.breakeven_high_usd);});
     root.replaceChildren();
@@ -55,7 +54,10 @@
       return;
     }
     function fmt(x){return Math.round(x).toLocaleString("en-US");}
-    ladder.rows.slice(0,5).forEach(function(x){
+    ladder.rows.filter(function(x){return x.verified_depth===true &&
+      x.expiry_ms>Date.now()&&Number.isFinite(x.all_in_cost_usd)&&
+      Number.isFinite(x.breakeven_low_usd)&&Number.isFinite(x.breakeven_high_usd);
+    }).slice(0,5).forEach(function(x){
       var tr=document.createElement("tr"),date=new Date(x.expiry_ms);
       var fields=[
         String(date.getUTCMonth()+1).padStart(2,"0")+"/"+String(date.getUTCDate()).padStart(2,"0"),
@@ -144,6 +146,7 @@
     try {
       const mod=await import("./best-option-venues.mjs");
       const core=await import("./best-option-core.mjs");
+      const ladderLib=await import("./straddle-ladder-core.mjs");
       var rv=null;
       try{
         const hist=await getJson(roots.OKX+"market/history-candles?instId=BTC-USDT&bar=1D&limit=36");
@@ -172,7 +175,7 @@
             getJson(root+"ticker"),getJson(root+"index?underlying=BTCUSDT")]);
           adapter=mod.normalizeBinance({exchangeInfo,marks,tickers,index});
         }
-        const pairs=mod.rankVenue(adapter,rv,Date.now()).slice(0,3),passed=[],cache=new Map();
+        const pairs=mod.rankVenue(adapter,rv,Date.now()).slice(0,3),passed=[],ladder=[],cache=new Map();
         async function depth(symbol){
           if(cache.has(symbol))return cache.get(symbol);
           var url=venue==="OKX"?
@@ -193,19 +196,47 @@
             if(valid)passed.push(valid);
           }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e;}
         }
-        return passed;
+        // A browser-side emergency fallback must also include a verified
+        // five-expiry ladder. Otherwise it masks a valid GitHub ladder with
+        // a newer single-winner-only snapshot.
+        const shortlist=ladderLib.shortlistStraddles(adapter,Date.now());
+        const expiryIds=[...new Set(shortlist.map(x=>x.expiry_ms))].slice(0,6);
+        const attempted=new Map();
+        for(const item of shortlist){
+          if(!expiryIds.includes(item.expiry_ms))continue;
+          if((attempted.get(item.expiry_ms)||0)>=2 ||
+             ladder.some(x=>x.expiry_ms===item.expiry_ms))continue;
+          attempted.set(item.expiry_ms,(attempted.get(item.expiry_ms)||0)+1);
+          try{
+            const books=await Promise.all([depth(item.call.symbol),depth(item.put.symbol)]);
+            const row=ladderLib.validateStraddle(item,books[0],books[1],Date.now());
+            if(row)ladder.push(row);
+          }catch(e){
+            if(/HTTP (418|429)/.test(String(e)))throw e;
+          }
+        }
+        return {passed,ladder};
       }
       var names=["OKX","DERIBIT","BINANCE"];
       var outcomes=await Promise.allSettled(names.map(x=>attempt(x)));
-      var candidates=[],errors=[];
+      var candidates=[],ladderRows=[],errors=[];
       for(var i=0;i<outcomes.length;i++){
-        if(outcomes[i].status==="fulfilled")candidates.push(...outcomes[i].value);
-        else errors.push(names[i]+": "+String(outcomes[i].reason));
+        if(outcomes[i].status==="fulfilled"){
+          candidates.push(...outcomes[i].value.passed);
+          ladderRows.push(...outcomes[i].value.ladder);
+        }else errors.push(names[i]+": "+String(outcomes[i].reason));
       }
       var winner=mod.chooseAcrossVenues(candidates,snapshots.browser);
       var snap=mod.snapshotFromVenues(winner,Date.now(),candidates.length,rv,
         {venues_checked:names,venues_responded:names.filter((x,i)=>outcomes[i].status==="fulfilled")});
       if(outcomes.every(x=>x.status==="rejected"))snap.state="BLOCKED_DATA";
+      snap.straddle_ladder={
+        schema:"btc-atm-straddle-ladder-v1",
+        generated_at_ms:snap.generated_at_ms,
+        state:ladderRows.length?"SHADOW":"BLOCKED_DATA",
+        rows:ladderLib.chooseFive(ladderRows,Date.now()),
+        decision:"CASH",source:"BROWSER_VERIFIED_PUBLIC_L2"
+      };
       snap.source="browser-multi-venue";
       snapshots.browser=snap;diagnostics.browserScan=snap.state;
       diagnostics.lastScanAt=Date.now();diagnostics.lastError=errors.join("; ");
