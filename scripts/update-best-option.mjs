@@ -51,11 +51,12 @@ async function getBook(venue,symbol,spot){
 }
 async function probe(venue,rv){
  const adapter=await prepare(venue),pairs=rankVenue(adapter,rv,Date.now()),cache=new Map(),vetted=[],ladder=[];
- for(const pair of pairs.slice(0,6)){
-  const book=async sym=>{
+ // Share the same cached L2 reader across candidate and straddle-ladder scans.
+ const book=async sym=>{
    if(!cache.has(sym))cache.set(sym,getBook(venue,sym,adapter.spot));
    return cache.get(sym);
-  };
+ };
+ for(const pair of pairs.slice(0,6)){
   try{
    const [c,p]=await Promise.all([book(pair.call.symbol),book(pair.put.symbol)]);
    const good=verifyVenuePair(pair,c,p,Date.now());
