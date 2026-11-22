@@ -33,8 +33,13 @@
     var root=document.querySelector("[data-option-ladder]");
     var meta=document.querySelector("[data-option-ladder-meta]");
     if(!root)return;
-    var best=chosen(),ladder=best&&best.straddle_ladder;
-    var valid=best&&isFresh(best)&&ladder&&ladder.schema==="btc-atm-straddle-ladder-v1"&&
+    // Use the freshest independently verified ladder, even when the browser
+    // has a newer single-winner snapshot without a ladder.
+    var sources=[snapshots.github,snapshots.browser].filter(function(x){
+      return isFresh(x)&&x.straddle_ladder&&x.straddle_ladder.schema==="btc-atm-straddle-ladder-v1";
+    }).sort(function(a,b){return b.generated_at_ms-a.generated_at_ms;});
+    var best=sources[0]||null,ladder=best&&best.straddle_ladder;
+    var valid=best&&ladder&&ladder.schema==="btc-atm-straddle-ladder-v1"&&
       Array.isArray(ladder.rows)&&ladder.rows.length>0&&
       ladder.rows.every(function(x){return x.verified_depth===true &&
         x.expiry_ms>Date.now()&&Number.isFinite(x.all_in_cost_usd)&&
