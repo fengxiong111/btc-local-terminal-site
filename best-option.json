@@ -1,11 +1,11 @@
 {
   "schema": "tce-best-option-v1",
-  "generated_at_ms": 1795306692933,
-  "expires_at_ms": 1795308192933,
+  "generated_at_ms": 1795306723814,
+  "expires_at_ms": 1795308223814,
   "mode": "READ_ONLY",
   "tradable": false,
   "auto_order": false,
-  "universe_count": 366,
+  "universe_count": 367,
   "decision": "CASH",
   "state": "SHADOW",
   "reason": "Best screened convexity candidate; positive expectancy NOT established",
@@ -17,14 +17,14 @@
     "put_strike": 63000,
     "expiry_ms": 1796371200000,
     "qty_contracts": 1,
-    "premium_with_entry_fees_usdt": 57.5388,
-    "immediate_exit_net_usdt": 55.6128,
+    "premium_with_entry_fees_usdt": 57.5455,
+    "immediate_exit_net_usdt": 55.6193,
     "roundtrip_loss_fraction": 0.0335,
-    "combined_delta": -0.256,
-    "gamma_5pct_approx_usdt": 5.7759,
+    "combined_delta": -0.2547,
+    "gamma_5pct_approx_usdt": 5.7758,
     "conservative_rv_assumption": 0.373074939297193,
-    "modeled_expiry_net_usdt": -14.0317,
-    "score": -0.2439,
+    "modeled_expiry_net_usdt": -14.0662,
+    "score": -0.2444,
     "venue": "OKX",
     "settlement_ccy": "BTC",
     "min_notional_btc": 0.01,
@@ -49,7 +49,7 @@
   "source": "PUBLIC_MARKET_DATA_MULTI_VENUE",
   "autonomous": true,
   "venue_universe_counts": {
-    "OKX": 366,
+    "OKX": 367,
     "DERIBIT": 0
   },
   "venue_diagnostics": {
@@ -86,7 +86,7 @@
             "BTC-USD-261122-60000-C",
             "BTC-USD-261122-60000-P"
           ],
-          "cost": 8.787302,
+          "cost": 8.788324,
           "expiry_ms": 1795334400000
         }
       }
@@ -113,7 +113,7 @@
   "capital_at_risk": 0,
   "straddle_ladder": {
     "schema": "btc-atm-straddle-ladder-v1",
-    "generated_at_ms": 1795306692933,
+    "generated_at_ms": 1795306723814,
     "state": "SHADOW",
     "rows": [
       {
@@ -123,16 +123,16 @@
         "call_strike": 60000,
         "put_strike": 60000,
         "expiry_ms": 1795334400000,
-        "index_price_usd": 60187,
+        "index_price_usd": 60194,
         "coin_qty": 0.01,
         "min_call_contracts": 1,
         "min_put_contracts": 1,
-        "all_in_cost_usd": 8.79,
-        "breakeven_low_usd": 59121.27,
-        "breakeven_high_usd": 60878.73,
-        "roundtrip_fraction": 0.1507,
+        "all_in_cost_usd": 9.09,
+        "breakeven_low_usd": 59091.07,
+        "breakeven_high_usd": 60908.93,
+        "roundtrip_fraction": 0.1788,
         "verified_depth": true,
-        "quote_time_ms": 1795306691853
+        "quote_time_ms": 1795306722553
       },
       {
         "venue": "OKX",
@@ -141,16 +141,16 @@
         "call_strike": 60000,
         "put_strike": 60000,
         "expiry_ms": 1795420800000,
-        "index_price_usd": 60187,
+        "index_price_usd": 60194,
         "coin_qty": 0.01,
         "min_call_contracts": 1,
         "min_put_contracts": 1,
         "all_in_cost_usd": 17.82,
-        "breakeven_low_usd": 58218.46,
-        "breakeven_high_usd": 61781.54,
+        "breakeven_low_usd": 58218.26,
+        "breakeven_high_usd": 61781.74,
         "roundtrip_fraction": 0.0743,
         "verified_depth": true,
-        "quote_time_ms": 1795306692053
+        "quote_time_ms": 1795306722803
       },
       {
         "venue": "OKX",
@@ -159,16 +159,16 @@
         "call_strike": 60000,
         "put_strike": 60000,
         "expiry_ms": 1795507200000,
-        "index_price_usd": 60187,
+        "index_price_usd": 60194,
         "coin_qty": 0.01,
         "min_call_contracts": 1,
         "min_put_contracts": 1,
-        "all_in_cost_usd": 25.04,
-        "breakeven_low_usd": 57496.22,
-        "breakeven_high_usd": 62503.78,
-        "roundtrip_fraction": 0.0529,
+        "all_in_cost_usd": 25.34,
+        "breakeven_low_usd": 57465.83,
+        "breakeven_high_usd": 62534.17,
+        "roundtrip_fraction": 0.0641,
         "verified_depth": true,
-        "quote_time_ms": 1795306692253
+        "quote_time_ms": 1795306723003
       },
       {
         "venue": "OKX",
@@ -177,16 +177,16 @@
         "call_strike": 60000,
         "put_strike": 60000,
         "expiry_ms": 1795766400000,
-        "index_price_usd": 60187,
+        "index_price_usd": 60194,
         "coin_qty": 0.01,
         "min_call_contracts": 1,
         "min_put_contracts": 1,
         "all_in_cost_usd": 35.57,
-        "breakeven_low_usd": 56442.95,
-        "breakeven_high_usd": 63557.05,
-        "roundtrip_fraction": 0.0457,
+        "breakeven_low_usd": 56442.53,
+        "breakeven_high_usd": 63557.47,
+        "roundtrip_fraction": 0.0372,
         "verified_depth": true,
-        "quote_time_ms": 1795306692653
+        "quote_time_ms": 1795306723503
       },
       {
         "venue": "OKX",
@@ -195,16 +195,16 @@
         "call_strike": 60000,
         "put_strike": 60000,
         "expiry_ms": 1796371200000,
-        "index_price_usd": 60187,
+        "index_price_usd": 60194,
         "coin_qty": 0.01,
         "min_call_contracts": 1,
         "min_put_contracts": 1,
-        "all_in_cost_usd": 51.22,
-        "breakeven_low_usd": 54878.09,
-        "breakeven_high_usd": 65121.91,
-        "roundtrip_fraction": 0.0317,
+        "all_in_cost_usd": 51.53,
+        "breakeven_low_usd": 54847.39,
+        "breakeven_high_usd": 65152.61,
+        "roundtrip_fraction": 0.0374,
         "verified_depth": true,
-        "quote_time_ms": 1795306692853
+        "quote_time_ms": 1795306723703
       }
     ],
     "source": "REAL_PUBLIC_L2",
