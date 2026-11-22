@@ -29,12 +29,55 @@
     ranked.sort(function(a,b){return b.generated_at_ms-a.generated_at_ms;});
     return ranked[0]||null;
   }
+  function renderLadder(){
+    var root=document.querySelector("[data-option-ladder]");
+    var meta=document.querySelector("[data-option-ladder-meta]");
+    if(!root)return;
+    var best=chosen(),ladder=best&&best.straddle_ladder;
+    var valid=best&&isFresh(best)&&ladder&&ladder.schema==="btc-atm-straddle-ladder-v1"&&
+      Array.isArray(ladder.rows)&&ladder.rows.length>0&&
+      ladder.rows.every(function(x){return x.verified_depth===true &&
+        x.expiry_ms>Date.now()&&Number.isFinite(x.all_in_cost_usd)&&
+        Number.isFinite(x.breakeven_low_usd)&&Number.isFinite(x.breakeven_high_usd);});
+    root.replaceChildren();
+    if(!valid){
+      var tr=document.createElement("tr"),td=document.createElement("td");
+      td.colSpan=5;
+      td.textContent=scanning?"正在核验真实盘口…":
+        best&&best.state==="BLOCKED_DATA"?"行情受阻":"暂无有效双买数据";
+      tr.appendChild(td);root.appendChild(tr);
+      if(meta)meta.textContent="没有可验证报价时不使用历史数据";
+      return;
+    }
+    function fmt(x){return Math.round(x).toLocaleString("en-US");}
+    ladder.rows.slice(0,5).forEach(function(x){
+      var tr=document.createElement("tr"),date=new Date(x.expiry_ms);
+      var fields=[
+        String(date.getUTCMonth()+1).padStart(2,"0")+"/"+String(date.getUTCDate()).padStart(2,"0"),
+        String(x.call_strike)+"C / "+String(x.put_strike)+"P",
+        Number(x.all_in_cost_usd).toFixed(2)+"U",
+        fmt(x.breakeven_high_usd),
+        fmt(x.breakeven_low_usd)
+      ];
+      fields.forEach(function(value,i){
+        var td=document.createElement("td");
+        td.textContent=value;
+        if(i===3)td.className="option-up";
+        if(i===4)td.className="option-down";
+        tr.appendChild(td);
+      });
+      root.appendChild(tr);
+    });
+    if(meta)meta.textContent="按交易所最小量计算 · 含估算开仓费 · 到期美元等值回本价 · 非买入建议";
+  }
+
   function render(){
+    renderLadder();
     var root=document.getElementById("best-option-card");
     if(!root) return;
     var name=root.querySelector("[data-option-name]");
     var expiry=root.querySelector("[data-option-date]");
-    if(!name||!expiry)return;
+    if(!name||!expiry)return; // Five-row ladder is rendered above.
     var best=chosen(),c=best&&best.candidate;
     var valid=best&&best.state==="SHADOW"&&c&&c.expiry_ms>Date.now()&&
       Number.isFinite(c.call_strike)&&Number.isFinite(c.put_strike);
