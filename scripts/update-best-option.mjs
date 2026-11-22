@@ -66,19 +66,27 @@ async function probe(venue,rv){
  // Keep the single-winner search untouched, and use the same cached L2 fetcher.
  const shortlist=shortlistStraddles(adapter,Date.now());
  const expirations=[...new Set(shortlist.map(x=>x.expiry_ms))].slice(0,6);
+ const ladderDiag={near_atm_candidates:shortlist.length,near_atm_dates:expirations.length,
+   attempted:0,failed:0,reasons:[],first:shortlist[0]?
+     {symbols:[shortlist[0].call.symbol,shortlist[0].put.symbol],
+      cost:shortlist[0].cost,expiry_ms:shortlist[0].expiry_ms}:null};
  const tried=new Map();
  for(const candidate of shortlist){
   if(!expirations.includes(candidate.expiry_ms))continue;
   if((tried.get(candidate.expiry_ms)||0)>=2 || ladder.some(x=>x.expiry_ms===candidate.expiry_ms))continue;
   tried.set(candidate.expiry_ms,(tried.get(candidate.expiry_ms)||0)+1);
+  ladderDiag.attempted++;
   try{
    const [c,p]=await Promise.all([book(candidate.call.symbol),book(candidate.put.symbol)]);
    const verified=validateStraddle(candidate,c,p,Date.now());
    if(verified)ladder.push(verified);
-  }catch(e){if(/HTTP (418|429)/.test(String(e)))throw e}
+  }catch(e){
+   ladderDiag.failed++;if(ladderDiag.reasons.length<3)ladderDiag.reasons.push(String(e).slice(0,160));
+   if(/HTTP (418|429)/.test(String(e)))throw e
+  }
  }
  return {venue,universe:pairs.length,normalized:adapter.exchangeInfo?.optionSymbols?.length,
-   diagnostics:adapter.diagnostics||null,vetted,ladder};
+   diagnostics:adapter.diagnostics||null,vetted,ladder,ladderDiag};
 }
 async function main(){
  let prev=null;
@@ -90,7 +98,7 @@ async function main(){
   const x=result[i],venue=names[i];
   if(x.status==="fulfilled"){
    responded.push(venue);counts[venue]=x.value.universe;
-   venueDiagnostics[venue]={normalized:x.value.normalized,detail:x.value.diagnostics};
+   venueDiagnostics[venue]={normalized:x.value.normalized,detail:x.value.diagnostics,ladder:x.value.ladderDiag};
    candidates.push(...x.value.vetted);
    ladderRows.push(...x.value.ladder);
   }else errors.push(venue+": "+String(x.reason).slice(0,180));
