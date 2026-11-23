@@ -193,7 +193,7 @@
         var EMA_CANDLE_LIMIT = 1000;
         var ANIM_MS = 450;
         var ANIM_EASE = "linear(0,.005,.019,.039,.066,.096,.129,.165,.202,.24,.278,.316,.354,.39,.426,.461,.494,.526,.557,.586,.614,.64,.665,.689,.711,.731,.751,.769,.786,.802,.817,.831,.844,.856,.867,.877,.887,.896,.904,.912,.919,.925,.931,.937,.942,.947,.951,.955,.959,.962,.965,.968,.971,.973,.976,.978,.98,.981,.983,.984,.986,.987,.988,.989,.99,.991,.992,.992,.993,.994,.994,.995,.995,.996,.996,.9963,.9967,.9969,.9972,.9975,.9977,.9979,.9981,.9982,.9984,.9985,.9987,.9988,.9989,1)";
-        var BUILD_ID = "calls-20261109";
+        var BUILD_ID = "sndk-perp-20261124";
         var reduceMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
         var diagnostics = {
           buildId: BUILD_ID,
@@ -257,12 +257,15 @@
         var cachedState = readCache();
         var macroDefinitions = [
           { id: "mu", label: "MU", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "MUUSDT" },
+          { id: "sndk", label: "SNDK", source: "hyperliquid", dex: HIP3_STOCK_DEX },
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
           { id: "googl", label: "GOOGL", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "GOOGLUSDT" }
         ];
+        // SNDK underwent an 8-for-1 split in Nov 2026. Do not publish an unadjusted 200D EMA.
+        var stockEmaDefinitions = macroDefinitions.filter(function (definition) { return definition.id !== "sndk"; });
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "okx" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" }
-        ], macroDefinitions, macroDefinitions.map(function (definition) {
+        ], macroDefinitions, stockEmaDefinitions.map(function (definition) {
           return { id: "ema200_" + definition.id, label: "EMA200", source: "hyperliquid-daily" };
         }));
 
@@ -918,7 +921,7 @@
         }
 
         function renderStockEma(id, value, stale) {
-          if (!macroDefinitions.some(function (definition) { return definition.id === id; })) return;
+          if (!stockEmaDefinitions.some(function (definition) { return definition.id === id; })) return;
           var price = finite(value);
           if (price === null) return;
           ingestQuote("ema200_" + id, {
@@ -932,7 +935,7 @@
           if (fetchStockEma200.pending) return;
           fetchStockEma200.pending = true;
           var end = Date.now();
-          Promise.all(macroDefinitions.map(function (definition) {
+          Promise.all(stockEmaDefinitions.map(function (definition) {
             return requestJson(HYPERLIQUID_INFO_URL, 8000, {
               method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
               body: JSON.stringify({ type: "candleSnapshot", req: { coin: "xyz:" + definition.label, interval: "1d", startTime: end - 300 * 86400000, endTime: end } })
