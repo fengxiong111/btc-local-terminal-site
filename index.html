@@ -190,10 +190,13 @@
         var HL_STALE_MS = 8000;
         var EMA_STALE_MS = 180000;
         var EMA_PERIOD = 200;
+        var SNDK_SPLIT_UTC = Date.UTC(2026, 10, 20);
+        var SNDK_SPLIT_RATIO = 8;
+        var SNDK_EMA_CACHE_VERSION = "split8-20261120";
         var EMA_CANDLE_LIMIT = 1000;
         var ANIM_MS = 450;
         var ANIM_EASE = "linear(0,.005,.019,.039,.066,.096,.129,.165,.202,.24,.278,.316,.354,.39,.426,.461,.494,.526,.557,.586,.614,.64,.665,.689,.711,.731,.751,.769,.786,.802,.817,.831,.844,.856,.867,.877,.887,.896,.904,.912,.919,.925,.931,.937,.942,.947,.951,.955,.959,.962,.965,.968,.971,.973,.976,.978,.98,.981,.983,.984,.986,.987,.988,.989,.99,.991,.992,.992,.993,.994,.994,.995,.995,.996,.996,.9963,.9967,.9969,.9972,.9975,.9977,.9979,.9981,.9982,.9984,.9985,.9987,.9988,.9989,1)";
-        var BUILD_ID = "sndk-ema-cap-20261124";
+        var BUILD_ID = "sndk-ema-split-adjusted-20261124";
         var reduceMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
         var diagnostics = {
           buildId: BUILD_ID,
@@ -263,8 +266,8 @@
           { id: "nvda", label: "NVDA", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "NVDAUSDT" },
           { id: "googl", label: "GOOGL", source: "hyperliquid", dex: HIP3_STOCK_DEX, symbol: "GOOGLUSDT" }
         ];
-        // Show the raw HIP-3 daily EMA200 for all stock perps, including SNDK.
-        // SNDK split 8-for-1 on 2026-11-20: this series may be unadjusted or discontinuous.
+        // Keep the same HIP-3 daily EMA200 display for all stock perps.
+        // Only SNDK closes before 2026-11-20 UTC are adjusted 8-for-1 inside fetchStockEma200.
         var stockEmaDefinitions = macroDefinitions;
         var marketDefinitions = [{ id: "btc", label: "BTC", source: "okx" }].concat([
           { id: "ema200", label: "EMA200", source: "btc-daily" }
@@ -375,6 +378,9 @@
             var value = window.localStorage.getItem(CACHE_KEY);
             if (!value) return null;
             var parsed = JSON.parse(value);
+            if (parsed && parsed.stockEma && parsed.sndkEmaCacheVersion !== SNDK_EMA_CACHE_VERSION) {
+              delete parsed.stockEma.sndk; // Never display the old, unadjusted SNDK EMA from cache.
+            }
             return parsed && parsed.savedAt ? parsed : null;
           } catch (error) {
             return null;
@@ -388,6 +394,7 @@
               btc: cachedState && cachedState.btc,
               macro: cachedState && cachedState.macro,
               ema200: cachedState && cachedState.ema200,
+              sndkEmaCacheVersion: SNDK_EMA_CACHE_VERSION,
               stockEma: cachedState && cachedState.stockEma
             }));
           } catch (error) {
@@ -944,7 +951,16 @@
               body: JSON.stringify({ type: "candleSnapshot", req: { coin: "xyz:" + definition.label, interval: "1d", startTime: end - 300 * 86400000, endTime: end } })
             }).then(function (candles) {
               if (!Array.isArray(candles)) throw new Error("Invalid candle data");
-              var closes = candles.slice().sort(function (a, b) { return a.t - b.t; }).map(function (candle) { return finite(candle.c); }).filter(function (value) { return value !== null && value > 0; });
+              var closes = candles.slice().sort(function (a, b) { return a.t - b.t; }).map(function (candle) {
+                var close = finite(candle && candle.c);
+                if (close === null || close <= 0) return null;
+                if (definition.id === "sndk") {
+                  var candleTime = finite(candle && candle.t);
+                  if (candleTime === null) return null; // Do not guess the split side of an undated candle.
+                  if (candleTime < SNDK_SPLIT_UTC) close /= SNDK_SPLIT_RATIO;
+                }
+                return close;
+              }).filter(function (value) { return value !== null && value > 0; });
               if (closes.length < EMA_PERIOD) throw new Error("Insufficient candle data");
               var ema = closes.slice(0, EMA_PERIOD).reduce(function (sum, value) { return sum + value; }, 0) / EMA_PERIOD;
               var multiplier = 2 / (EMA_PERIOD + 1);
