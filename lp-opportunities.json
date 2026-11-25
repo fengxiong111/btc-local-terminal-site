@@ -1,7 +1,7 @@
 {
   "schema": "lp-radar-v1",
   "policy_version": "FEE_24H_TVL100K_MCAP500K_DISCOVERY",
-  "generated_at_ms": 1795596013196,
+  "generated_at_ms": 1795643058373,
   "read_only": true,
   "merkl": {
     "state": "NO_VERIFIED_NET_EDGE",
@@ -19,27 +19,27 @@
     "best": null,
     "research_leader": {
       "platform": "Merkl",
-      "name": "Provide liquidity to UniswapV4 USDC-cbBTC 0.05%",
-      "opportunity_id": "7041296046502113175",
+      "name": "Provide liquidity to UniswapV4 MON-USDC 0.05%",
+      "opportunity_id": "8829080316986770972",
       "chain_id": 143,
-      "pool_identifier": "0x7fc6232a9ec6cc4e9434640dcde5ee08ccae3b07de3247bf788fc9e2051b449e",
+      "pool_identifier": "0x18a9fc874581f3ba12b7898f80a683c66fd5877fd74b26a85ba9a3a79c549954",
       "type": "UNISWAP_V4",
-      "tvl_usd": 509327.0113768714,
-      "incentive_apr_pct": 11.027269235313527,
+      "tvl_usd": 106303.90995060158,
+      "incentive_apr_pct": 51.22151420652868,
       "valid_campaign_count": 1,
       "reward_tokens": [
         "WMON"
       ],
       "nearest_end_unix_sec": 1796058000,
       "underlying_tokens": [
-        "USDC",
-        "cbBTC"
+        "MON",
+        "USDC"
       ],
-      "score": 8.843579,
+      "score": 9.782057,
       "reward_policy": {
         "out_of_range_incentivized": false,
-        "fee_weight_min": 7000,
-        "fee_weight_max": 7000,
+        "fee_weight_min": 5000,
+        "fee_weight_max": 5000,
         "position_claimability": "UNKNOWN_NO_POSITION_OR_CAMPAIGN_PROOF"
       },
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
@@ -60,29 +60,29 @@
     "best": null,
     "fee_leader": {
       "platform": "Meteora",
-      "name": "ANSEM-SOL",
-      "address": "6e7V9eegCHw997T72MxgwwJipZ6GJyZF8NvjkzT1rvpN",
+      "name": "ANT-USDC",
+      "address": "8GTCUyGQsVNq7cdWEszyNb6w9uiUo727BdGu6v7UmpdX",
       "token_mints": [
-        "9cRCn9rGT8V2imeM2BaKs13yhMEais3ruM3rPvTGpump",
-        "So11111111111111111111111111111111111111112"
+        "ANTBTZQ1EUuTxUs3tfeampxdqTWPHmwyJmcWj4xoAyNe",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ],
       "token_symbols": [
-        "ANSEM",
-        "SOL"
+        "ANT",
+        "USDC"
       ],
-      "token_x_market_cap_usd": 20363437.999259844,
-      "token_y_market_cap_usd": 40122511320.08593,
-      "min_token_market_cap_usd": 20363437.999259844,
-      "tvl_usd": 169401.4359712178,
-      "fee_24h_usd": 32728.175738639387,
-      "fee_30m_usd": 28.72862506688997,
-      "fee_1h_usd": 51.40693340727756,
-      "fee_4h_usd": 258.38931447613487,
-      "volume_24h_usd": 5265495.818361367,
-      "pool_age_days": 150.1,
+      "token_x_market_cap_usd": 5794539.3363372665,
+      "token_y_market_cap_usd": 9121175141.98133,
+      "min_token_market_cap_usd": 5794539.3363372665,
+      "tvl_usd": 813027.3823604207,
+      "fee_24h_usd": 10441.153607578077,
+      "fee_30m_usd": 66.80195783970588,
+      "fee_1h_usd": 762.9239738401255,
+      "fee_4h_usd": 2480.592132920449,
+      "volume_24h_usd": 5685822.800187271,
+      "pool_age_days": 6.6,
       "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 32728.175738639387,
+      "ranking_value_usd": 10441.153607578077,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -95,29 +95,29 @@
     },
     "research_leader": {
       "platform": "Meteora",
-      "name": "ANSEM-SOL",
-      "address": "6e7V9eegCHw997T72MxgwwJipZ6GJyZF8NvjkzT1rvpN",
+      "name": "ANT-USDC",
+      "address": "8GTCUyGQsVNq7cdWEszyNb6w9uiUo727BdGu6v7UmpdX",
       "token_mints": [
-        "9cRCn9rGT8V2imeM2BaKs13yhMEais3ruM3rPvTGpump",
-        "So11111111111111111111111111111111111111112"
+        "ANTBTZQ1EUuTxUs3tfeampxdqTWPHmwyJmcWj4xoAyNe",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ],
       "token_symbols": [
-        "ANSEM",
-        "SOL"
+        "ANT",
+        "USDC"
       ],
-      "token_x_market_cap_usd": 20363437.999259844,
-      "token_y_market_cap_usd": 40122511320.08593,
-      "min_token_market_cap_usd": 20363437.999259844,
-      "tvl_usd": 169401.4359712178,
-      "fee_24h_usd": 32728.175738639387,
-      "fee_30m_usd": 28.72862506688997,
-      "fee_1h_usd": 51.40693340727756,
-      "fee_4h_usd": 258.38931447613487,
-      "volume_24h_usd": 5265495.818361367,
-      "pool_age_days": 150.1,
+      "token_x_market_cap_usd": 5794539.3363372665,
+      "token_y_market_cap_usd": 9121175141.98133,
+      "min_token_market_cap_usd": 5794539.3363372665,
+      "tvl_usd": 813027.3823604207,
+      "fee_24h_usd": 10441.153607578077,
+      "fee_30m_usd": 66.80195783970588,
+      "fee_1h_usd": 762.9239738401255,
+      "fee_4h_usd": 2480.592132920449,
+      "volume_24h_usd": 5685822.800187271,
+      "pool_age_days": 6.6,
       "pool_base_fee_pct": 0.2,
       "ranking_metric": "ABSOLUTE_POOL_FEES_24H_USD",
-      "ranking_value_usd": 32728.175738639387,
+      "ranking_value_usd": 10441.153607578077,
       "status": "WATCH_NET_UNVERIFIED",
       "net_edge_state": "UNKNOWN_NO_POSITION_LEVEL_FEES_OR_EXIT_QUOTE",
       "missing": [
@@ -132,8 +132,8 @@
     "min_tvl_usd": 100000,
     "min_token_market_cap_usd": 500000,
     "token_market_cap_rule": "BOTH_TOKENS",
-    "sampled": 134,
-    "api_total_after_tvl_filter": 134,
+    "sampled": 139,
+    "api_total_after_tvl_filter": 139,
     "pages": 1,
     "page_size": 200,
     "max_pages": 12,
